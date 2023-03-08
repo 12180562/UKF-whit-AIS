@@ -1,0 +1,22 @@
+<launch>
+    <node pkg="inha_modules"  type="WP_pub.py"  name="WP_generator" respawn="true" />
+    <node pkg="inha_modules"  type="KRISO.py"  name="KRISO" respawn="true" output="screen" />
+    <node pkg="inha_modules"  type="PKNU.py" name="PKNU" respawn="true" /> 
+
+    <!-- Comment out the unused vessel nodes -->
+    <!-- Define the vessels' initial condition at the `/params/main_parameter.yaml` -->
+    <node pkg="inha_modules"  type="vessel_node1.py"  name="OS_Node"  respawn="true" output="screen"/>
+    <node pkg="inha_modules"  type="vessel_node2.py"  name="TS1_Node"  respawn="true" />
+    <node pkg="inha_modules"  type="vessel_node3.py"  name="TS2_Node"  respawn="true" />
+    <!-- <node pkg="inha_modules"  type="vessel_node4.py"  name="TS3_Node"  respawn="true" /> -->
+    <!-- <node pkg="inha_modules"  type="vessel_node5.py"  name="TS4_Node"  respawn="true" /> -->
+
+    <node pkg="inha_modules"  type="data_integration.py"  name="data_integration"  respawn="true"  output="screen"/>
+
+    <!-- <node pkg="inha_modules"  type="data_visualizer.py" name="data_visualizer" respawn="true" output="screen"/> 
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find inha_modules)/Disp/data_vis_inha.rviz"/> -->
+
+	<rosparam command="load" file="$(find inha_modules)/params/main_parameter.yaml" />
+    <rosparam command="load" file="$(find inha_modules)/params/KASS_Coefficient.yaml"/>     
+    <rosparam command="load" file="$(find inha_modules)/params/park_parameter.yaml"/> 
+</launch>
