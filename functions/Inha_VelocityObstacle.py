@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from math import pi, cos, sin, atan2, asin
+from math import pi, cos, sin, atan2, asin, sqrt
 import numpy as np
 import rospy
 
@@ -206,7 +206,7 @@ class VO_module:
         self.num_targetSpeedCandidates = int(rospy.get_param('num_targetSpeedCandidates'))
 
         # NOTE: It is not clear what min and max of heading angle could be.
-        self.min_targetHeading_deg_local = rospy.get_param('min_targetHeading_deg_local') 
+        self.min_targetHeading_deg_local = rospy.get_param('min_targetHeading_deg_local')
         self.max_targetHeading_deg_local = rospy.get_param('max_targetHeading_deg_local')
         self.num_targetHeadingCandidates = int(rospy.get_param('num_targetHeadingCandidates'))
 
@@ -1025,7 +1025,7 @@ class VO_module:
         else:
             return False
 
-    def __generate_vel_candidates(self, targetSpeed_all, targetHeading_rad_global_all):
+    def __generate_vel_candidates(self, targetSpeed_all, targetHeading_rad_global_all, OS, static_obstacle_info, static_point_info):
         """
         It generates the velocity candidates based on given speeds and heading angles.
 
@@ -1055,9 +1055,270 @@ class VO_module:
         reachableVelX_global_all = np.reshape(reachableVelX_global_all, newshape=(-1, 1))
         reachableVelY_global_all = np.reshape(reachableVelY_global_all, newshape=(-1, 1))
 
-        reachableVel_global_all = np.concatenate((reachableVelX_global_all, reachableVelY_global_all), axis=-1,)
+        reachableVel_global_all = np.concatenate(
+            (reachableVelX_global_all, reachableVelY_global_all),
+             axis=-1,
+             )
+        
+        """
+        reachableVel_global_all_after_obstacle : The candidate of reachable vector that dosen't cross static obstacle.
+        
+        __delete_vector_inside_obstacle : The function that judge collision with static obstacle.
+
+        """
+
+        reachableVel_global_all_after_obstacle = self.__delete_vector_inside_obstacle(reachableVel_global_all, OS, static_obstacle_info,static_point_info)
+
+        return reachableVel_global_all_after_obstacle
+
+
+    # reachable velocity global all을 받아와서 detecting vector를 생성
+    # detecting vector가 장애물과 겹친다면 후보에서 삭제
+
+    def __delete_vector_inside_obstacle(self, reachableVel_global_all, OS, static_obstacle_info, static_point_info):
+    
+        reachableVel_global_all_copy = np.copy(reachableVel_global_all)
+        static_OB_data = static_obstacle_info
+        static_point_data = static_point_info
+        
+        pA = np.array([OS['Pos_X'], OS['Pos_Y']])
+        delta_t = 30 # constant
+
+        #initial number for while
+        obstacle_number = 0
+        point_number = 0
+
+        # obstacle_radious
+        radious = 5
+
+        while (obstacle_number) != len(static_OB_data):
+            obstacle_point_x = [static_OB_data[obstacle_number],static_OB_data[obstacle_number+2]] 
+            obstacle_point_y = [static_OB_data[obstacle_number+1],static_OB_data[obstacle_number+3]] 
+
+            if obstacle_point_x[0] > obstacle_point_x[1]:
+                obstacle_point_x.reverse()
+                obstacle_point_y.reverse()
+
+            if (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and (obstacle_point_y[0]-obstacle_point_y[1]) > 0:
+                slope = 9999
+
+            elif (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and (obstacle_point_y[0]-obstacle_point_y[1]) < 0:
+                slope =-9999
+
+            else: 
+                slope = (obstacle_point_y[1]-obstacle_point_y[0])/(obstacle_point_x[1]-obstacle_point_x[0])
+                
+            reachableVel_global_all_after_delta_t = reachableVel_global_all * delta_t 
+            result = []
+
+            for i in range(len(reachableVel_global_all_after_delta_t)-1): 
+                after_delta_t_x = reachableVel_global_all_after_delta_t[i][0]+pA[0]
+                after_delta_t_y = reachableVel_global_all_after_delta_t[i][1]+pA[1]
+                if (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) < 0:
+                    vector_slope = 9999
+
+                elif (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) > 0:
+                    vector_slope = -9999
+                else:
+                    vector_slope = (pA[1]-after_delta_t_y)/(pA[0]-after_delta_t_x)
+
+                if self.get_crosspt(slope, 
+                        vector_slope,
+                        obstacle_point_x[0], 
+                        obstacle_point_y[0],
+                        obstacle_point_x[1], 
+                        obstacle_point_y[1],
+                        pA[0], 
+                        pA[1], 
+                        after_delta_t_x, 
+                        after_delta_t_y):
+
+                    component = reachableVel_global_all[i]
+                    component_list = component.tolist()
+                    result.append(component_list)
+                else:
+                    pass
+
+            reachableVel_global_all = np.array(result)
+
+            obstacle_number = obstacle_number+4
+
+        while point_number != len(static_point_data):
+        
+            point_x = static_point_data[point_number]
+            point_y = static_point_data[point_number+1]
+            print(point_x, point_y)
+
+            reachableVel_global_all_after_delta_t = reachableVel_global_all * delta_t 
+            result = []
+
+            for i in range(len(reachableVel_global_all_after_delta_t)-1): 
+                after_delta_t_x = reachableVel_global_all_after_delta_t[i][0]+pA[0]
+                after_delta_t_y = reachableVel_global_all_after_delta_t[i][1]+pA[1]
+
+                if (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) < 0:
+                    vector_slope = 9999
+
+                elif (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) > 0:
+                    vector_slope = -9999
+                else:
+                    vector_slope = (pA[1]-after_delta_t_y)/(pA[0]-after_delta_t_x)
+
+                if self.get_crosspt_circle(vector_slope,
+                        point_x, 
+                        point_y, 
+                        radious, 
+                        pA[0], 
+                        pA[1], 
+                        after_delta_t_x, 
+                        after_delta_t_y ):
+                    
+                    component = reachableVel_global_all[i]
+                    component_list = component.tolist()
+                    result.append(component_list)
+
+                else:
+                    pass
+
+            reachableVel_global_all = np.array(result)
+
+            point_number = point_number+2
+
+        if len(reachableVel_global_all) == 0:
+            reachableVel_global_all = np.array([reachableVel_global_all_copy[9,:],reachableVel_global_all_copy[99,:]])
+            # print("no way to avoid obstacle")
+        else:
+            pass
 
         return reachableVel_global_all
+        
+    def get_crosspt(self, slope, vector_slope, start_x, start_y,end_x, end_y, OS_pos_x, OS_pos_y, after_delta_t_x, after_delta_t_y):
+
+        x_point = [start_x, end_x]
+        y_point = [start_y, end_y]
+
+        if (slope) == (vector_slope): 
+            return True
+
+        else:
+            cross_x = (start_x * slope - start_y - OS_pos_x * vector_slope + OS_pos_y) / (slope - vector_slope)
+            cross_y = slope * (cross_x - start_x) + start_y
+
+            if OS_pos_x <= after_delta_t_x and OS_pos_y <= after_delta_t_y:
+                if (min(x_point)-5) <= cross_x <= (max(x_point)+5) and (min(y_point)-5) <= cross_y <= (max(y_point)+5):
+                    if OS_pos_x <= cross_x <= after_delta_t_x and OS_pos_y <= cross_y <= after_delta_t_y:
+                        # print(f"detected line start x: {min(x_point)}, y: {min(y_point)}")
+                        # print(f"detected line end x: {max(x_point)}, y: {max(y_point)}")
+                        # print(f"x: {cross_x}, y: {cross_y}")
+                        return False
+                    else:
+                        return True
+                else:
+                    return True
+
+            elif OS_pos_x >= after_delta_t_x and OS_pos_y <= after_delta_t_y:
+                if (min(x_point)-5) <= cross_x <= (max(x_point)+5) and (min(y_point)-5) <= cross_y <= (max(y_point)+5):
+                    if after_delta_t_x <= cross_x <= OS_pos_x and OS_pos_y <= cross_y <= after_delta_t_y:
+                        # print(f"detected line start x: {min(x_point)}, y: {min(y_point)}")
+                        # print(f"detected line end x: {max(x_point)}, y: {max(y_point)}")
+                        # print(f"x: {cross_x}, y: {cross_y}")
+                        return False
+                    else:
+                        return True
+                else:
+                    return True
+
+            elif OS_pos_x <= after_delta_t_x and OS_pos_y >= after_delta_t_y:
+                if (min(x_point)-5) <= cross_x <= (max(x_point)+5) and (min(y_point)-5) <= cross_y <= (max(y_point)+5):
+                    if OS_pos_x <= cross_x <= after_delta_t_x and  after_delta_t_y <= cross_y <= OS_pos_y:
+                        # print(f"detected line start x: {min(x_point)}, y: {min(y_point)}")
+                        # print(f"detected line end x: {max(x_point)}, y: {max(y_point)}")
+                        # print(f"x: {cross_x}, y: {cross_y}")
+                        return False
+                    else:
+                        return True
+                else:
+                    return True
+
+            else:
+                if (min(x_point)-5) <= cross_x <= (max(x_point)+5) and (min(y_point)-5) <= cross_y <= (max(y_point)+5):
+                    if after_delta_t_x <= cross_x <= OS_pos_x and after_delta_t_y <= cross_y <= OS_pos_y:
+                        # print(f"detected line start x: {min(x_point)}, y: {min(y_point)}")
+                        # print(f"detected line end x: {max(x_point)}, y: {max(y_point)}")
+                        # print(f"x: {cross_x}, y: {cross_y}")
+                        return False
+                    else:
+                        return True
+                else:
+                    return True
+                
+    def get_crosspt_circle(self, vector_slope, point_x, point_y, radious, OS_pos_x, OS_pos_y, after_delta_t_x, after_delta_t_y ):
+
+        point = [point_x,point_y]
+        r = radious
+
+        vector_point_x = [OS_pos_x,after_delta_t_x]
+        vector_point_y = [OS_pos_y,after_delta_t_y]
+
+        slope = vector_slope
+
+        a = slope
+        b = -1
+        c = -slope*vector_point_x[0]+vector_point_y[0]
+
+        xp = point[0]
+        yp = point[1]
+
+        A = 1+(a**2/b**2)
+        B = (-2*xp)+(2*a*c/b**2)+(2*a*yp/b)
+        C = (xp**2)+(c**2/b**2)+(2*c*yp/b)+(yp**2)-(r**2)
+
+        discriminant = (B**2)-(4*A*C)
+
+        if discriminant >= 0:
+            cross_x_1 = (-B+sqrt(discriminant))/(2*A)
+            cross_y_1 = slope*(cross_x_1-vector_point_x[0])+vector_point_y[0]
+            #cross_x_2 = (-B-sqrt(discriminant))/(2*A)
+            #cross_y_2 = slope*(cross_x_2-vector_point_x[0])+vector_point_y[0]
+
+            if OS_pos_x <= after_delta_t_x and OS_pos_y <= after_delta_t_y:
+                if (xp-r) <= cross_x_1 <= (xp+r) and (yp-r) <= cross_y_1 <= (yp+r):
+                    if OS_pos_x <= cross_x_1 <= after_delta_t_x and OS_pos_y <= cross_y_1 <= after_delta_t_y:
+                        return False
+                    else:
+                        return True
+                else:
+                    return True
+
+            elif OS_pos_x >= after_delta_t_x and OS_pos_y <= after_delta_t_y:
+                if (xp-r) <= cross_x_1 <= (xp+r) and (yp-r) <= cross_y_1 <= (yp+r):
+                    if after_delta_t_x <= cross_x_1 <= OS_pos_x and OS_pos_y <= cross_y_1 <= after_delta_t_y:
+                        return False
+                    else:
+                        return True
+                else:
+                    return True
+
+            elif OS_pos_x <= after_delta_t_x and OS_pos_y >= after_delta_t_y:
+                if (xp-r) <= cross_x_1 <= (xp+r) and (yp-r) <= cross_y_1 <= (yp+r):
+                    if OS_pos_x <= cross_x_1 <= after_delta_t_x and  after_delta_t_y <= cross_y_1 <= OS_pos_y:
+                        return False
+                    else:
+                        return True
+                else:
+                    return True
+
+            else:
+                if (xp-r) <= cross_x_1 <= (xp+r) and (yp-r) <= cross_y_1 <= (yp+r):
+                    if after_delta_t_x <= cross_x_1 <= OS_pos_x and after_delta_t_y <= cross_y_1 <= OS_pos_y:
+                        return False
+                    else:
+                        return True
+                else:
+                    return True
+
+        else:
+            return True
 
     def __select_vel_inside_RVOs(self, reachableCollisionVel_global_all, RVOdata_all, V_des):
         """
@@ -1207,7 +1468,7 @@ class VO_module:
         vA_post = min(velCandidates_dict, key=lambda k : velCandidates_dict[k]['penalty'])
         return vA_post
 
-    def __choose_velocity(self, V_des, RVOdata_all, OS, TS): 
+    def __choose_velocity(self, V_des, RVOdata_all, OS, TS, static_obstacle_info, static_point_info): 
         """ 
         It chooses the best velocity for the collision avoidance task.
 
@@ -1303,6 +1564,9 @@ class VO_module:
         reachableVel_global_all = self.__generate_vel_candidates(
             targetSpeed_all, 
             targetHeading_rad_global_all,
+            OS,
+            static_obstacle_info,
+            static_point_info
             )
         
         # Annotate the velocities - 'in time horizon', 'in left', 'in right', 'in collision cone'
@@ -1555,7 +1819,7 @@ class VO_module:
 
         return RVOdata_all, pub_collision_cone
 
-    def VO_update(self, OS_original, TS_original, V_des):   
+    def VO_update(self, OS_original, TS_original, V_des, static_obstacle_info, static_point_info):   
         """ 
         It computes the velocity selection with RVO formulation and returns selected velocity and collision cone information from the current state of the ships.
 
@@ -1611,7 +1875,8 @@ class VO_module:
             TS_original,
             )
 
-        V_opt = self.__choose_velocity(V_des, RVOdata_all, OS_original, TS_original)
+        V_opt = self.__choose_velocity(V_des, RVOdata_all, OS_original, TS_original,static_obstacle_info, static_point_info)
+        #print(V_opt)
 
         return V_opt, pub_collision_cone
 

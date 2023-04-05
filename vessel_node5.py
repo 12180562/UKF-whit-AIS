@@ -5,12 +5,13 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
 from functions.Inha_DataProcess import Inha_dataProcess
 
-from udp_col_msg.msg import col, vis_info, cri_info, VO_info
+from udp_col_msg.msg import col, vis_info, cri_info, VO_info, static_OB_info
 from udp_msgs.msg import frm_info, group_wpts_info
 
 from math import sqrt, atan2
 from numpy import rad2deg
 
+import csv
 import numpy as np
 import rospy
 import time
@@ -22,6 +23,7 @@ class data_inNout:
         # Subscriber = input
         rospy.Subscriber('/frm_info', frm_info, self.OP_callback) 
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
+        rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
 
         self.WP_pub = rospy.Publisher('/vessel5_info', col, queue_size=10)
         self.cri_pub = rospy.Publisher('/cri5_info', cri_info, queue_size=10)
@@ -33,6 +35,8 @@ class data_inNout:
         self.waypoint_dict = dict()
 
         self.TS_WP_index = []
+        self.static_obstacle_info = []
+        self.static_point_info = []
 
     def wp_callback(self, wp):
         ''' subscribe `/waypoint_info`
@@ -75,6 +79,54 @@ class data_inNout:
 
         raw_psi = np.asanyarray(operation.m_fltHeading)
         self.Heading = raw_psi % 360
+
+    def static_OB_callback(self, static_OB):
+
+        # self.obstacle_list_COLINE_x = static_OB.obstacle_list_COLINE_x
+        # self.obstacle_list_COLINE_y = static_OB.obstacle_list_COLINE_y
+        # self.obstacle_list_SUBSEA_x = static_OB.obstacle_list_SUBSEA_x
+        # self.obstacle_list_SUBSEA_y = static_OB.obstacle_list_SUBSEA_y
+
+        # obstacle_list_COLINE = [self.obstacle_list_COLINE_x,self.obstacle_list_COLINE_y]
+        # obstacle_list_SUBSEA = [self.obstacle_list_SUBSEA_x,self.obstacle_list_SUBSEA_y]
+
+        # # make obstacle list for line data
+        # line_list_COLINE = []
+        # line_list_SUBSEA = []
+
+        # for j in range(len(obstacle_list_COLINE[0])):
+        #     if j != (len(obstacle_list_COLINE[0])-1):
+        #         x_list = [obstacle_list_COLINE[0][j],obstacle_list_COLINE[0][j+1]]
+        #         y_list = [obstacle_list_COLINE[1][j],obstacle_list_COLINE[1][j+1]]
+        #         line_list_all = [x_list,y_list]
+        # #        print(line_list_all)
+        #     else:
+        #         x_list = [obstacle_list_COLINE[0][j],obstacle_list_COLINE[0][0]]
+        #         y_list = [obstacle_list_COLINE[1][j],obstacle_list_COLINE[1][0]]
+        #         line_list_all = [x_list,y_list]
+        # #        print(line_list_all)
+        #     line_list_COLINE.append(line_list_all)
+
+        # #print(line_list_COLINE)
+
+        # for j in range(len(obstacle_list_SUBSEA[0])):
+        #     if j != (len(obstacle_list_SUBSEA[0])-1):
+        #         x_list = [obstacle_list_SUBSEA[0][j],obstacle_list_SUBSEA[0][j+1]]
+        #         y_list = [obstacle_list_SUBSEA[1][j],obstacle_list_SUBSEA[1][j+1]]
+        #         line_list_all = [x_list,y_list]
+        # #        print(line_list_all)
+        #     else:
+        #         x_list = [obstacle_list_SUBSEA[0][j],obstacle_list_SUBSEA[0][0]]
+        #         y_list = [obstacle_list_SUBSEA[1][j],obstacle_list_SUBSEA[1][0]]
+        #         line_list_all = [x_list,y_list]
+        # #        print(line_list_all)
+        #     line_list_SUBSEA.append(line_list_all)
+
+        # self.static_obstacle_info = []
+        # self.static_obstacle_info.append(line_list_COLINE)
+        # self.static_obstacle_info.append(line_list_SUBSEA)
+        self.static_obstacle_info = static_OB.data
+        self.static_point_info = static_OB.point
 
 
     def path_out_publish(self, pub_list):
@@ -141,9 +193,16 @@ def main():
     VO_operate = rospy.get_param("shipInfo_all/ship5_info/include_inha_modules")
 
     update_rate = rospy.get_param("update_rate")
-    dt =  rospy.get_param("mmg_dt") 
+    dt =  rospy.get_param("mmg_dt")
 
-    node_Name = "vessel_node5"
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    path = "/home/ldh/simul_log/" + timestr + ".csv"
+    header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
+    file = open(path, 'a', newline='')
+    writer = csv.writer(file)
+    writer.writerow(header)
+
+    node_Name = "vessel_node1"
     rospy.init_node("{}".format(node_Name), anonymous=False)    
     rate = rospy.Rate(update_rate) # 10 Hz renew
 
@@ -201,10 +260,10 @@ def main():
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
-        
+
         TS_ID = ship_ID[:]  ## 리스트 복사
         TS_ID.remove(OS_ID)
-
+        # TODO : why do this?
 
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
@@ -296,8 +355,10 @@ def main():
         # V_opt, VO_BA_all = Local_PP.VO_update(OS_list, TS_list_sort, static_OB, V_des, v_min)
         V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 
-            TS_list,
+            TS_list, 
             V_des, 
+            data.static_obstacle_info,
+            data.static_point_info
             )
 
         # TODO: Reduce the computation time for this part (~timeChckpt4_vesselNode)
@@ -372,6 +433,23 @@ def main():
             pub_collision_cone
         ]
 
+        ship_dic2list = list(OS_list.values())
+
+        savedata_list = [
+            int(OS_ID),
+            ship_dic2list[1],
+            ship_dic2list[2],
+            wp_x,
+            wp_y,
+            ship_dic2list[3],
+            OS_Vx,
+            OS_Vy,
+            ship_dic2list[4],
+            desired_heading,
+        ]
+
+        writer.writerow(savedata_list)
+
         data.path_out_publish(OS_pub_list)   
         data.vis_out(vis_pub_list)
         data.cri_out(cri_pub_list)
@@ -386,6 +464,8 @@ def main():
         
         print("Loop end time: ", time.time() - startTime)
         print("================ Node 1 loop end ================\n")
+
+    file.close()
 
     rospy.spin()
 
