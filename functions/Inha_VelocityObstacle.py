@@ -657,8 +657,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*100,
-                    # timeHorizon=40
+                    # timeHorizon=RVOdata['CRI']*100,
+                    timeHorizon=40
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
@@ -669,8 +669,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*100,
-                    # timeHorizon=40
+                    # timeHorizon=RVOdata['CRI']*100,
+                    timeHorizon=40
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
@@ -1147,7 +1147,6 @@ class VO_module:
         
             point_x = static_point_data[point_number]
             point_y = static_point_data[point_number+1]
-            print(point_x, point_y)
 
             reachableVel_global_all_after_delta_t = reachableVel_global_all * delta_t 
             result = []

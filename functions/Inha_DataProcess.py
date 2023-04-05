@@ -223,7 +223,7 @@ class Inha_dataProcess:
             TS_list[ts_ID]['Ra'] = Ra
             TS_list[ts_ID]['Rs'] = Rs
             TS_list[ts_ID]['Rp'] = Rp
-            TS_list[ts_ID]['mapped_radius'] = SD_dist * 2
+            TS_list[ts_ID]['mapped_radius'] = SD_dist * 4
 
             TS_list[ts_ID]['CRI'] = cri_value
 
