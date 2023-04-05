@@ -210,7 +210,7 @@ shipInfo_all:
     initial_start_y : 180.0,    # [m]
     initial_start_U : 1.0 ,    # [knots] // 너무 작으면 발산함
     initial_start_psi : 180.0,   # [deg]
-    include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+    include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
   ship3_info : {
@@ -291,4 +291,26 @@ waypoint_List: {
   # wpts_y_ship5: [
   #   10.0, -30.0, -70.0, -30.0
   # ],
+}
+
+target_spd_List: {
+  target_speed_ship1: [
+    1.0, 1.0, 1.0
+    ],  # VO모듈이 켜지면 사용하지 않음
+
+  target_speed_ship2: [
+    0.7, 1.3, 0.7 
+    ],
+
+  target_speed_ship3: [
+    1.0, 0.6
+    ],
+
+  # target_speed_ship4: [
+  #   1.0, 0.6
+  #   ],
+
+  # target_speed_ship5: [
+  #   1.0, 0.6
+  #   ],
 }

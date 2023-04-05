@@ -224,7 +224,8 @@ def main():
     data = data_inNout()
     
     t = 0
-    waypointIndex = 0   
+    waypointIndex = 0
+    targetspdIndex = 0    
 
     while not rospy.is_shutdown():
         Local_PP = VO_module()
@@ -371,9 +372,21 @@ def main():
         wp_y = wp[1]
 
         if VO_operate:
-            pass
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list.append(temp_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[0]
+            desired_heading = desired_heading_list[0]
+        
         else:
             V_selected = V_des
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[targetspdIndex]
+            desired_heading = desired_heading_list[0]
 
         eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)
         temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)

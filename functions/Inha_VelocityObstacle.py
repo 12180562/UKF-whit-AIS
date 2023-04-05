@@ -1076,7 +1076,31 @@ class VO_module:
     # detecting vector가 장애물과 겹친다면 후보에서 삭제
 
     def __delete_vector_inside_obstacle(self, reachableVel_global_all, OS, static_obstacle_info, static_point_info):
+
+        pA = np.array([OS['Pos_X'], OS['Pos_Y']])
+        obstacle_number_move = 0
+        static_OB_data = static_obstacle_info
+        new_static_OB_data = []
+        safty_length = 10
     
+        while (obstacle_number_move) != len(static_OB_data):
+            obstacle_point_x_move = static_OB_data[obstacle_number_move]
+            obstacle_point_y_move = static_OB_data[obstacle_number_move+1]
+
+            distance_x = obstacle_point_x_move-pA[0]
+            distance_y = obstacle_point_y_move-pA[1]
+            distance = sqrt((obstacle_point_x_move-pA[0])**2+(obstacle_point_y_move-pA[1])**2)
+
+            new_position_x = obstacle_point_x_move - (distance_x/distance)*safty_length
+            new_position_y = obstacle_point_y_move - (distance_y/distance)*safty_length
+
+            new_static_OB_data.append(new_position_x)
+            new_static_OB_data.append(new_position_y)
+
+            obstacle_number_move = obstacle_number_move+2
+
+        static_OB_data = new_static_OB_data
+
         reachableVel_global_all_copy = np.copy(reachableVel_global_all)
         static_OB_data = static_obstacle_info
         static_point_data = static_point_info
