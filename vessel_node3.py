@@ -111,18 +111,19 @@ class data_inNout:
 
     def cri_out(self, pub_list):
         cri = cri_info()
-        cri.UDCPA = pub_list[0]
-        cri.UTCPA = pub_list[1]
-        cri.UD = pub_list[2]
-        cri.UB = pub_list[3]
-        cri.UK = pub_list[4]
-        cri.CRI = pub_list[5]
-        cri.PARK = pub_list[6]
-        cri.Rf = pub_list[7]
-        cri.Ra = pub_list[8]
-        cri.Rs = pub_list[9]
-        cri.Rp = pub_list[10]
-        cri.encounter_classification = pub_list[11]
+        cri.DCPA = pub_list[0]
+        cri.TCPA = pub_list[1]
+        cri.UDCPA = pub_list[2]
+        cri.UTCPA = pub_list[3]
+        cri.UD = pub_list[4]
+        cri.UB = pub_list[5]
+        cri.UK = pub_list[6]
+        cri.CRI = pub_list[7]
+        cri.Rf = pub_list[8]
+        cri.Ra = pub_list[9]
+        cri.Rs = pub_list[10]
+        cri.Rp = pub_list[11]
+        cri.encounter_classification = pub_list[12]
 
         self.cri_pub.publish(cri)
 
@@ -136,8 +137,8 @@ class data_inNout:
 def main():  
     # get an instance of RosPack with the default search paths
     rospack = rospkg.RosPack()  
-    package_path = rospack.get_path('inha_modules')
-    VO_operate = rospy.get_param("shipInfo_all/TS2_info/include_inha_modules")
+    package_path = rospack.get_path('kass_inha')
+    VO_operate = rospy.get_param("shipInfo_all/ship3_info/include_inha_modules")
 
     update_rate = rospy.get_param("update_rate")
     dt =  rospy.get_param("mmg_dt") 
@@ -146,36 +147,28 @@ def main():
     rospy.init_node("{}".format(node_Name), anonymous=False)    
     rate = rospy.Rate(update_rate) # 10 Hz renew
 
-    OS_ID = rospy.get_param("shipInfo_all/TS2_info/ship_ID")
+    OS_ID = rospy.get_param("shipInfo_all/ship3_info/ship_ID")
     TS_ID = []
     desired_spd_list = []
-    pub_collision_cone = [] 
+    pub_collision_cone = []
     V_opt = []
 
     # 자선의 정보
-    OS_scale = rospy.get_param("shipInfo_all/TS2_info/ship_scale")
-    target_speed = rospy.get_param("shipInfo_all/TS2_info/target_speed")  * 0.5144 / sqrt(OS_scale)
-    ship_L = rospy.get_param("shipInfo_all/TS2_info/ship_L") ## 향후 이부분은, 1) ship domain과 2) AIS data의 선박의 길이 부분으로 나누어 고려 및 받아야 함!
+    OS_scale = rospy.get_param("shipInfo_all/ship3_info/ship_scale")
+    target_speed = rospy.get_param("shipInfo_all/ship3_info/target_speed")  * 0.5144 / sqrt(OS_scale)
+    ship_L = rospy.get_param("shipInfo_all/ship3_info/ship_L") ## 향후 이부분은, 1) ship domain과 2) AIS data의 선박의 길이 부분으로 나누어 고려 및 받아야 함!
     
     # # !----- 설문조사에서는 충돌회피 시점은 12m 어선 기준으로 일반적으론 HO 3nm/ CS & OT 2nm을 기준으로 하고 있으며, 최소 안전 이격거리는 0.5~ 1nm으로 조사됨
     # # 다만, 2m급 모형선 테스트에서는 협소한 부분이 있으므로 스케일 다운(1/200)을 시켜서, "회피시점: 0.0015nm(27.78m) / 최소 안전 이격거리는 9.26m"가 되게끔 할 예정
     # # 참고 논문: https://www.koreascience.or.kr/article/JAKO201427542599696.pdf 
 
-    #### <<<<<<<<<<<<<<<< Check later !!! <<<<<<<<<<<<<<<<<<< ####    
-    # 향후 이 부분은 ECDIS 등 전자해도지도를 바탕으로 정적장애물 정보를 불러와야 함!!
-    static_OB = dict()
-    static_OB['circular_obstacles'] = []
-    static_OB['robot_radius'] = 0.2
-    #### >>>>>>>>>>>>>>>> Check later !!! >>>>>>>>>>>>>>>>>>>> ####    
-
     data = data_inNout()
     
-    t =0
+    t = 0
     waypointIndex = 0   
 
     while not rospy.is_shutdown():
         Local_PP = VO_module()
-        radius_scale = rospy.get_param("shipInfo_all/TS2_info/ship_domain_radius")
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
@@ -192,7 +185,7 @@ def main():
         startTime = time.time()
 
         inha = Inha_dataProcess(
-            data.ship_ID, 
+            data.ship_ID,
             data.Pos_X, 
             data.Pos_Y, 
             data.Vel_U, 
@@ -207,25 +200,22 @@ def main():
         
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
-        OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)   
+        OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
         
         TS_ID = ship_ID[:]  ## 리스트 복사
         TS_ID.remove(OS_ID)
 
-        #----------- OS -> vx, vy 추가
-        ## Heading angle 바탕으로 속도 벡터 구하는 함수
 
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
+
         OS_list['V_x'] = OS_Vx
         OS_list['V_y'] = OS_Vy
-        OS_list['radius'] = ship_L  * radius_scale
 
-        _, local_goal_EDA = inha.eta_eda_assumption(Local_goal, OS_list, target_speed)   
+        _, local_goal_EDA = inha.eta_eda_assumption(Local_goal, OS_list, target_speed)
 
         # <=========== VO 기반 충돌회피를 위한 경로 생성
         # !--- 1) `Local goal`으로 향하기 위한 속도벡터 계산
-        V_des = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)  
-        V_des_Heading = rad2deg(atan2(V_des[1], V_des[0]))
+        V_des = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
 
         '''
             NOTE: 
@@ -244,19 +234,17 @@ def main():
 
         TS_list = inha.TS_info_supplement(
             OS_list, 
-            TS_list, 
-            ship_L, 
-            radius_scale, 
-            V_des_Heading, 
+            TS_list,
             )
         
-        TS_CRI_temp = []
+        TS_DCPA_temp = []
+        TS_TCPA_temp = []
         TS_UDCPA_temp = []
         TS_UTCPA_temp = []
         TS_UD_temp = []
         TS_UB_temp = []
         TS_UK_temp = []
-        TS_PARK_temp = []
+        TS_CRI_temp = []
         TS_Rf_temp = []
         TS_Ra_temp = []
         TS_Rs_temp = []
@@ -264,6 +252,12 @@ def main():
         TS_ENC_temp = []
 
         for ts_ID in TS_ID:
+            temp_DCPA = TS_list[ts_ID]['DCPA']
+            TS_DCPA_temp.append(temp_DCPA)
+
+            temp_TCPA = TS_list[ts_ID]['TCPA']
+            TS_TCPA_temp.append(temp_TCPA)
+
             temp_UDCPA = TS_list[ts_ID]['UDCPA']
             TS_UDCPA_temp.append(temp_UDCPA)
             
@@ -281,9 +275,6 @@ def main():
 
             temp_cri = TS_list[ts_ID]['CRI']
             TS_CRI_temp.append(temp_cri)
-
-            temp_park = TS_list[ts_ID]['PARK']
-            TS_PARK_temp.append(temp_park)
 
             temp_Rf = TS_list[ts_ID]['Rf']
             TS_Rf_temp.append(temp_Rf)
@@ -305,8 +296,7 @@ def main():
         # V_opt, VO_BA_all = Local_PP.VO_update(OS_list, TS_list_sort, static_OB, V_des, v_min)
         V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 
-            TS_list, 
-            static_OB, 
+            TS_list,
             V_des, 
             )
 
@@ -324,7 +314,7 @@ def main():
         else:
             V_selected = V_des
 
-        eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+        eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)
         temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
         desired_spd_list.append(temp_spd)
         desired_heading_list.append(temp_heading_deg)
@@ -335,7 +325,7 @@ def main():
         if t%10 ==0:
             pass
 
-        t += 1  
+        t += 1
 
         # # < =========  인하대 모듈에서 나온 데이터를 최종적으로 송신하는 부분
         # OS_pub_list = [int(OS_ID), False, waypointIndex, [wp_x], [wp_y],desired_spd, eta, eda, 0.5, 0.0, False, [], desired_spd, desired_heading, isNeedCA, ""]
@@ -362,18 +352,19 @@ def main():
         ]
 
         cri_pub_list = [
+            TS_DCPA_temp,
+            TS_TCPA_temp,
             TS_UDCPA_temp,
             TS_UTCPA_temp,
             TS_UD_temp,
             TS_UB_temp,
             TS_UK_temp,
             TS_CRI_temp,
-            TS_PARK_temp,
             TS_Rf_temp,
             TS_Ra_temp,
             TS_Rs_temp,
             TS_Rp_temp,
-            TS_ENC_temp
+            TS_ENC_temp,
         ]
 
         vo_pub_list = [
@@ -391,33 +382,12 @@ def main():
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
 
-        # Node communication sync requirements check
-        endTime = time.time()
-        elapsedTime = endTime - startTime
-        requiredElapsedTime = 1 / update_rate
-
-        # print("Required time: ", requiredElapsedTime)
-        # print("Elapsed time: ", elapsedTime)
-
-        # if elapsedTime > requiredElapsedTime:
-        #     print(
-        #         '\033[31m' + 
-        #         "\nRequired elapsed time: ", requiredElapsedTime,
-        #         "Elapsed time: ", elapsedTime)
-        #     print(
-        #         "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\
-        #         \n!!!!!!!!!!!!!!!!!!!!!! Check !!!!!!!!!!!!!!!!!!!!\
-        #         \n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\
-        #         \nComputation speed for node is slower than what it's required. Reduce the computation for the node or decrease the update rate\
-        #         \n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
-
         rate.sleep()
         
         print("Loop end time: ", time.time() - startTime)
         print("================ Node 1 loop end ================\n")
 
     rospy.spin()
-
 
 if __name__ == '__main__':
     main()

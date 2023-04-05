@@ -55,10 +55,10 @@ class InfoLoader:
         """
         shipName_all = [0 for _ in range(num_ships)]
         for idx in range(num_ships):
-            if idx == 0:
-                shipName = "OS"
-            else:
-                shipName = "TS" + str(idx)
+            # if idx == 0:
+            #     shipName = "OS"
+            # else:
+            shipName = "ship" + str(idx + 1)
             shipName_all[idx] = shipName
 
         return shipName_all

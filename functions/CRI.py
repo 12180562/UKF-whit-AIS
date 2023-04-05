@@ -26,22 +26,22 @@ class CRI:
         return result
 
     def TB(self):
-        '''True Bearing, 자선의 위치 기준 타선의 절대 방위'''
+        '''True Bearing, 자선의 위치 기준 타선의 절대 방위, rad'''
         Xot = self.Xt - self.Xo
         Yot = self.Yt - self.Yo
         result = atan2(Yot, Xot) % (2*pi)
         return result
 
     def RB(self):
-        '''Relative Bearing, 자선의 Heading angle에 대한 타선의 방위'''
+        '''Relative Bearing, 자선의 Heading angle에 대한 타선의 방위, rad'''
         if self.TB() - self.Co >= 0:
             result = self.TB() - self.Co
-        elif self.TB() - self.Co < 0:
+        else:
             result = self.TB() - self.Co + (2 * pi)
         return result
 
     def HAD(self):
-        '''Heading angle difference'''
+        '''Heading angle difference, rad'''
         result = self.Ct - self.Co
         if result < 0 :
             result += 2*pi
@@ -67,18 +67,22 @@ class CRI:
         result = self.Vt * sin(self.Ct)
         return result
 
+    def Vrx(self):
+        result = self.Vtx() - self.Vox()
+        return result
+
+    def Vry(self):
+        result = self.Vty() - self.Voy()
+        return result
+
     def RV(self):
         '''Relative Velocity, 자선에 대한 타선의 상대속도'''
-        Vrx = self.Vtx() - self.Vox()
-        Vry = self.Vty() - self.Voy()
-        result = sqrt(pow(Vrx, 2) + pow(Vry, 2)) + 0.001
+        result = sqrt(pow(self.Vrx(), 2) + pow(self.Vry(), 2)) + 0.001
         return result
 
     def RC(self):
         '''Relative speed heading direction, 상대속도(RV)의 방향'''
-        Vrx = self.Vtx() - self.Vox()
-        Vry = self.Vty() - self.Voy()
-        result = atan2(Vry, Vrx) % (2*pi)
+        result = atan2(self.Vry(), self.Vrx()) % (2*pi)
         return result
 
     def tcpa(self):
@@ -90,7 +94,7 @@ class CRI:
         return result
 
     def d1(self):
-        '''minimum safety distance between encountered vessels, 단위 Nautical mile, Goodwin observation data'''
+        '''Safe approaching distance'''
         RB = np.rad2deg(self.RB())
         if 0 <= RB < 112.5:
             result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
@@ -98,12 +102,12 @@ class CRI:
             result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
         elif 180 <= RB < 247.5:
             result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
-        elif 247.5 <= RB <= 360:
+        else:
             result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
         return result
 
     def d2(self):
-        '''absolute safety distance, twice the value of d1'''
+        '''Safe passing distance'''
         result = 2 * self.d1()
         return result
 
@@ -111,62 +115,61 @@ class CRI:
         '''#d1, d2의 범위에 따른 DCPA의 계수'''
         if abs(self.dcpa()) <= self.d1():
             result = 1
-        elif self.d1() < abs(self.dcpa()) <= self.d2():
-            result = 0.5 - 0.5 * sin((pi/(self.d2() - self.d1())) * (abs(self.dcpa()) - ((self.d1() + self.d2())/2)))
         elif self.d2() < abs(self.dcpa()):
             result = 0
+        else:
+            result = 0.5 - 0.5 * sin(((pi/(self.d2() - self.d1())) * abs(self.dcpa())) - ((self.d1() + self.d2())/2))
         return result
 
     def D1(self):
-        '''critical safety distance, 12 times the length of the own vessel'''
+        '''Distance of action'''
         result = 12 * self.L
         return result
 
     def D2(self):
-        '''the distance at which the final action of collision avoidance can be taken,
-        equal to R which is the radius of marine power model obtained by Davis'''
+        '''Distance of last action'''
         result = self.ratio * (1.7 * cos(self.RB() - np.deg2rad(19))) + sqrt(4.4 + 2.89 * pow(cos(self.RB() - np.deg2rad(19)), 2))
         return result
 
     def UD(self):
         '''D1, D2의 범위에 따른 Relative distance의 계수'''
-        if 0 <= self.RD() < self.D1():
+        if self.RD() <= self.D1():
             result = 1
-        elif self.D1() <= self.RD() <= self.D2():
-            result = pow((self.D2() - self.RD())/(self.D2() - self.D1()), 2)
         elif self.D2() < self.RD():
             result = 0
+        else:
+            result = pow((self.D2() - self.RD())/(self.D2() - self.D1()), 2)
         return result
 
     def t1(self):
+        '''Collision time'''
         D1 = self.D1()
-        '''the time remaining until collision'''
         if abs(self.dcpa()) <= D1:
             result = sqrt(pow(D1, 2) - pow(self.dcpa(), 2)) / self.RV()
-        elif abs(self.dcpa()) > D1:
+        else:
             result = (D1 - abs(self.dcpa())) / self.RV()
         return result
 
     def t2(self):
+        '''Avoidance time'''
         D2 = 12 * self.ratio
-        '''the collision avoidance time'''
         if abs(self.dcpa()) <= D2:
             result = sqrt(pow(D2, 2) - pow(self.dcpa(), 2)) / self.RV()
         else:
-            result = 0
+            result = (D2 - abs(self.dcpa())) / self.RV()
         return result
 
     def UTCPA(self):
         '''t1, t2의 범위에 따른 TCPA의 계수'''
-        if self.tcpa() < -20:
+        if self.tcpa() < 0:
             result = 0
         else:
-            if 0 <= abs(self.tcpa()) <= self.t1():
+            if self.tcpa() <= self.t1():
                 result = 1
-            elif self.t1() < abs(self.tcpa()) <= self.t2():
-                result = pow(((self.t2() - abs(self.tcpa()))/(self.t2() - self.t1())), 2)
-            elif self.t2() < abs(self.tcpa()):
+            elif self.t2() < self.tcpa():
                 result = 0
+            else:
+                result = pow(((self.t2() - abs(self.tcpa()))/(self.t2() - self.t1())), 2)
         return result
 
     def UB(self):

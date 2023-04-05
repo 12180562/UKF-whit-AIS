@@ -448,10 +448,7 @@ class VO_module:
 
         TSradius_mapped_all = []
         for ts_ID in TS_ID:
-            SD = TS[ts_ID]['SD']
-            TSradius_mapped = SD + TS[ts_ID]['radius']
-            TS[ts_ID]['mapped_radius'] = TSradius_mapped 
-            TSradius_mapped_all.append(TSradius_mapped)
+            TSradius_mapped_all.append(TS[ts_ID]['mapped_radius'])
 
     
     def __remove_annotation(self, vel_annotated_all):
@@ -661,7 +658,7 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     timeHorizon=RVOdata['CRI']*100,
-                    # timeHorizon=30
+                    # timeHorizon=40
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
@@ -673,7 +670,7 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     timeHorizon=RVOdata['CRI']*100,
-                    # timeHorizon=30
+                    # timeHorizon=40
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
@@ -858,7 +855,7 @@ class VO_module:
 
         if self.__is_in_between(
             velVecAngle_rad_global, 
-            boundLineAngle_left_rad_global, 
+            boundLineAngle_left_rad_global,
             boundLineAngle_right_rad_global,
             ):
             return False
@@ -1058,10 +1055,7 @@ class VO_module:
         reachableVelX_global_all = np.reshape(reachableVelX_global_all, newshape=(-1, 1))
         reachableVelY_global_all = np.reshape(reachableVelY_global_all, newshape=(-1, 1))
 
-        reachableVel_global_all = np.concatenate(
-            (reachableVelX_global_all, reachableVelY_global_all),
-             axis=-1,
-             )
+        reachableVel_global_all = np.concatenate((reachableVelX_global_all, reachableVelY_global_all), axis=-1,)
 
         return reachableVel_global_all
 
@@ -1211,7 +1205,6 @@ class VO_module:
 
         # Take the velocity that has the minimum penalty
         vA_post = min(velCandidates_dict, key=lambda k : velCandidates_dict[k]['penalty'])
-
         return vA_post
 
     def __choose_velocity(self, V_des, RVOdata_all, OS, TS): 
@@ -1562,7 +1555,7 @@ class VO_module:
 
         return RVOdata_all, pub_collision_cone
 
-    def VO_update(self, OS_original, TS_original, static_OB, V_des):   
+    def VO_update(self, OS_original, TS_original, V_des):   
         """ 
         It computes the velocity selection with RVO formulation and returns selected velocity and collision cone information from the current state of the ships.
 

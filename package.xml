@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>kass_inha</name>
-  <version>0.0.0</version>
-  <description>The kass_inha package</description>
+  <version>0.0.1</version>
+  <description>The kass_inha package for integrate_simulation from INHA Univ. </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="phlmy@todo.todo">phlmy</maintainer>
+  <maintainer email="kimjjs100@naver.com">kjs</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->

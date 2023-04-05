@@ -169,9 +169,9 @@ min_targetSpeed : 1.0
 max_targetSpeed : 1.5
 num_targetSpeedCandidates : 10
 
-min_targetHeading_deg_local : -30.0
-max_targetHeading_deg_local: 30.0
-num_targetHeadingCandidates: 10
+min_targetHeading_deg_local : -60.0
+max_targetHeading_deg_local: 60.0
+num_targetHeadingCandidates: 20
 
 Kp : 1.0
 Ki : 0.0
@@ -185,63 +185,63 @@ Kd : 0.0
 # ==========================================+
 shipInfo_all: 
 
-  OS_info : {
+  ship1_info : {
     ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
     ship_B : 0.6,
     ship_scale : 11.0,
     ship_ID : 2000, ## 자선의 ship ID 정의
     ship_domain_radius : 4.0,  # original
-    target_speed : 7.0,  #[knots]
+    target_speed : 6.0,  #[knots]
     initial_start_x : 0.0,    # [m]
-    initial_start_y : 0.0,    # [m]
+    initial_start_y : -10.0,    # [m]
     initial_start_U : 1.0 ,    # [knots] // 너무 작으면 발산함
-    initial_start_psi : 0.0,   # [deg]
+    initial_start_psi : 5.0,   # [deg]
     include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
-  TS1_info : {
+  ship2_info : {
     ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
     ship_B : 0.6,
     ship_scale : 11.0,
     ship_ID : 2001, ## 자선의 ship ID 정의
     ship_domain_radius : 4.0,  # original
-    target_speed : 5.0,  #[knots]
-    initial_start_x : 130.0,    # [m]
-    initial_start_y : 80.0,    # [m]
+    target_speed : 6.0,  #[knots]
+    initial_start_x : 100.0,    # [m]
+    initial_start_y : 100.0,    # [m]
     initial_start_U : 1.0 ,    # [knots] // 너무 작으면 발산함
-    initial_start_psi : 225.0,   # [deg]
+    initial_start_psi : 270.0,   # [deg]
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
-  TS2_info : {
+  ship3_info : {
     ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
     ship_B : 0.6,
     ship_scale : 11.0,
     ship_ID : 2002, ## 자선의 ship ID 정의
     ship_domain_radius : 4.0,  # original
     target_speed : 6.0,       #[knots]
-    initial_start_x : 200.0,    # [m]
-    initial_start_y : 0.0,    # [m]
+    initial_start_x : 100.0,    # [m]
+    initial_start_y : -100.0,    # [m]
     initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
-    initial_start_psi : 180.0,   # [deg]
+    initial_start_psi : 90.0,   # [deg]
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
-  # TS3_info : {
+  # ship4_info : {
   #   ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
   #   ship_B : 0.6,
   #   ship_scale : 11.0,
   #   ship_ID : 2003, ## 자선의 ship ID 정의
   #   ship_domain_radius : 4.0,  # original
   #   target_speed : 6.0,       #[knots]
-  #   initial_start_x : 100.0,    # [m]
-  #   initial_start_y : -100.0,    # [m]
+  #   initial_start_x : 200.0,    # [m]
+  #   initial_start_y : -2.0,    # [m]
   #   initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
-  #   initial_start_psi : 90.0,   # [deg]
+  #   initial_start_psi : 180.0,   # [deg]
   #   include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   # }
 
-  # TS4_info : {
+  # ship5_info : {
   #   ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
   #   ship_B : 0.6,
   #   ship_scale : 11.0,
@@ -257,38 +257,38 @@ shipInfo_all:
   # }
 
 waypoint_List: {
-  wpts_x_OS: [
-    200.0, 300.0,
+  wpts_x_ship1: [
+    200.0, 0.0,
   ],
-  wpts_y_OS: [
-    0.0, 0.0,
-  ],
-
-  wpts_x_TS1: [
-    100.0, 80.0,
-  ],
-  wpts_y_TS1: [
-    -100.0, -150.0,
+  wpts_y_ship1: [
+    10.0, -10.0,
   ],
 
-  wpts_x_TS2: [
-    -100.0, -200.0,
+  wpts_x_ship2: [
+    100.0, 100.0,
   ],
-  wpts_y_TS2: [
-    0.0, 0.0,
+  wpts_y_ship2: [
+    -100.0, 100.0,
   ],
 
-  # wpts_x_TS3: [
-  #   100.0, 100.0,
+  wpts_x_ship3: [
+    100.0, 100.0,
+  ],
+  wpts_y_ship3: [
+    100.0, 0.0,
+  ],
+
+  # wpts_x_ship4: [
+  #   -200.0, -300.0,
   # ],
-  # wpts_y_TS3: [
-  #   200.0, 300.0,
+  # wpts_y_ship4: [
+  #   -2.0, -2.0,
   # ],
 
-  # wpts_x_TS4: [
+  # wpts_x_ship5: [
   #   -100.0, -140.0, -100.0, -60.0
   # ],
-  # wpts_y_TS4: [
+  # wpts_y_ship5: [
   #   10.0, -30.0, -70.0, -30.0
   # ],
 }

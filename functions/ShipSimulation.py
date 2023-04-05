@@ -34,7 +34,7 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         
         self.ship_scale = ship_scale
 
-        mmg = KASS_MMG(ship_scale=rospy.get_param('shipInfo_all/OS_info/ship_scale'))
+        mmg = KASS_MMG(ship_scale=rospy.get_param('shipInfo_all/ship1_info/ship_scale'))
         self.max_delta = mmg.Model['Rudder_max']    # rad.
         self.n_plus = 0.0
         
