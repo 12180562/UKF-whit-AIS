@@ -28,6 +28,7 @@ class Inha_dataProcess:
         self.waypoint_dict = waypoint_dict
 
         self.ship_dic= {}
+        self.SD_param = rospy.get_param('SD_param')
 
     def ship_list_container(self, OS_ID):
         ''' 
@@ -223,7 +224,7 @@ class Inha_dataProcess:
             TS_list[ts_ID]['Ra'] = Ra
             TS_list[ts_ID]['Rs'] = Rs
             TS_list[ts_ID]['Rp'] = Rp
-            TS_list[ts_ID]['mapped_radius'] = SD_dist * 4
+            TS_list[ts_ID]['mapped_radius'] = SD_dist * self.SD_param
 
             TS_list[ts_ID]['CRI'] = cri_value
 

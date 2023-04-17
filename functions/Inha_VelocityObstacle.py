@@ -211,7 +211,8 @@ class VO_module:
         self.num_targetHeadingCandidates = int(rospy.get_param('num_targetHeadingCandidates'))
 
         self.weight_alpha = rospy.get_param('weight_focusObs')  
-        self.weight_aggresiveness = rospy.get_param('weight_agressivness') 
+        self.weight_aggresiveness = rospy.get_param('weight_agressivness')
+        self.cri_param = rospy.get_param('cri_param')
         
         
         
@@ -657,8 +658,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    # timeHorizon=RVOdata['CRI']*100,
-                    timeHorizon=40
+                    timeHorizon=RVOdata['CRI']*self.cri_param,
+                    # timeHorizon=40
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
@@ -669,8 +670,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    # timeHorizon=RVOdata['CRI']*100,
-                    timeHorizon=40
+                    timeHorizon=RVOdata['CRI']*self.cri_param,
+                    # timeHorizon=40
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
@@ -1212,7 +1213,6 @@ class VO_module:
             # print("no way to avoid obstacle")
         else:
             pass
-
         return reachableVel_global_all
         
     def get_crosspt(self, slope, vector_slope, start_x, start_y,end_x, end_y, OS_pos_x, OS_pos_y, after_delta_t_x, after_delta_t_y):
@@ -1569,6 +1569,10 @@ class VO_module:
             num=self.num_targetSpeedCandidates,
             )
 
+        TS_ID = TS.keys()
+        for ts_ID in TS_ID:
+            status = TS[ts_ID]['status']
+
         # Generate target heading angle candidates
         min_targetHeading_rad_local = np.deg2rad(self.min_targetHeading_deg_local)
         max_targetHeading_rad_local = np.deg2rad(self.max_targetHeading_deg_local)
@@ -1672,12 +1676,19 @@ class VO_module:
             - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
             - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
             - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
-            """                                                     # |
-            avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
-                vel_all_annotated=reachableVel_all_annotated,       # |
-                annotation=['inLeft'],                              # |
-                shipID_all=TS.keys(),                               # |
-                )                                                   # |
+            """                                                        # |
+            if status == 'Port crossing':
+                avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
+                    vel_all_annotated=reachableVel_all_annotated,       # |
+                    annotation=['inRight'],                             # |
+                    shipID_all=TS.keys(),                               # |
+                    )                                                   # |
+            else:
+                avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
+                    vel_all_annotated=reachableVel_all_annotated,       # |
+                    annotation=['inLeft'],                              # |
+                    shipID_all=TS.keys(),                               # |
+                    )                                                   # |
             #=========================================================+
 
             if avoidanceAllRightVel_all_annotated:
@@ -1804,7 +1815,7 @@ class VO_module:
                 in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
             '''
 
-            if status == 'Safe' or status == 'Port crossing' or CRI < 0.33 :
+            if status == 'Safe' or CRI < 0.33 :
                 boundLineAngle_left_rad_global = OS['Heading']+pi
                 boundLineAngle_right_rad_global = OS['Heading']-pi
                 RVOapexPos_global = pA

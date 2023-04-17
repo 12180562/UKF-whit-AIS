@@ -196,7 +196,7 @@ def main():
     dt =  rospy.get_param("mmg_dt")
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    path = "/home/phlmy/Documents" + timestr + ".csv"
+    path = "/home/ldh/simul_log" + timestr + ".csv"
     header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
     file = open(path, 'a', newline='')
     writer = csv.writer(file)
