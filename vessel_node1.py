@@ -3,6 +3,7 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
+# from functions.Inha_VelocityObstacle2 import VO_module2
 from functions.Inha_DataProcess import Inha_dataProcess
 
 from udp_col_msg.msg import col, vis_info, cri_info, VO_info, static_OB_info
@@ -196,7 +197,7 @@ def main():
     dt =  rospy.get_param("mmg_dt")
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    path = "/home/ldh/simul_log" + timestr + ".csv"
+    path = "/home/ldh/simul_log/" + timestr + ".csv"
     header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
     file = open(path, 'a', newline='')
     writer = csv.writer(file)
@@ -229,6 +230,7 @@ def main():
 
     while not rospy.is_shutdown():
         Local_PP = VO_module()
+        # Local_PP2 = VO_module2()
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
@@ -361,6 +363,14 @@ def main():
             data.static_obstacle_info,
             data.static_point_info
             )
+
+        # V_selected2 = Local_PP2.RVO_update(
+        #     OS_list,
+        #     TS_list,
+        #     V_des,
+        # )
+
+        # print(V_selected2)
 
         # TODO: Reduce the computation time for this part (~timeChckpt4_vesselNode)
         desired_spd_list = []

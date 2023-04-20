@@ -380,77 +380,6 @@ class VO_module:
 
         return True
 
-    def __include_mappedTSradius(self, OS, TS):
-        """
-        It inserts the mapped radius of the TS (OS radius + TS radius) into the TS dictionary.
-        
-        Example:
-
-            From:
-                {
-                    2001:{
-                        'Ship_ID': '2001',
-                        ...,
-                        'radius': 4.0,
-                        },
-                    2002:{
-                        'Ship_ID': '2002',
-                        ...,
-                        'radius': 4.0,
-                        },
-                    ...,
-                }
-            To:
-                {
-                    2001:{
-                        'Ship_ID': '2001',
-                        ...,
-                        'radius': 4.0,
-                        'mapped_radius': 8.0,
-                        },
-                    2002:{
-                        'Ship_ID': '2002',
-                        ...,
-                        'radius': 4.0,
-                        'mapped_radius': 8.0,
-                        },
-                    ...,
-                }
-
-        Args: 
-
-            OS: 
-                - State of the OS
-                - Example:
-                    {
-                        'Ship_ID': 2000,
-                        'Pos_X': -49.99,
-                        ...,
-                        'radius': 8.0,
-                    }
-            TS: 
-                - State of the TSs
-                - Example:
-                    {
-                        2001:{
-                            'Ship_ID': '2001',
-                            ...,
-                            'radius': 4.0,
-                            },
-                        2002:{
-                            'Ship_ID': '2002',
-                            ...,
-                            'radius': 4.0,
-                            },
-                        ...,
-                    }
-        """
-        TS_ID = TS.keys()
-
-        TSradius_mapped_all = []
-        for ts_ID in TS_ID:
-            TSradius_mapped_all.append(TS[ts_ID]['mapped_radius'])
-
     
     def __remove_annotation(self, vel_annotated_all):
         """
@@ -658,8 +587,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=40
+                    # timeHorizon=RVOdata['CRI']*self.cri_param,
+                    timeHorizon=50
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
@@ -670,8 +599,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=40
+                    # timeHorizon=RVOdata['CRI']*self.cri_param,
+                    timeHorizon=50
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
@@ -1107,7 +1036,7 @@ class VO_module:
         static_point_data = static_point_info
         
         pA = np.array([OS['Pos_X'], OS['Pos_Y']])
-        delta_t = 30 # constant
+        delta_t = 50 # constant
 
         #initial number for while
         obstacle_number = 0
@@ -1783,14 +1712,15 @@ class VO_module:
             pB = np.array([TS[ts_ID]['Pos_X'], TS[ts_ID]['Pos_Y']]) # position of of the obstacle
 
             CRI = TS[ts_ID]['CRI']
-            status = TS[ts_ID]['status']
+            TCPA = TS[ts_ID]['TCPA']
+
 
             RVOapexPos_global = pA + (1 - self.weight_alpha) * vA + self.weight_alpha * vB
 
             # NOTE: LOS: line of sight. The line between pA and pB = relative distance
             LOSdist = np.linalg.norm([pA - pB]) 
             # NOTE: atan2(y, x) = arctangent of y/x 
-            LOSangle_rad = atan2(pB[1] - pA[1], pB[0] - pA[0])  
+            LOSangle_rad = atan2(pB[1] - pA[1], pB[0] - pA[0])
             
             # TODO: It represents the "collision" with the configured radius of objects. 
             #       Forcing to change of LOSdist would distort some calculation afterwards.
@@ -1799,8 +1729,8 @@ class VO_module:
             if TS[ts_ID]['mapped_radius'] > LOSdist:
                 LOSdist = TS[ts_ID]['mapped_radius']
             
-            boundLineAngle_left_rad_global = LOSangle_rad + asin(TS[ts_ID]['mapped_radius']/LOSdist)  
-            boundLineAngle_right_rad_global = LOSangle_rad - asin(TS[ts_ID]['mapped_radius']/LOSdist) 
+            boundLineAngle_left_rad_global = LOSangle_rad + asin(TS[ts_ID]['mapped_radius']/LOSdist)
+            boundLineAngle_right_rad_global = LOSangle_rad - asin(TS[ts_ID]['mapped_radius']/LOSdist)
             
             collisionConeTranslated = (1 - self.weight_alpha) * vA + self.weight_alpha * vB
             '''
@@ -1815,11 +1745,11 @@ class VO_module:
                 in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
             '''
 
-            if status == 'Safe' or CRI < 0.33 :
-                boundLineAngle_left_rad_global = OS['Heading']+pi
-                boundLineAngle_right_rad_global = OS['Heading']-pi
-                RVOapexPos_global = pA
-                LOSdist = 0
+            # if TCPA <= 0 :
+            #     boundLineAngle_left_rad_global = OS['Heading']+pi
+            #     boundLineAngle_right_rad_global = OS['Heading']-pi
+            #     RVOapexPos_global = pA
+            #     LOSdist = 0
 
             RVOdata = {
                 "TS_ID": ts_ID,
@@ -1833,7 +1763,6 @@ class VO_module:
                 "CRI" : CRI,
                 }
             RVOdata_all.append(RVOdata)
-
             # To publish the collision cone data for visualization
             bound_left_view = [
                 cos(boundLineAngle_left_rad_global)* int(LOSdist)/2,
@@ -1902,7 +1831,7 @@ class VO_module:
             pub_collision_cone:
                 TODO: Add explanations
         """
-        self.__include_mappedTSradius(OS_original, TS_original) 
+        # self.__include_mappedTSradius(OS_original, TS_original) 
 
         RVOdata_all, pub_collision_cone = self.__extract_RVO_data(
             OS_original,
@@ -1910,7 +1839,7 @@ class VO_module:
             )
 
         V_opt = self.__choose_velocity(V_des, RVOdata_all, OS_original, TS_original,static_obstacle_info, static_point_info)
-        #print(V_opt)
+
 
         return V_opt, pub_collision_cone
 
