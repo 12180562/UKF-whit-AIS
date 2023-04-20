@@ -375,7 +375,7 @@ class CRI:
 
     def Rp(self):
         SD = self.ship_domain()
-        result = SD[3]
+        result = SD[3] * 2
         return result
 
     #Ship domain distance
