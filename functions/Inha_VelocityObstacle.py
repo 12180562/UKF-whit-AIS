@@ -213,6 +213,7 @@ class VO_module:
         self.weight_alpha = rospy.get_param('weight_focusObs')  
         self.weight_aggresiveness = rospy.get_param('weight_agressivness')
         self.cri_param = rospy.get_param('cri_param')
+        self.time_horizon = rospy.get_param('timeHorizon')
         
         
         
@@ -588,7 +589,7 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    timeHorizon=50
+                    timeHorizon=self.time_horizon
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
@@ -600,7 +601,7 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    timeHorizon=50
+                    timeHorizon=self.time_horizon
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
@@ -1606,16 +1607,16 @@ class VO_module:
             - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
             - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
             """                                                        # |
-            if status == 'Port crossing':
+            if status == 'Head-on' or 'Starboard crossing' or 'Overtaking':
                 avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
                     vel_all_annotated=reachableVel_all_annotated,       # |
-                    annotation=['inRight'],                             # |
+                    annotation=['inLeft'],                             # |
                     shipID_all=TS.keys(),                               # |
                     )                                                   # |
             else:
                 avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
                     vel_all_annotated=reachableVel_all_annotated,       # |
-                    annotation=['inLeft'],                              # |
+                    annotation=['inRight'],                              # |
                     shipID_all=TS.keys(),                               # |
                     )                                                   # |
             #=========================================================+
