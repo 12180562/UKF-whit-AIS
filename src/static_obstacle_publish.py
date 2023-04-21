@@ -75,18 +75,13 @@ class static_obstacle:
 
         #원하는 좌표 그대로 넣으면 문제 없음
         new_static_OB = []
-        static_OB.data = [15, 85, -15, 85]
-        # static_OB.data = static_OB.data + [150,500,150,400,150,400,350,400,350,400,350,500]
-        # static_OB.data = static_OB.data + [350,0,350,250,350,250,500,250]
-        # static_OB.data = static_OB.data + [0,0,0,500,0,500,500,500,500,500,500,0,500,0,0,0]
-        # static_OB.data = [70,180,30,160,30,160,10,130,10,130,-20,110,-20,110,-10,70,-10,70,15,40,15,40,70,20] #0331
-        # static_OB.data = [-10,95,-10,105,-10,105,-20,105,-20,105,-20,95,-20,95,-10,95]
-        # static_OB.data = [10,90,30,90,30,90,30,80,30,80,10,80,10,80,10,90]
-        # static_OB.data = static_OB.data + [100,90,140,90,140,90,140,70,140,70,100,70,100,70,100,90]
-        # static_OB.data = static_OB.data + [40,60,100,60,100,60,100,30,100,30,40,30,40,30,40,60]
-        # static_OB.data = static_OB.data + [110,-10,130,-10,130,-10,130,-20,130,-20,110,-20,110,-20,110,-10]
-        # static_OB.data = static_OB.data + [140,20,160,20,70,110,70,90,-10,50,10,50,60,10,60,-10]
-        static_OB.point = [] #[0,25,10,50,-10,75,50,50,-50,50]
+        static_OB.data = []
+        static_OB.data = static_OB.data + [150,500,150,400,150,400,350,400,350,400,350,500]
+        static_OB.data = static_OB.data + [0,250,150,250,150,250,150,0]
+        static_OB.data = static_OB.data + [350,0,350,250,350,250,500,250]
+        static_OB.data = static_OB.data + [0,0,0,500,0,500,500,500,500,500,500,0,500,0,0,0]
+
+        static_OB.point = [0,25,10,50,-10,75,50,50,-50,50]
         # for i in static_OB.data:
         #     j=i
         #     new_static_OB.append(j)

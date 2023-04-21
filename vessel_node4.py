@@ -196,7 +196,7 @@ def main():
     dt =  rospy.get_param("mmg_dt")
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    path = "/home/ldh/simul_log/" + timestr + ".csv"
+    path = "/home/mscl1/simul_log/" + timestr + ".csv"
     header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
     file = open(path, 'a', newline='')
     writer = csv.writer(file)
@@ -224,7 +224,8 @@ def main():
     data = data_inNout()
     
     t = 0
-    waypointIndex = 0   
+    waypointIndex = 0
+    targetspdIndex = 0    
 
     while not rospy.is_shutdown():
         Local_PP = VO_module()
@@ -371,17 +372,22 @@ def main():
         wp_y = wp[1]
 
         if VO_operate:
-            pass
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list.append(temp_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[0]
+            desired_heading = desired_heading_list[0]
+        
         else:
             V_selected = V_des
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[targetspdIndex]
+            desired_heading = desired_heading_list[0]
 
-        eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)
-        temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
-        desired_spd_list.append(temp_spd)
-        desired_heading_list.append(temp_heading_deg)
-
-        desired_spd = desired_spd_list[0]
-        desired_heading = desired_heading_list[0]
 
         if t%10 ==0:
             pass
@@ -459,6 +465,7 @@ def main():
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
+            targetspdIndex = waypointIndex
 
         rate.sleep()
         
