@@ -25,6 +25,13 @@ class data_inNout:
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
         rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
 
+        ############################ for connect with KRISO format ##################################
+
+        # rospy.Subscriber('/Unavailiable_Area_info', group_boundary_info, self.static_unavailable_callback)
+        # rospy.Subscriber('/Availiable_Area_info', group_boundary_info, self.static_available_callback)
+
+        ############################ for connect with KRISO format ##################################
+
         self.WP_pub = rospy.Publisher('/vessel4_info', col, queue_size=10)
         self.cri_pub = rospy.Publisher('/cri4_info', cri_info, queue_size=10)
         self.VO_pub = rospy.Publisher('/VO4_info', VO_info, queue_size=10)
@@ -35,6 +42,12 @@ class data_inNout:
         self.waypoint_dict = dict()
 
         self.TS_WP_index = []
+        ############################ for connect with KRISO format ##################################
+
+        # self.static_unavailable_info =[]
+        # self.static_available_info =[]
+
+        ############################ for connect with KRISO format ##################################
         self.static_obstacle_info = []
         self.static_point_info = []
 
@@ -354,6 +367,13 @@ def main():
         # NOTE: `VO_update()` takes the majority of the computation time
         # TODO: Reduce the computation time of `VO_update()`
         # V_opt, VO_BA_all = Local_PP.VO_update(OS_list, TS_list_sort, static_OB, V_des, v_min)
+
+        ############################ for connect with KRISO format ##################################
+
+        # data.static_obstacle_info = data.static_available_info + data.static_unavailable_info
+
+        ############################ for connect with KRISO format ##################################
+
         V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 
             TS_list, 
