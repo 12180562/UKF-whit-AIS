@@ -1606,19 +1606,12 @@ class VO_module:
             - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
             - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
             - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
-            """                                                        # |
-            if status == 'Head-on' or 'Starboard crossing' or 'Overtaking':
-                avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
-                    vel_all_annotated=reachableVel_all_annotated,       # |
-                    annotation=['inLeft'],                             # |
-                    shipID_all=TS.keys(),                               # |
-                    )                                                   # |
-            else:
-                avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
-                    vel_all_annotated=reachableVel_all_annotated,       # |
-                    annotation=['inRight'],                              # |
-                    shipID_all=TS.keys(),                               # |
-                    )                                                   # |
+            """                                                        # |:
+            avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
+                vel_all_annotated=reachableVel_all_annotated,       # |
+                annotation=['inLeft'],                              # |
+                shipID_all=TS.keys(),                               # |
+                )                                                   # |
             #=========================================================+
 
             if avoidanceAllRightVel_all_annotated:
@@ -1713,7 +1706,7 @@ class VO_module:
             pB = np.array([TS[ts_ID]['Pos_X'], TS[ts_ID]['Pos_Y']]) # position of of the obstacle
 
             CRI = TS[ts_ID]['CRI']
-            TCPA = TS[ts_ID]['TCPA']
+            status = TS[ts_ID]['status']
 
 
             RVOapexPos_global = pA + (1 - self.weight_alpha) * vA + self.weight_alpha * vB
@@ -1762,6 +1755,7 @@ class VO_module:
                 "boundLineAngle_right_rad_global" : boundLineAngle_right_rad_global,
                 "collisionConeTranslated": collisionConeTranslated,
                 "CRI" : CRI,
+                "Status" : status,
                 }
             RVOdata_all.append(RVOdata)
             # To publish the collision cone data for visualization

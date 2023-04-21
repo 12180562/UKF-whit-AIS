@@ -300,7 +300,7 @@ waypoint_List: {
 target_spd_List: {
   target_speed_ship1: [
     1.0, 1.0
-    ],  # VO모듈이 켜지면 사용하지 않음
+    ],
 
   target_speed_ship2: [
     1.0, 1.0
