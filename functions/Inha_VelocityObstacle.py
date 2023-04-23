@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from math import pi, cos, sin, atan2, asin, sqrt
+from math import pi, cos, sin, atan2, asin, sqrt, tan
 import numpy as np
 import rospy
 
@@ -1033,11 +1033,14 @@ class VO_module:
         # static_OB_data = new_static_OB_data
 
         reachableVel_global_all_copy = np.copy(reachableVel_global_all)
-        static_OB_data = self.select_effective_static_OB(OS, static_obstacle_info)
-        static_point_data = self.select_effective_static_point(OS, static_point_info)
+        static_OB_data = static_obstacle_info
+        static_point_data = static_point_info
+        # static_OB_data = self.select_effective_static_OB(OS, static_obstacle_info)
+        # static_point_data = self.select_effective_static_point(OS, static_point_info)
         
         pA = np.array([OS['Pos_X'], OS['Pos_Y']])
         delta_t = rospy.get_param("delta_t") # constant
+        detecting_radious = rospy.get_param("detecting_radious")
 
         #initial number for while
         obstacle_number = 0
@@ -1066,7 +1069,7 @@ class VO_module:
             reachableVel_global_all_after_delta_t = reachableVel_global_all * delta_t 
             result = []
 
-            for i in range(len(reachableVel_global_all_after_delta_t)-1): 
+            for i in range(len(reachableVel_global_all_after_delta_t)): 
                 after_delta_t_x = reachableVel_global_all_after_delta_t[i][0]+pA[0]
                 after_delta_t_y = reachableVel_global_all_after_delta_t[i][1]+pA[1]
                 if (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) < 0:
@@ -1139,12 +1142,90 @@ class VO_module:
             point_number = point_number+2
 
         if len(reachableVel_global_all) == 0:
-            reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
+            reachableVel_global_all = self.if_all_vector_collidable(OS, static_OB_data, detecting_radious, reachableVel_global_all_copy)
             # print("no way to avoid obstacle")
         else:
             pass
+
         return reachableVel_global_all
-        
+    
+    def if_all_vector_collidable(self, OS, effective_static_OB, detecting_radious, reachableVel_global_all_copy):
+        space_number = rospy.get_param("space_number")
+        pA = [OS['Pos_X'], OS['Pos_Y']]
+        vector_radian_plus = 0
+        vector_radian_minus = 0
+        vector_space_radian = pi/space_number
+        detecting_vector_list = []
+        detecting_vector_list_in_right = []
+        detecting_vector_list_in_left = []
+        for i in range(space_number):
+            vector_radian_plus = vector_radian_plus + vector_space_radian * i
+            vector_radian_minus = vector_radian_minus - vector_space_radian * i
+            vector_point_plus = [(pA[0]+detecting_radious*cos(vector_radian_plus)),(pA[0]+detecting_radious*sin(vector_radian_plus))]
+            vector_point_minus = [(pA[0]+detecting_radious*cos(vector_radian_minus)),(pA[0]+detecting_radious*sin(vector_radian_minus))]
+            vector_slope_plus = tan(vector_radian_plus)
+            vector_slope_minus = tan(vector_radian_minus)
+            obstacle_number = 0
+
+            while (obstacle_number) != len(effective_static_OB):
+                obstacle_point_x = [effective_static_OB[obstacle_number],effective_static_OB[obstacle_number+2]] 
+                obstacle_point_y = [effective_static_OB[obstacle_number+1],effective_static_OB[obstacle_number+3]] 
+
+                if obstacle_point_x[0] > obstacle_point_x[1]:
+                    obstacle_point_x.reverse()
+                    obstacle_point_y.reverse()
+
+                if (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and (obstacle_point_y[0]-obstacle_point_y[1]) > 0:
+                    slope = 9999
+
+                elif (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and (obstacle_point_y[0]-obstacle_point_y[1]) < 0:
+                    slope =-9999
+
+                else: 
+                    slope = (obstacle_point_y[1]-obstacle_point_y[0])/(obstacle_point_x[1]-obstacle_point_x[0])
+
+                if self.get_crosspt(slope, 
+                        vector_slope_plus,
+                        obstacle_point_x[0], 
+                        obstacle_point_y[0],
+                        obstacle_point_x[1], 
+                        obstacle_point_y[1],
+                        pA[0], 
+                        pA[1], 
+                        vector_point_plus[0], 
+                        vector_point_plus[1]):
+
+                    detecting_vector_list_in_right.append(vector_radian_plus)
+
+                elif self.get_crosspt(slope, 
+                        vector_slope_minus,
+                        obstacle_point_x[0], 
+                        obstacle_point_y[0],
+                        obstacle_point_x[1], 
+                        obstacle_point_y[1],
+                        pA[0], 
+                        pA[1], 
+                        vector_point_minus[0], 
+                        vector_point_minus[1]):
+
+                    detecting_vector_list_in_left.append(vector_radian_minus)
+                else:
+                    pass
+
+            if len(detecting_vector_list) == 0:
+                print("all the vector is collidable")
+                reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
+
+            else:
+                if len(detecting_vector_list_in_right) >= len(detecting_vector_list_in_left):
+                    reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
+                    # select vector that is in right
+                else:
+                    reachableVel_global_all = np.array([reachableVel_global_all_copy[123,:]])
+                    # select vector that is in left
+
+            return reachableVel_global_all
+
     def get_crosspt(self, slope, vector_slope, start_x, start_y,end_x, end_y, OS_pos_x, OS_pos_y, after_delta_t_x, after_delta_t_y):
 
         x_point = [start_x, end_x]
@@ -1273,43 +1354,43 @@ class VO_module:
         else:
             return True
 
-    def select_effective_static_OB(self, OS, static_obstacle_info):
-        detecting_radious = rospy.get_param("detecting_radious")
-        obstacle_number = 0
-        pA = [OS['Pos_X'], OS['Pos_Y']]
-        effective_static_obstacle = []
-        while obstacle_number  < len(static_obstacle_info):
-            distance_from_pA_start = sqrt(((static_obstacle_info[obstacle_number]-pA[0])**2)+((static_obstacle_info[obstacle_number+1]-pA[1])**2))
-            distance_from_pA_end = sqrt(((static_obstacle_info[obstacle_number+2]-pA[0])**2)+((static_obstacle_info[obstacle_number+3]-pA[1])**2))
+    # def select_effective_static_OB(self, OS, static_obstacle_info):
+    #     detecting_radious = rospy.get_param("detecting_radious")
+    #     obstacle_number = 0
+    #     pA = [OS['Pos_X'], OS['Pos_Y']]
+    #     effective_static_obstacle = []
+    #     while obstacle_number  < len(static_obstacle_info):
+    #         distance_from_pA_start = sqrt(((static_obstacle_info[obstacle_number]-pA[0])**2)+((static_obstacle_info[obstacle_number+1]-pA[1])**2))
+    #         distance_from_pA_end = sqrt(((static_obstacle_info[obstacle_number+2]-pA[0])**2)+((static_obstacle_info[obstacle_number+3]-pA[1])**2))
 
-            if distance_from_pA_end <= detecting_radious or distance_from_pA_start <= detecting_radious:
-                effective_static_obstacle.append(static_obstacle_info[obstacle_number])
-                effective_static_obstacle.append(static_obstacle_info[obstacle_number+1])
-                effective_static_obstacle.append(static_obstacle_info[obstacle_number+2])
-                effective_static_obstacle.append(static_obstacle_info[obstacle_number+3])
-            else:
-                pass
-            obstacle_number = obstacle_number + 4
+    #         if distance_from_pA_end <= detecting_radious or distance_from_pA_start <= detecting_radious:
+    #             effective_static_obstacle.append(static_obstacle_info[obstacle_number])
+    #             effective_static_obstacle.append(static_obstacle_info[obstacle_number+1])
+    #             effective_static_obstacle.append(static_obstacle_info[obstacle_number+2])
+    #             effective_static_obstacle.append(static_obstacle_info[obstacle_number+3])
+    #         else:
+    #             pass
+    #         obstacle_number = obstacle_number + 4
 
-        return effective_static_obstacle
+    #     return effective_static_obstacle
     
-    def select_effective_static_point(self, OS, static_point_info):
-        detecting_radious = rospy.get_param("detecting_radious")
-        obstacle_number = 0
-        pA = [OS['Pos_X'], OS['Pos_Y']]
-        effective_static_point = []
-        while obstacle_number  < len(static_point_info):
-            distance_from_pA_point = sqrt(((static_point_info[obstacle_number]-pA[0])**2)+((static_point_info[obstacle_number+1]-pA[1])**2))
+    # def select_effective_static_point(self, OS, static_point_info):
+    #     detecting_radious = rospy.get_param("detecting_radious")
+    #     obstacle_number = 0
+    #     pA = [OS['Pos_X'], OS['Pos_Y']]
+    #     effective_static_point = []
+    #     while obstacle_number  < len(static_point_info):
+    #         distance_from_pA_point = sqrt(((static_point_info[obstacle_number]-pA[0])**2)+((static_point_info[obstacle_number+1]-pA[1])**2))
 
-            if distance_from_pA_point <= detecting_radious :
-                effective_static_point.append(static_point_info[obstacle_number])
-                effective_static_point.append(static_point_info[obstacle_number+1])
-                obstacle_number = obstacle_number + 2
-            else:
-                pass
-            obstacle_number = obstacle_number + 2
+    #         if distance_from_pA_point <= detecting_radious :
+    #             effective_static_point.append(static_point_info[obstacle_number])
+    #             effective_static_point.append(static_point_info[obstacle_number+1])
+    #             obstacle_number = obstacle_number + 2
+    #         else:
+    #             pass
+    #         obstacle_number = obstacle_number + 2
 
-        return effective_static_point
+    #     return effective_static_point
 
     def __select_vel_inside_RVOs(self, reachableCollisionVel_global_all, RVOdata_all, V_des):
         """

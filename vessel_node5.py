@@ -95,52 +95,56 @@ class data_inNout:
 
     def static_OB_callback(self, static_OB):
 
-        # self.obstacle_list_COLINE_x = static_OB.obstacle_list_COLINE_x
-        # self.obstacle_list_COLINE_y = static_OB.obstacle_list_COLINE_y
-        # self.obstacle_list_SUBSEA_x = static_OB.obstacle_list_SUBSEA_x
-        # self.obstacle_list_SUBSEA_y = static_OB.obstacle_list_SUBSEA_y
-
-        # obstacle_list_COLINE = [self.obstacle_list_COLINE_x,self.obstacle_list_COLINE_y]
-        # obstacle_list_SUBSEA = [self.obstacle_list_SUBSEA_x,self.obstacle_list_SUBSEA_y]
-
-        # # make obstacle list for line data
-        # line_list_COLINE = []
-        # line_list_SUBSEA = []
-
-        # for j in range(len(obstacle_list_COLINE[0])):
-        #     if j != (len(obstacle_list_COLINE[0])-1):
-        #         x_list = [obstacle_list_COLINE[0][j],obstacle_list_COLINE[0][j+1]]
-        #         y_list = [obstacle_list_COLINE[1][j],obstacle_list_COLINE[1][j+1]]
-        #         line_list_all = [x_list,y_list]
-        # #        print(line_list_all)
-        #     else:
-        #         x_list = [obstacle_list_COLINE[0][j],obstacle_list_COLINE[0][0]]
-        #         y_list = [obstacle_list_COLINE[1][j],obstacle_list_COLINE[1][0]]
-        #         line_list_all = [x_list,y_list]
-        # #        print(line_list_all)
-        #     line_list_COLINE.append(line_list_all)
-
-        # #print(line_list_COLINE)
-
-        # for j in range(len(obstacle_list_SUBSEA[0])):
-        #     if j != (len(obstacle_list_SUBSEA[0])-1):
-        #         x_list = [obstacle_list_SUBSEA[0][j],obstacle_list_SUBSEA[0][j+1]]
-        #         y_list = [obstacle_list_SUBSEA[1][j],obstacle_list_SUBSEA[1][j+1]]
-        #         line_list_all = [x_list,y_list]
-        # #        print(line_list_all)
-        #     else:
-        #         x_list = [obstacle_list_SUBSEA[0][j],obstacle_list_SUBSEA[0][0]]
-        #         y_list = [obstacle_list_SUBSEA[1][j],obstacle_list_SUBSEA[1][0]]
-        #         line_list_all = [x_list,y_list]
-        # #        print(line_list_all)
-        #     line_list_SUBSEA.append(line_list_all)
-
-        # self.static_obstacle_info = []
-        # self.static_obstacle_info.append(line_list_COLINE)
-        # self.static_obstacle_info.append(line_list_SUBSEA)
         self.static_obstacle_info = static_OB.data
         self.static_point_info = static_OB.point
 
+        ############################ for connect with KRISO format ##################################
+
+    # def static_unavailable_callback(self, static_OB):
+    #     self.len_static_obstacle_info = len(static_OB.group_boundary_info)
+    #     static_ob_list_x = []
+    #     static_ob_list_y = []
+    #     for i in range(self.len_static_obstacle_info):
+    #         static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
+    #         static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
+            
+    #     static_ob_info = []
+        
+    #     for k in range(len(static_ob_list_x)):
+    #         for l in range(len(static_ob_list_x[k])):
+    #             if l == 0:
+    #                 pass
+    #             else:
+    #                 static_ob_info.append(static_ob_list_x[k][l-1])
+    #                 static_ob_info.append(static_ob_list_y[k][l-1])
+    #                 static_ob_info.append(static_ob_list_x[k][l])
+    #                 static_ob_info.append(static_ob_list_y[k][l])
+                    
+    #     self.static_unavailable_info = static_ob_info
+        
+    # def static_available_callback(self, static_OB):
+    #     self.len_static_obstacle_info = len(static_OB.group_boundary_info)
+    #     static_ob_list_x = []
+    #     static_ob_list_y = []
+    #     for i in range(self.len_static_obstacle_info):
+    #         static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
+    #         static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
+        
+    #     static_ob_info = []
+        
+    #     for k in range(len(static_ob_list_x)):
+    #         for l in range(len(static_ob_list_x[k])):
+    #             if l == 0:
+    #                 pass
+    #             else:
+    #                 static_ob_info.append(static_ob_list_x[k][l-1])
+    #                 static_ob_info.append(static_ob_list_y[k][l-1])
+    #                 static_ob_info.append(static_ob_list_x[k][l])
+    #                 static_ob_info.append(static_ob_list_y[k][l])
+                    
+    #     self.static_available_info = static_ob_info
+
+        ############################ for connect with KRISO format ##################################
 
     def path_out_publish(self, pub_list):
         ''' publish `/path_out_inha`

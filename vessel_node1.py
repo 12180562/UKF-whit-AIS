@@ -45,10 +45,13 @@ class data_inNout:
         self.TS_WP_index = []
         ############################ for connect with KRISO format ##################################
 
-        # self.static_unavailable_info =[]
-        # self.static_available_info =[]
+        self.static_unavailable_info =[]
+        self.static_available_info =[]
+        self.len_static_obstacle_info = 0
 
         ############################ for connect with KRISO format ##################################
+        self.OS_POS_X = 0
+        self.OS_POS_Y = 0
         self.static_obstacle_info = []
         self.static_point_info = []
 
@@ -120,8 +123,25 @@ class data_inNout:
     #                 static_ob_info.append(static_ob_list_y[k][l-1])
     #                 static_ob_info.append(static_ob_list_x[k][l])
     #                 static_ob_info.append(static_ob_list_y[k][l])
+
+    #     detecting_radious = rospy.get_param("detecting_radious")
+    #     obstacle_number = 0
+    #     pA = [self.OS_POS_X, self.OS_POS_Y]
+    #     effective_static_obstacle = []
+    #     while obstacle_number  < len(static_ob_info):
+    #         distance_from_pA_start = sqrt(((static_ob_info[obstacle_number]-pA[0])**2)+((static_ob_info[obstacle_number+1]-pA[1])**2))
+    #         distance_from_pA_end = sqrt(((static_ob_info[obstacle_number+2]-pA[0])**2)+((static_ob_info[obstacle_number+3]-pA[1])**2))
+
+    #         if distance_from_pA_end <= detecting_radious or distance_from_pA_start <= detecting_radious:
+    #             effective_static_obstacle.append(static_ob_info[obstacle_number])
+    #             effective_static_obstacle.append(static_ob_info[obstacle_number+1])
+    #             effective_static_obstacle.append(static_ob_info[obstacle_number+2])
+    #             effective_static_obstacle.append(static_ob_info[obstacle_number+3])
+    #         else:
+    #             pass
+    #         obstacle_number = obstacle_number + 4
                     
-    #     self.static_unavailable_info = static_ob_info
+    #     self.static_unavailable_info = effective_static_obstacle
         
     # def static_available_callback(self, static_OB):
     #     self.len_static_obstacle_info = len(static_OB.group_boundary_info)
@@ -146,6 +166,23 @@ class data_inNout:
     #     self.static_available_info = static_ob_info
 
         ############################ for connect with KRISO format ##################################
+
+        detecting_radious = rospy.get_param("detecting_radious")
+        obstacle_number = 0
+        pA = [self.OS_POS_X, self.OS_POS_Y]
+        effective_static_obstacle = []
+        while obstacle_number  < len(self.static_obstacle_info):
+            distance_from_pA_start = sqrt(((self.static_obstacle_info[obstacle_number]-pA[0])**2)+((self.static_obstacle_info[obstacle_number+1]-pA[1])**2))
+            distance_from_pA_end = sqrt(((self.static_obstacle_info[obstacle_number+2]-pA[0])**2)+((self.static_obstacle_info[obstacle_number+3]-pA[1])**2))
+
+            if distance_from_pA_end <= detecting_radious or distance_from_pA_start <= detecting_radious:
+                effective_static_obstacle.append(self.static_obstacle_info[obstacle_number])
+                effective_static_obstacle.append(self.static_obstacle_info[obstacle_number+1])
+                effective_static_obstacle.append(self.static_obstacle_info[obstacle_number+2])
+                effective_static_obstacle.append(self.static_obstacle_info[obstacle_number+3])
+            else:
+                pass
+            obstacle_number = obstacle_number + 4
 
     def path_out_publish(self, pub_list):
         ''' publish `/path_out_inha`
@@ -280,6 +317,10 @@ def main():
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
+
+        # OS position for effective static_OB
+        data.OS_POS_X = OS_list['Pos_X']
+        data.OS_POS_Y = OS_list['Pos_Y']
 
         TS_ID = ship_ID[:]  ## 리스트 복사
         TS_ID.remove(OS_ID)

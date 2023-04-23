@@ -183,8 +183,11 @@ Kd : 0.0
 
 ############################################
 
+# param for static_OB
+
 delta_t : 50
 detecting_radious : 100
+space_number : 20
 
 # ==========================================+
 #             Original Conditions           |
