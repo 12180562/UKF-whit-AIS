@@ -149,7 +149,7 @@ meta: |
   
   ---------------------------------------------------------------
 
-update_rate: 60   ## rospy.Rate(update_rate)
+update_rate: 10   ## rospy.Rate(update_rate)
 mmg_dt: 1
 
 ############################################
@@ -165,7 +165,7 @@ cri_param: 150
 
 weight_focusObs: 1
 weight_agressivness: 1
-timeHorizon: 70
+timeHorizon: 60
 
 ############################################
 
@@ -209,7 +209,7 @@ shipInfo_all:
     initial_start_y : 450,    # [m]
     initial_start_U : 1.0 ,    # [knots] // 너무 작으면 발산함
     initial_start_psi : 225,   # [deg]
-    include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+    include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
   ship2_info : {
@@ -223,7 +223,7 @@ shipInfo_all:
     initial_start_y : 50,    # [m]
     initial_start_U : 1.0 ,    # [knots] // 너무 작으면 발산함
     initial_start_psi : 0,   # [deg]
-    include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+    include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
   # ship3_info : {
