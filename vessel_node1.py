@@ -25,7 +25,7 @@ class data_inNout:
         # Subscriber = input
         rospy.Subscriber('/frm_info', frm_info, self.OP_callback) 
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
-        rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
+        # rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
         rospy.Subscriber('/wpts_idx_os_kriso', wpt_idx_os, self.wp_idx_callback)
 
         ############################ for connect with KRISO format ##################################
@@ -40,7 +40,7 @@ class data_inNout:
         self.VO_pub = rospy.Publisher('/VO1_info', VO_info, queue_size=10)
         self.Vis_pub = rospy.Publisher('/vis1_info', vis_info, queue_size=10)
         self.ship_ID = []
-
+        self.waypoint_idx = 0
         self.len_waypoint_info = 0
         self.waypoint_dict = dict()
         # self.index = rospy.get_param('index')
@@ -278,6 +278,8 @@ def main():
             data.waypoint_dict,
             )                       # inha_module의 data 송신을 위해 필요한 함수들이 정의됨
 
+
+        # print(data.waypoint_idx)
         ## <======== 서울대학교 전역경로를 위한 waypoint 수신 및 Local path의 goal로 처리
         wpts_x_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_x)
         wpts_y_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_y)

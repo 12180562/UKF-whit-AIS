@@ -189,7 +189,7 @@ ship3_index : 2
 
 # param for static_OB
 
-delta_t : 50
+delta_t : 30
 detecting_radious : 100
 space_number : 20
 
@@ -202,7 +202,7 @@ shipInfo_all:
     ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
     ship_B : 0.6,
     ship_scale : 11.0,
-    ship_ID : 2000, ## 자선의 ship ID 정의
+    ship_ID : 1000, ## 자선의 ship ID 정의
     ship_domain_radius : 4.0,  # original
     target_speed : 6.0,  #[knots]
     initial_start_x : 450,    # [m]
@@ -216,7 +216,7 @@ shipInfo_all:
     ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
     ship_B : 0.6,
     ship_scale : 11.0,
-    ship_ID : 2001, ## 자선의 ship ID 정의
+    ship_ID : 1001, ## 자선의 ship ID 정의
     ship_domain_radius : 4.0,  # original
     target_speed : 6.0,  #[knots]
     initial_start_x : 250,    # [m]

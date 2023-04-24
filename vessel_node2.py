@@ -24,8 +24,8 @@ class data_inNout:
         # Subscriber = input
         rospy.Subscriber('/frm_info', frm_info, self.OP_callback) 
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
-        rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
-        # rospy.Subscriber('/wpts_idx_os_kriso', wpt_idx_os, self.wp_idx_callback)
+        # rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
+        rospy.Subscriber('/ctrl_info_pknu', ctrl_output_pknu, self.wp_idx_callback)
 
         ############################ for connect with KRISO format ##################################
 
@@ -42,6 +42,7 @@ class data_inNout:
 
         self.len_waypoint_info = 0
         self.waypoint_dict = dict()
+        self.ship2_index = rospy.get_param('ship2_index')
 
         self.TS_WP_index = []
         ############################ for connect with KRISO format ##################################
@@ -95,8 +96,8 @@ class data_inNout:
         raw_psi = np.asanyarray(operation.m_fltHeading)
         self.Heading = raw_psi % 360
 
-    # def wp_idx_callback(self, idx):
-    #     self.waypoint_idx = idx.m_idxWptOS
+    def wp_idx_callback(self, idx):
+        self.waypoint_idx = idx.i_way[self.ship2_index]
 
     # def static_OB_callback(self, static_OB):
 
@@ -251,6 +252,8 @@ def main():
 
     while not rospy.is_shutdown():
         Local_PP = VO_module()
+
+        data.ship2_index = rospy.get_param('ship2_index')
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
@@ -278,8 +281,8 @@ def main():
         ## <======== 서울대학교 전역경로를 위한 waypoint 수신 및 Local path의 goal로 처리
         wpts_x_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_x)
         wpts_y_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_y)
-        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]   
-        # Local_goal = [wpts_x_os[data.waypoint_idx], wpts_y_os[data.waypoint_idx]]          # waypoint list에서 1개의 waypoint 만을 추출
+        # Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]   
+        Local_goal = [wpts_x_os[int(data.waypoint_idx)], wpts_y_os[int(data.waypoint_idx)]]          # waypoint list에서 1개의 waypoint 만을 추출
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
@@ -423,8 +426,8 @@ def main():
         OS_pub_list = [
             int(OS_ID), 
             False,
-            waypointIndex, 
-            # data.waypoint_idx, 
+            # waypointIndex, 
+           int(data.waypoint_idx), 
             [wp_x], 
             [wp_y],  
             desired_spd_list, 
@@ -489,9 +492,9 @@ def main():
         if local_goal_EDA < 2 * ship_L :
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
-            # data.waypoint_idx = (data.waypoint_idx + 1) % len(wpts_x_os)
+            data.waypoint_idx = (int(data.waypoint_idx) + 1) % len(wpts_x_os)
             # targetspdIndex = data.waypoint_idx
-            waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
+            # waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             # targetspdIndex = waypointIndex
 
         rate.sleep()
