@@ -157,7 +157,7 @@ mmg_dt: 1
 CRI_ratio: 16.8364
 
 ########### 1852/110 ###########
-SD_param: 4
+SD_param: 3
 cri_param: 150
 
 
@@ -165,7 +165,7 @@ cri_param: 150
 
 weight_focusObs: 1
 weight_agressivness: 1
-timeHorizon: 60
+timeHorizon: 40
 
 ############################################
 
@@ -173,16 +173,16 @@ min_targetSpeed : 0.8
 max_targetSpeed : 1.0
 num_targetSpeedCandidates : 3
 
-min_targetHeading_deg_local : -30.0
-max_targetHeading_deg_local: 30.0
-num_targetHeadingCandidates: 61
+min_targetHeading_deg_local : -50.0
+max_targetHeading_deg_local: 50.0
+num_targetHeadingCandidates: 101
 
 Kp : 1.0
 Ki : 0.0
 Kd : 0.0
 
-ship1_index : 0
-ship2_index : 1
+ship1_index : 14
+ship2_index : 3
 ship3_index : 2
 
 ############################################
@@ -216,14 +216,14 @@ shipInfo_all:
     ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
     ship_B : 0.6,
     ship_scale : 11.0,
-    ship_ID : 1001, ## 자선의 ship ID 정의
+    ship_ID : 2001, ## 자선의 ship ID 정의
     ship_domain_radius : 4.0,  # original
     target_speed : 6.0,  #[knots]
     initial_start_x : 250,    # [m]
     initial_start_y : 50,    # [m]
     initial_start_U : 1.0 ,    # [knots] // 너무 작으면 발산함
     initial_start_psi : 0,   # [deg]
-    include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+    include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
   # ship3_info : {

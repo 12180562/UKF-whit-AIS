@@ -180,7 +180,7 @@ class CRI:
     def K(self):
         '''Speed factor'''
         if self.Vt == 0 or self.Vo == 0:
-            result = 0
+            result = 0.0000000001
         else:
             result = self.Vt / self.Vo
         return result

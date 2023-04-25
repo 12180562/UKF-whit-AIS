@@ -1,8 +1,8 @@
 <launch>
-    <node pkg="kass_inha"  type="WP_pub.py"  name="WP_generator" respawn="true" />
+    <!-- <node pkg="kass_inha"  type="WP_pub.py"  name="WP_generator" respawn="true" /> -->
     <!-- <node pkg="kass_inha"  type="static_obstacle_publish.py"  name="STOB" respawn="true" /> -->
-    <node pkg="kass_inha"  type="KRISO.py"  name="KRISO" respawn="true" output="screen" />
-    <node pkg="kass_inha"  type="PKNU.py" name="PKNU" respawn="true" /> 
+    <!-- <node pkg="kass_inha"  type="KRISO.py"  name="KRISO" respawn="true" output="screen" /> -->
+    <!-- <node pkg="kass_inha"  type="PKNU.py" name="PKNU" respawn="true" />  -->
 
     <!-- Comment out the unused vessel nodes -->
     <!-- Define the vessels' initial condition at the `/params/main_parameter.yaml` -->

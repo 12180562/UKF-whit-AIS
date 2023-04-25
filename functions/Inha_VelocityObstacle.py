@@ -1118,7 +1118,7 @@ class VO_module:
             point_number = point_number+2
 
         if len(reachableVel_global_all) == 0:
-            reachableVel_global_all = reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
+            reachableVel_global_all = reachableVel_global_all = np.array([reachableVel_global_all_copy[-1,:]])
         else:
             pass
 
