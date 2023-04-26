@@ -157,7 +157,7 @@ mmg_dt: 1
 CRI_ratio: 16.8364
 
 ########### 1852/110 ###########
-SD_param: 3
+SD_param: 2
 cri_param: 150
 
 
@@ -165,25 +165,25 @@ cri_param: 150
 
 weight_focusObs: 1
 weight_agressivness: 1
-timeHorizon: 40
+timeHorizon: 20
 
 ############################################
 
-min_targetSpeed : 0.8
+min_targetSpeed : 0.7
 max_targetSpeed : 1.0
-num_targetSpeedCandidates : 3
+num_targetSpeedCandidates : 4
 
-min_targetHeading_deg_local : -50.0
-max_targetHeading_deg_local: 50.0
-num_targetHeadingCandidates: 101
+min_targetHeading_deg_local : -45.0
+max_targetHeading_deg_local: 45.0
+num_targetHeadingCandidates: 91
 
 Kp : 1.0
 Ki : 0.0
 Kd : 0.0
 
-ship1_index : 14
+ship1_index : 11
 ship2_index : 3
-ship3_index : 2
+ship3_index : 10
 
 ############################################
 

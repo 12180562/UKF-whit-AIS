@@ -12,6 +12,7 @@ class data_inNout:
         
         shipsInfo = InfoLoader(rospy.get_param("shipInfo_all"))
         self.num_ships = shipsInfo.num_ships
+        # print(self.num_ships)
 
         if self.num_ships == 1:
             rospy.Subscriber('/vessel1_info', col, self.ship1_callback) 
@@ -120,7 +121,7 @@ def main():
     data = data_inNout()
 
     while not rospy.is_shutdown():
-        
+        # print(data.num_ships)
         if data.num_ships == 1:
             if len(data.ship1_info) == 0:
                 ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
