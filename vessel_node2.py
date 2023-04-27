@@ -54,6 +54,8 @@ class data_inNout:
         self.static_obstacle_info = []
         self.static_point_info = []
 
+        self.target_heading_list = []
+
     def wp_callback(self, wp):
         ''' subscribe `/waypoint_info`
 
@@ -253,6 +255,7 @@ def main():
 
     while not rospy.is_shutdown():
         Local_PP = VO_module()
+        data.static_obstacle_info = data.static_unavailable_info + data.static_available_info
 
         data.ship2_index = rospy.get_param('ship2_index')
         
@@ -377,6 +380,12 @@ def main():
 
             temp_enc = TS_list[ts_ID]['status']
             TS_ENC_temp.append(temp_enc)
+            
+            if abs(temp_DCPA) <= rospy.get_param('timeHorizon'):
+                print(ts_ID,":",temp_enc, temp_DCPA)
+
+        # print(TS_ENC_temp)
+
 
         # NOTE: `VO_update()` takes the majority of the computation time
         # TODO: Reduce the computation time of `VO_update()`
@@ -423,6 +432,25 @@ def main():
 
         t += 1
 
+        if len(data.target_heading_list) != rospy.get_param('filter_length'):
+            data.target_heading_list.append(desired_heading)
+        
+        else:
+            del data.target_heading_list[0]
+
+        sum_of_heading = 0
+        real_target_heading = 0
+        for i in data.target_heading_list:
+            sum_of_heading = sum_of_heading + i
+
+        if len(data.target_heading_list) >= 2:
+            if data.target_heading_list[len(data.target_heading_list)-1]*data.target_heading_list[len(data.target_heading_list)-2] < 0:
+                data.target_heading_list = [data.target_heading_list[-1]]
+            else:
+                pass
+
+        real_target_heading = sum_of_heading/len(data.target_heading_list)
+
         # # < =========  인하대 모듈에서 나온 데이터를 최종적으로 송신하는 부분
         # OS_pub_list = [int(OS_ID), False, waypointIndex, [wp_x], [wp_y],desired_spd, eta, eda, 0.5, 0.0, False, [], desired_spd, desired_heading, isNeedCA, ""]
         OS_pub_list = [
@@ -439,7 +467,7 @@ def main():
             False, 
             0, 
             desired_spd, 
-            desired_heading, 
+            real_target_heading, 
             ]
 
         vis_pub_list = [

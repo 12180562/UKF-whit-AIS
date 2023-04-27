@@ -151,13 +151,12 @@ meta: |
 
 update_rate: 10   ## rospy.Rate(update_rate)
 mmg_dt: 1
-
 ############################################
 
 CRI_ratio: 16.8364
 
 ########### 1852/110 ###########
-SD_param: 2
+SD_param: 1.5
 cri_param: 150
 
 
@@ -165,17 +164,18 @@ cri_param: 150
 
 weight_focusObs: 1
 weight_agressivness: 1
-timeHorizon: 20
+timeHorizon: 30
+filter_length : 10
 
 ############################################
 
 min_targetSpeed : 0.7
-max_targetSpeed : 1.0
-num_targetSpeedCandidates : 4
+max_targetSpeed : 0.9
+num_targetSpeedCandidates : 3
 
 min_targetHeading_deg_local : -45.0
 max_targetHeading_deg_local: 45.0
-num_targetHeadingCandidates: 91
+num_targetHeadingCandidates: 19
 
 Kp : 1.0
 Ki : 0.0
@@ -205,10 +205,10 @@ shipInfo_all:
     ship_ID : 1000, ## 자선의 ship ID 정의
     ship_domain_radius : 4.0,  # original
     target_speed : 6.0,  #[knots]
-    initial_start_x : 450,    # [m]
-    initial_start_y : 450,    # [m]
-    initial_start_U : 1.0 ,    # [knots] // 너무 작으면 발산함
-    initial_start_psi : 225,   # [deg]
+    initial_start_x : 0.0,    # [m]
+    initial_start_y : 0.0,    # [m]
+    initial_start_U : 1.0,    # [knots] // 너무 작으면 발산함
+    initial_start_psi : 90,   # [deg]
     include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
@@ -219,11 +219,11 @@ shipInfo_all:
     ship_ID : 2001, ## 자선의 ship ID 정의
     ship_domain_radius : 4.0,  # original
     target_speed : 6.0,  #[knots]
-    initial_start_x : 250,    # [m]
-    initial_start_y : 50,    # [m]
+    initial_start_x : 0.0,    # [m]
+    initial_start_y : 0.0,    # [m]
     initial_start_U : 1.0 ,    # [knots] // 너무 작으면 발산함
     initial_start_psi : 0,   # [deg]
-    include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+    include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
   # ship3_info : {
@@ -233,10 +233,10 @@ shipInfo_all:
   #   ship_ID : 2002, ## 자선의 ship ID 정의
   #   ship_domain_radius : 4.0,  # original
   #   target_speed : 6.0,       #[knots]
-  #   initial_start_x : 50,    # [m]
-  #   initial_start_y : 450,    # [m]
+  #   initial_start_x : 35.0,    # [m]
+  #   initial_start_y : 20.0,    # [m]
   #   initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
-  #   initial_start_psi : 135.0,   # [deg]
+  #   initial_start_psi : 45.0,   # [deg]
   #   include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   # }
 
@@ -247,10 +247,10 @@ shipInfo_all:
   #   ship_ID : 2003, ## 자선의 ship ID 정의
   #   ship_domain_radius : 4.0,  # original
   #   target_speed : 6.0,       #[knots]
-  #   initial_start_x : 50,    # [m]
-  #   initial_start_y : 375,    # [m]
+  #   initial_start_x : 35.0,     # [m]
+  #   initial_start_y : -20.0,    # [m]
   #   initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
-  #   initial_start_psi : 90,   # [deg]
+  #   initial_start_psi : -45,   # [deg]
   #   include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   # }
 
@@ -271,31 +271,31 @@ shipInfo_all:
 
 waypoint_List: {
   wpts_x_ship1: [
-    200, 450,
+    0.0, 50.0, 50.0, 0.0,
   ],
   wpts_y_ship1: [
-    50, 450,
+    70.0, 70.0, 0.0, 0.0, 
   ],
 
   wpts_x_ship2: [
-    450, 250, 50, 50, 450
+    50.0, 50.0, 0.0, 0.0,  #450, 250, 50, 50, 450
   ],
   wpts_y_ship2: [
-    325, 50, 325, 450, 450
+    0.0, 70.0, 70.0, 0.0,  #325, 50, 325, 450, 450
   ],
 
   # wpts_x_ship3: [
-  #   300, 50,
+  #   50.0, 70.0, 50.0, 35.0,
   # ],
   # wpts_y_ship3: [
-  #   50, 450,
+  #   25.0, 20.0, -10.0, 10.0
   # ],
 
   # wpts_x_ship4: [
-  #   450, 50,
+  #   50.0, 70.0, 50.0, 35.0,
   # ],
   # wpts_y_ship4: [
-  #   375, 375,
+  #   -50, -20.0, -10.0, -20.0,
   # ],
 
   # wpts_x_ship5: [

@@ -999,6 +999,7 @@ class VO_module:
         """
 
         reachableVel_global_all_after_obstacle = self.__delete_vector_inside_obstacle(reachableVel_global_all, OS, static_obstacle_info,static_point_info)
+        print("number of vector:",len(reachableVel_global_all_after_obstacle))
 
         return reachableVel_global_all_after_obstacle
 
@@ -1648,7 +1649,7 @@ class VO_module:
                 annotation=['inLeft', 'inRight', 'inTimeHorizon'],
                 shipID_all=TS.keys(),
                 )
-
+            
             #=========================================================+
             """ <<<<<<<< IMPORTANT! MUST READ IT CAREFULLY! >>>>>>>>>>|
             - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
@@ -1671,6 +1672,7 @@ class VO_module:
                 velCandidates,
                 key= lambda v: np.linalg.norm(v - V_des),
                 )
+            
 
         return vA_post 
 

@@ -53,6 +53,8 @@ class data_inNout:
         self.static_obstacle_info = []
         self.static_point_info = []
 
+        self.target_heading_list = []
+
     def wp_callback(self, wp):
         ''' subscribe `/waypoint_info`
 
@@ -419,6 +421,24 @@ def main():
 
         t += 1
 
+        if len(data.target_heading_list) != 6:
+            data.target_heading_list.append(desired_heading)
+        
+        else:
+            del data.target_heading_list[0]
+
+        sum_of_heading = 0
+        for i in data.target_heading_list:
+            sum_of_heading = sum_of_heading + i
+
+        if len(data.target_heading_list) >= 2:
+            if data.target_heading_list[len(data.target_heading_list)-1]*data.target_heading_list[len(data.target_heading_list)-2] < 0:
+                data.target_heading_list = [data.target_heading_list[-1]]
+            else:
+                pass
+
+        real_target_heading = sum_of_heading/len(data.target_heading_list)
+
         # # < =========  인하대 모듈에서 나온 데이터를 최종적으로 송신하는 부분
         # OS_pub_list = [int(OS_ID), False, waypointIndex, [wp_x], [wp_y],desired_spd, eta, eda, 0.5, 0.0, False, [], desired_spd, desired_heading, isNeedCA, ""]
         OS_pub_list = [
@@ -434,7 +454,7 @@ def main():
             False, 
             0, 
             desired_spd, 
-            desired_heading, 
+            real_target_heading, 
             ]
 
         vis_pub_list = [

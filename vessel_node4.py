@@ -51,6 +51,8 @@ class data_inNout:
         self.static_obstacle_info = []
         self.static_point_info = []
 
+        self.target_heading_list = []
+
     def wp_callback(self, wp):
         ''' subscribe `/waypoint_info`
 
@@ -213,7 +215,7 @@ def main():
     dt =  rospy.get_param("mmg_dt")
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    path = "/home/mscl1/simul_log/" + timestr + ".csv"
+    path = "/home/phl/문서/" + timestr + ".csv"
     header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
     file = open(path, 'a', newline='')
     writer = csv.writer(file)
@@ -396,27 +398,40 @@ def main():
         wp_y = wp[1]
 
         if VO_operate:
-            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
-            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
-            desired_spd_list.append(temp_spd)
-            desired_heading_list.append(temp_heading_deg)
-            desired_spd = desired_spd_list[0]
-            desired_heading = desired_heading_list[0]
-        
+            pass
         else:
             V_selected = V_des
-            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
-            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
-            desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
-            desired_heading_list.append(temp_heading_deg)
-            desired_spd = desired_spd_list[targetspdIndex]
-            desired_heading = desired_heading_list[0]
 
+        eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+        temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+        desired_spd_list.append(temp_spd)
+        desired_heading_list.append(temp_heading_deg)
+
+        desired_spd = desired_spd_list[0]
+        desired_heading = desired_heading_list[0]
 
         if t%10 ==0:
             pass
 
         t += 1
+
+        if len(data.target_heading_list) != 6:
+            data.target_heading_list.append(desired_heading)
+        
+        else:
+            del data.target_heading_list[0]
+
+        sum_of_heading = 0
+        for i in data.target_heading_list:
+            sum_of_heading = sum_of_heading + i
+
+        if len(data.target_heading_list) >= 2:
+            if data.target_heading_list[len(data.target_heading_list)-1]*data.target_heading_list[len(data.target_heading_list)-2] < 0:
+                data.target_heading_list = [data.target_heading_list[-1]]
+            else:
+                pass
+
+        real_target_heading = sum_of_heading/len(data.target_heading_list)
 
         # # < =========  인하대 모듈에서 나온 데이터를 최종적으로 송신하는 부분
         # OS_pub_list = [int(OS_ID), False, waypointIndex, [wp_x], [wp_y],desired_spd, eta, eda, 0.5, 0.0, False, [], desired_spd, desired_heading, isNeedCA, ""]
@@ -432,7 +447,7 @@ def main():
             False, 
             0, 
             desired_spd, 
-            desired_heading, 
+            real_target_heading, 
             ]
 
         vis_pub_list = [
