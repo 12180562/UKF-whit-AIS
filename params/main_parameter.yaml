@@ -189,7 +189,7 @@ ship3_index : 10
 
 # param for static_OB
 
-delta_t : 30
+delta_t : 40
 detecting_radious : 100
 space_number : 20
 
