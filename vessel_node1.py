@@ -26,13 +26,13 @@ class data_inNout:
         rospy.Subscriber('/frm_info', frm_info, self.OP_callback) 
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
         # rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
-        rospy.Subscriber('/wpts_idx_os_kriso', wpt_idx_os, self.wp_idx_callback)
+        # rospy.Subscriber('/wpts_idx_os_kriso', wpt_idx_os, self.wp_idx_callback)
         # rospy.Subscriber('/ctrl_info_pknu', ctrl_output_pknu, self.wp_idx_callback)
 
         ############################ for connect with KRISO format ##################################
 
-        rospy.Subscriber('/Unavailiable_Area_info', group_boundary_info, self.static_unavailable_callback)
-        rospy.Subscriber('/Availiable_Area_info', group_boundary_info, self.static_available_callback)
+        # rospy.Subscriber('/Unavailiable_Area_info', group_boundary_info, self.static_unavailable_callback)
+        # rospy.Subscriber('/Availiable_Area_info', group_boundary_info, self.static_available_callback)
 
         ############################ for connect with KRISO format ##################################
 
@@ -44,14 +44,15 @@ class data_inNout:
         self.waypoint_idx = 0
         self.len_waypoint_info = 0
         self.waypoint_dict = dict()
-        self.ship1_index = rospy.get_param('ship1_index')
+        self.ts_spd_dict = dict()
+        # self.ship1_index = rospy.get_param('ship1_index')
         # self.index = rospy.get_param('index')
 
         self.TS_WP_index = []
         ############################ for connect with KRISO format ##################################
 
-        self.static_unavailable_info =[]
-        self.static_available_info =[]
+        # self.static_unavailable_info =[]
+        # self.static_available_info =[]
 
         ############################ for connect with KRISO format ##################################
         self.static_obstacle_info = []
@@ -101,8 +102,8 @@ class data_inNout:
         raw_psi = np.asanyarray(operation.m_fltHeading)
         self.Heading = raw_psi % 360
 
-    def wp_idx_callback(self, idx):
-        self.waypoint_idx = idx.m_idxWptOS
+    # def wp_idx_callback(self, idx):
+        # self.waypoint_idx = idx.m_idxWptOS
         # self.waypoint_idx = idx.i_way[self.ship1_index]
 
     # def static_OB_callback(self, static_OB):
@@ -112,49 +113,49 @@ class data_inNout:
 
         ############################ for connect with KRISO format ##################################
 
-    def static_unavailable_callback(self, static_OB):
-        self.len_static_obstacle_info = len(static_OB.group_boundary_info)
-        static_ob_list_x = []
-        static_ob_list_y = []
-        for i in range(self.len_static_obstacle_info):
-            static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
-            static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
+    # def static_unavailable_callback(self, static_OB):
+    #     self.len_static_obstacle_info = len(static_OB.group_boundary_info)
+    #     static_ob_list_x = []
+    #     static_ob_list_y = []
+    #     for i in range(self.len_static_obstacle_info):
+    #         static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
+    #         static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
             
-        static_ob_info = []
+    #     static_ob_info = []
         
-        for k in range(len(static_ob_list_x)):
-            for l in range(len(static_ob_list_x[k])):
-                if l == 0:
-                    pass
-                else:
-                    static_ob_info.append(static_ob_list_x[k][l-1])
-                    static_ob_info.append(static_ob_list_y[k][l-1])
-                    static_ob_info.append(static_ob_list_x[k][l])
-                    static_ob_info.append(static_ob_list_y[k][l])
+    #     for k in range(len(static_ob_list_x)):
+    #         for l in range(len(static_ob_list_x[k])):
+    #             if l == 0:
+    #                 pass
+    #             else:
+    #                 static_ob_info.append(static_ob_list_x[k][l-1])
+    #                 static_ob_info.append(static_ob_list_y[k][l-1])
+    #                 static_ob_info.append(static_ob_list_x[k][l])
+    #                 static_ob_info.append(static_ob_list_y[k][l])
                     
-        self.static_unavailable_info = static_ob_info
+    #     self.static_unavailable_info = static_ob_info
         
-    def static_available_callback(self, static_OB):
-        self.len_static_obstacle_info = len(static_OB.group_boundary_info)
-        static_ob_list_x = []
-        static_ob_list_y = []
-        for i in range(self.len_static_obstacle_info):
-            static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
-            static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
+    # def static_available_callback(self, static_OB):
+    #     self.len_static_obstacle_info = len(static_OB.group_boundary_info)
+    #     static_ob_list_x = []
+    #     static_ob_list_y = []
+    #     for i in range(self.len_static_obstacle_info):
+    #         static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
+    #         static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
         
-        static_ob_info = []
+    #     static_ob_info = []
         
-        for k in range(len(static_ob_list_x)):
-            for l in range(len(static_ob_list_x[k])):
-                if l == 0:
-                    pass
-                else:
-                    static_ob_info.append(static_ob_list_x[k][l-1])
-                    static_ob_info.append(static_ob_list_y[k][l-1])
-                    static_ob_info.append(static_ob_list_x[k][l])
-                    static_ob_info.append(static_ob_list_y[k][l])
+    #     for k in range(len(static_ob_list_x)):
+    #         for l in range(len(static_ob_list_x[k])):
+    #             if l == 0:
+    #                 pass
+    #             else:
+    #                 static_ob_info.append(static_ob_list_x[k][l-1])
+    #                 static_ob_info.append(static_ob_list_y[k][l-1])
+    #                 static_ob_info.append(static_ob_list_x[k][l])
+    #                 static_ob_info.append(static_ob_list_y[k][l])
                     
-        self.static_available_info = static_ob_info
+    #     self.static_available_info = static_ob_info
 
         ############################ for connect with KRISO format ##################################
 
@@ -254,12 +255,12 @@ def main():
     
     t = 0
     waypointIndex = 0
-    
+    targetspdIndex = 0    
 
     while not rospy.is_shutdown():
         Local_PP = VO_module()
         # Local_PP2 = VO_module2()
-        data.static_obstacle_info = data.static_unavailable_info + data.static_available_info
+        # data.static_obstacle_info = data.static_unavailable_info + data.static_available_info
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
@@ -285,12 +286,11 @@ def main():
             )                       # inha_module의 data 송신을 위해 필요한 함수들이 정의됨
 
 
-        print(data.waypoint_idx)
         ## <======== 서울대학교 전역경로를 위한 waypoint 수신 및 Local path의 goal로 처리
         wpts_x_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_x)
         wpts_y_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_y)
-        # Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]   
-        Local_goal = [wpts_x_os[data.waypoint_idx], wpts_y_os[data.waypoint_idx]]          # kriso
+        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]   
+        # Local_goal = [wpts_x_os[data.waypoint_idx], wpts_y_os[data.waypoint_idx]]          # kriso
         # Local_goal = [wpts_x_os[int(data.waypoint_idx)], wpts_y_os[int(data.waypoint_idx)]]          # 부경대
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
@@ -388,8 +388,8 @@ def main():
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
             
-            if distance <= rospy.get_param('timeHorizon'):
-                print(ts_ID,":",temp_enc, distance)
+            # if distance <= rospy.get_param('timeHorizon'):
+            #     print(ts_ID,":",temp_enc, distance)
 
         # print(TS_ENC_temp)
 
@@ -430,17 +430,21 @@ def main():
         wp_y = wp[1]
 
         if VO_operate:
-            pass
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list.append(temp_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[0]
+            desired_heading = desired_heading_list[0]
+        
         else:
             V_selected = V_des
-
-        eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
-        temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
-        desired_spd_list.append(temp_spd)
-        desired_heading_list.append(temp_heading_deg)
-
-        desired_spd = desired_spd_list[0]
-        desired_heading = desired_heading_list[0]
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[targetspdIndex]
+            desired_heading = desired_heading_list[0]
 
         if t%10 ==0:
             pass
@@ -472,9 +476,9 @@ def main():
         OS_pub_list = [
             int(OS_ID), 
             False,
-            # waypointIndex,
+            waypointIndex,
             # int(data.waypoint_idx), # 부경대 i_way
-            data.waypoint_idx, # kriso
+            # data.waypoint_idx, # kriso
             [wp_x], 
             [wp_y],  
             desired_spd_list, 
@@ -539,7 +543,9 @@ def main():
         if local_goal_EDA < 2 * ship_L :
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
-            data.waypoint_idx = (data.waypoint_idx + 1) % len(wpts_x_os)  # kriso 
+            waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
+            targetspdIndex = waypointIndex
+            # data.waypoint_idx = (data.waypoint_idx + 1) % len(wpts_x_os)  # kriso 
             # data.waypoint_idx = (int(data.waypoint_idx) + 1) % len(wpts_x_os) # 부경대
 
             # targetspdIndex = data.waypoint_idx

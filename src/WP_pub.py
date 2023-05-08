@@ -30,7 +30,7 @@ def main():
             wptsInfo[shipName].shipID = rospy.get_param("shipInfo_all/" + shipName + "_info/ship_ID")
             wptsInfo[shipName].wpts_x = rospy.get_param("waypoint_List/wpts_x_" + shipName)
             wptsInfo[shipName].wpts_y = rospy.get_param("waypoint_List/wpts_y_" + shipName)
-            # wptsInfo[shipName].target_spd = rospy.get_param("target_spd_List/target_speed_" + shipName)
+            wptsInfo[shipName].target_spd = rospy.get_param("target_spd_List/target_speed_" + shipName)
 
 
         topic.group_wpts_info = [wptsInfo[shipName] for shipName in shipsInfo.shipName_all]

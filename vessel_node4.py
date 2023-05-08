@@ -23,7 +23,9 @@ class data_inNout:
         # Subscriber = input
         rospy.Subscriber('/frm_info', frm_info, self.OP_callback) 
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
-        rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
+        # rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
+        # rospy.Subscriber('/wpts_idx_os_kriso', wpt_idx_os, self.wp_idx_callback)
+        # rospy.Subscriber('/ctrl_info_pknu', ctrl_output_pknu, self.wp_idx_callback)
 
         ############################ for connect with KRISO format ##################################
 
@@ -37,9 +39,12 @@ class data_inNout:
         self.VO_pub = rospy.Publisher('/VO4_info', VO_info, queue_size=10)
         self.Vis_pub = rospy.Publisher('/vis4_info', vis_info, queue_size=10)
         self.ship_ID = []
-
+        self.waypoint_idx = 0
         self.len_waypoint_info = 0
         self.waypoint_dict = dict()
+        self.ts_spd_dict = dict()
+        # self.ship1_index = rospy.get_param('ship1_index')
+        # self.index = rospy.get_param('index')
 
         self.TS_WP_index = []
         ############################ for connect with KRISO format ##################################
@@ -95,10 +100,11 @@ class data_inNout:
         raw_psi = np.asanyarray(operation.m_fltHeading)
         self.Heading = raw_psi % 360
 
-    def static_OB_callback(self, static_OB):
 
-        self.static_obstacle_info = static_OB.data
-        self.static_point_info = static_OB.point
+    # def static_OB_callback(self, static_OB):
+
+    #     self.static_obstacle_info = static_OB.data
+    #     self.static_point_info = static_OB.point
 
         ############################ for connect with KRISO format ##################################
 
@@ -275,8 +281,9 @@ def main():
         ## <======== 서울대학교 전역경로를 위한 waypoint 수신 및 Local path의 goal로 처리
         wpts_x_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_x)
         wpts_y_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_y)
-        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]           # waypoint list에서 1개의 waypoint 만을 추출
-        
+        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]   
+        # Local_goal = [wpts_x_os[data.waypoint_idx], wpts_y_os[data.waypoint_idx]]          # kriso
+        # Local_goal = [wpts_x_os[int(data.waypoint_idx)], wpts_y_os[int(data.waypoint_idx)]]          # 부경대
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
@@ -398,40 +405,44 @@ def main():
         wp_y = wp[1]
 
         if VO_operate:
-            pass
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list.append(temp_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[0]
+            desired_heading = desired_heading_list[0]
+        
         else:
             V_selected = V_des
-
-        eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
-        temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
-        desired_spd_list.append(temp_spd)
-        desired_heading_list.append(temp_heading_deg)
-
-        desired_spd = desired_spd_list[0]
-        desired_heading = desired_heading_list[0]
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[targetspdIndex]
+            desired_heading = desired_heading_list[0]
 
         if t%10 ==0:
             pass
 
         t += 1
 
-        if len(data.target_heading_list) != 6:
+        if len(data.target_heading_list) != rospy.get_param('filter_length'):
             data.target_heading_list.append(desired_heading)
         
         else:
             del data.target_heading_list[0]
 
         sum_of_heading = 0
+        real_target_heading = 0
         for i in data.target_heading_list:
             sum_of_heading = sum_of_heading + i
 
         if len(data.target_heading_list) >= 2:
             if data.target_heading_list[len(data.target_heading_list)-1]*data.target_heading_list[len(data.target_heading_list)-2] < 0:
                 data.target_heading_list = [data.target_heading_list[-1]]
+                real_target_heading = desired_heading
             else:
-                pass
-
-        real_target_heading = sum_of_heading/len(data.target_heading_list)
+                real_target_heading = sum_of_heading/len(data.target_heading_list)
 
         # # < =========  인하대 모듈에서 나온 데이터를 최종적으로 송신하는 부분
         # OS_pub_list = [int(OS_ID), False, waypointIndex, [wp_x], [wp_y],desired_spd, eta, eda, 0.5, 0.0, False, [], desired_spd, desired_heading, isNeedCA, ""]

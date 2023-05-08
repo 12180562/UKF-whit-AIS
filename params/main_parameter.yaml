@@ -226,19 +226,19 @@ shipInfo_all:
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
-  # ship3_info : {
-  #   ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
-  #   ship_B : 0.6,
-  #   ship_scale : 11.0,
-  #   ship_ID : 2002, ## 자선의 ship ID 정의
-  #   ship_domain_radius : 4.0,  # original
-  #   target_speed : 6.0,       #[knots]
-  #   initial_start_x : 35.0,    # [m]
-  #   initial_start_y : 20.0,    # [m]
-  #   initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
-  #   initial_start_psi : 45.0,   # [deg]
-  #   include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
-  # }
+  ship3_info : {
+    ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 0.6,
+    ship_scale : 11.0,
+    ship_ID : 2002, ## 자선의 ship ID 정의
+    ship_domain_radius : 4.0,  # original
+    target_speed : 6.0,       #[knots]
+    initial_start_x : 35.0,    # [m]
+    initial_start_y : 20.0,    # [m]
+    initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
+    initial_start_psi : 45.0,   # [deg]
+    include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+  }
 
   # ship4_info : {
   #   ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
@@ -284,12 +284,12 @@ waypoint_List: {
     0.0, 70.0, 70.0, 0.0,  #325, 50, 325, 450, 450
   ],
 
-  # wpts_x_ship3: [
-  #   50.0, 70.0, 50.0, 35.0,
-  # ],
-  # wpts_y_ship3: [
-  #   25.0, 20.0, -10.0, 10.0
-  # ],
+  wpts_x_ship3: [
+    50.0, 70.0, 50.0, 35.0,
+  ],
+  wpts_y_ship3: [
+    25.0, 20.0, -10.0, 10.0
+  ],
 
   # wpts_x_ship4: [
   #   50.0, 70.0, 50.0, 35.0,
@@ -308,15 +308,15 @@ waypoint_List: {
 
 target_spd_List: {
   target_speed_ship1: [
-    1.0, 1.0
+    1.0, 1.2, 1.0, 1.2,
     ],
 
   target_speed_ship2: [
-    1.0, 1.0
+    1.0, 0.6, 1.0, 0.6
     ],
 
   target_speed_ship3: [
-    1.0, 1.0
+    1.0, 1.0, 1.0, 1.0
     ],
 
   target_speed_ship4: [
@@ -326,4 +326,4 @@ target_spd_List: {
   target_speed_ship5: [
     1.0, 0.6
     ],
-}
+}   
