@@ -237,7 +237,7 @@ class CRI:
             elif 202.5 < HAD <= 292.5:
                 return "Starboard crossing"
             else:
-                if self.Vo > self.Vt:
+                if self.Vo >= self.Vt:
                     return "Overtaking"
                 else:
                     return "Safe"
@@ -272,14 +272,14 @@ class CRI:
             elif 202.5 < HAD <= 292.5:
                 return "Safe"
             else:
-                if self.Vo > self.Vt:
+                if self.Vo >= self.Vt:
                     return "Overtaking"
                 else:
                     return "Safe"
 
         else:
             if 0 <= HAD <= 67.5 or 292.5 <= HAD <= 360:
-                if self.Vt > self.Vo:
+                if self.Vt >= self.Vo:
                     return "Overtaken"
                 else:
                     return "Safe"

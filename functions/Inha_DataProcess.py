@@ -228,4 +228,6 @@ class Inha_dataProcess:
 
             TS_list[ts_ID]['CRI'] = cri_value
 
+            print(enc)
+
         return TS_list

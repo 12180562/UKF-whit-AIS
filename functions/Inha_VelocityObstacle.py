@@ -1788,11 +1788,11 @@ class VO_module:
                 in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
             '''
 
-            # if status == 'Safe' or status == 'Port crossing':
-            #     boundLineAngle_left_rad_global = OS['Heading'] + pi
-            #     boundLineAngle_right_rad_global = OS['Heading'] - pi
-            #     RVOapexPos_global = pA
-            #     LOSdist = 0
+            if status == 'Safe' or status == 'Port crossing':
+                boundLineAngle_left_rad_global = OS['Heading'] + pi
+                boundLineAngle_right_rad_global = OS['Heading'] - pi
+                RVOapexPos_global = pA
+                LOSdist = 0
 
             RVOdata = {
                 "TS_ID": ts_ID,
