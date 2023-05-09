@@ -90,20 +90,21 @@ class CRI:
         return result
 
     def dcpa(self):
-        result = self.RD() * sin(self.RC() - self.TB() - pi)
+        result = sqrt(pow(self.RD(), 2) + pow((self.tcpa() * self.RV()), 2))
         return result
 
     def d1(self):
         '''Safe approaching distance'''
-        RB = np.rad2deg(self.RB())
-        if 0 <= RB < 112.5:
-            result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
-        elif 112.5 <= RB < 180:
-            result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
-        elif 180 <= RB < 247.5:
-            result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
-        else:
-            result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
+        # RB = np.rad2deg(self.RB())
+        # if 0 <= RB < 112.5:
+        #     result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
+        # elif 112.5 <= RB < 180:
+        #     result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
+        # elif 180 <= RB < 247.5:
+        #     result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
+        # else:
+        #     result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
+        result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
         return result
 
     def d2(self):
@@ -375,7 +376,7 @@ class CRI:
 
     def Rp(self):
         SD = self.ship_domain()
-        result = SD[3] * 2
+        result = SD[3]
         return result
 
     #Ship domain distance
