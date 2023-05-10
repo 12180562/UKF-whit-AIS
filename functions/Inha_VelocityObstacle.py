@@ -214,7 +214,8 @@ class VO_module:
         self.weight_aggresiveness = rospy.get_param('weight_agressivness')
         self.cri_param = rospy.get_param('cri_param')
         self.time_horizon = rospy.get_param('timeHorizon')
-        
+
+        self.rule = rospy.get_param('Portside_rule')     
         
         
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
@@ -1787,12 +1788,14 @@ class VO_module:
 
                 in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
             '''
-
-            if status == 'Safe' or status == 'Port crossing':
-                boundLineAngle_left_rad_global = OS['Heading'] + pi
-                boundLineAngle_right_rad_global = OS['Heading'] - pi
-                RVOapexPos_global = pA
-                LOSdist = 0
+            if self.rule == True:
+                if status == 'Safe' or status == 'Port crossing':
+                    boundLineAngle_left_rad_global = OS['Heading'] + pi
+                    boundLineAngle_right_rad_global = OS['Heading'] - pi
+                    RVOapexPos_global = pA
+                    LOSdist = 0
+            else:
+                pass
 
             RVOdata = {
                 "TS_ID": ts_ID,
