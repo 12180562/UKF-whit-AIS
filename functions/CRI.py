@@ -196,17 +196,6 @@ class CRI:
         result = 1 / (1 + (2 / (self.K() * sqrt(pow(self.K(), 2) + 1 + (2 * self.K() * self.sinC())))))
         return result
 
-    def VCD(self):
-        RB = np.rad2deg(self.RB())
-        RB_list = []
-        RB_list.append(RB)
-        if len(RB_list) < 10:
-            result = 0
-        else:
-            result = (RB_list[9] - RB_list[0])
-
-        return result
-
     def CRI(self):
         '''충돌위험도지수, UDCPA, UTCPA, UD, UB, UK 5개의 파라미터에 가중치를 곱하여 계산'''
         result = 0.4 * self.UDCPA() + 0.367 * self.UTCPA() + 0.133 * self.UD() + 0.067 * self.UB() + 0.033 * self.UK()
@@ -224,10 +213,8 @@ class CRI:
             elif 202.5 < HAD <= 292.5:
                 return "Starboard crossing"
             else:
-                if self.Vo > self.Vt:
-                    return "Overtaking"
-                else:
-                    return "Safe"
+                return "Overtaking"
+
 
         elif 22.5 < RB <= 90:
             if 157.5 <= HAD <= 202.5:
@@ -237,10 +224,8 @@ class CRI:
             elif 202.5 < HAD <= 292.5:
                 return "Starboard crossing"
             else:
-                if self.Vo >= self.Vt:
-                    return "Overtaking"
-                else:
-                    return "Safe"
+                return "Overtaking"
+
 
         elif 90 < RB <= 112.5:
             if 67.5 <= HAD < 202.5:
@@ -248,10 +233,8 @@ class CRI:
             elif 202.5 < HAD <= 292.5:
                 return "Starboard crossing"
             else:
-                if self.Vo > self.Vt:
-                    return "Overtaking"
-                else:
-                    return "Overtaken"
+                return "Overtaking"
+
 
         elif 247.5 <= RB < 270:
             if 157.5 <= HAD <= 292.5:
@@ -259,10 +242,8 @@ class CRI:
             elif 67.5 <= HAD < 157.5:
                 return "Port crossing"
             else:
-                if self.Vo > self.Vt:
-                    return "Overtaking"
-                else:
-                    return "Overtaken"
+                return "Overtaking"
+
 
         elif 270 <= RB < 337.5:
             if 157.5 <= HAD <= 202.5:
@@ -272,15 +253,12 @@ class CRI:
             elif 202.5 < HAD <= 292.5:
                 return "Safe"
             else:
-                if self.Vo >= self.Vt:
-                    return "Overtaking"
-                else:
-                    return "Safe"
+                return "Overtaking"
 
         else:
             if 0 <= HAD <= 67.5 or 292.5 <= HAD <= 360:
-                if self.Vt >= self.Vo:
-                    return "Overtaken"
+                if self.Vt > self.Vo:
+                    return "Overtaking"
                 else:
                     return "Safe"
             else:
