@@ -153,8 +153,6 @@ update_rate: 10   ## rospy.Rate(update_rate)
 mmg_dt: 1
 ############################################
 
-CRI_ratio: 16.8364
-
 ########### 1852/110 ###########
 SD_param: 4
 cri_param: 150

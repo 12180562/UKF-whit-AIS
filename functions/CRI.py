@@ -264,47 +264,47 @@ class CRI:
             else:
                 return "Safe"
 
-    def PARK(self):
-        RB = np.rad2deg(self.RB())
-        RC = np.rad2deg(self.HAD())
-        Tp = rospy.get_param("Type_Factor/Container")
-        Tf = rospy.get_param("Ton_Factor/500t")
-        Lf1 = rospy.get_param("Length_Factor/70m")
-        Wf = rospy.get_param("Width_Factor/10m")
-        Caf = rospy.get_param("Career_Factor/1y")
-        Lf2 = rospy.get_param("License_factor/2nd")
-        Pf = rospy.get_param("Position_Factor/Captain")
-        L = self.L
+    # def PARK(self):
+    #     RB = np.rad2deg(self.RB())
+    #     RC = np.rad2deg(self.HAD())
+    #     Tp = rospy.get_param("Type_Factor/Container")
+    #     Tf = rospy.get_param("Ton_Factor/500t")
+    #     Lf1 = rospy.get_param("Length_Factor/70m")
+    #     Wf = rospy.get_param("Width_Factor/10m")
+    #     Caf = rospy.get_param("Career_Factor/1y")
+    #     Lf2 = rospy.get_param("License_factor/2nd")
+    #     Pf = rospy.get_param("Position_Factor/Captain")
+    #     L = self.L
         
-        if 22.5 <= RC <= 67.5:
-            Crf = rospy.get_param("Crossing_Factor/CR135")
-        elif 67.5 < RC <= 112.5:
-            Crf = rospy.get_param("Crossing_Factor/CR90")
-        elif 112.5 < RC <= 157.5:
-            Crf = rospy.get_param("Crossing_Factor/CR45")
-        else:
-            Crf = rospy.get_param("Crossing_Factor/HO")
+    #     if 22.5 <= RC <= 67.5:
+    #         Crf = rospy.get_param("Crossing_Factor/CR135")
+    #     elif 67.5 < RC <= 112.5:
+    #         Crf = rospy.get_param("Crossing_Factor/CR90")
+    #     elif 112.5 < RC <= 157.5:
+    #         Crf = rospy.get_param("Crossing_Factor/CR45")
+    #     else:
+    #         Crf = rospy.get_param("Crossing_Factor/HO")
 
         
-        if 10 <= RB < 180:
-            Sf = rospy.get_param("Side_Factor/Stbd")
-        else:
-            Sf = rospy.get_param("Side_Factor/Port")
+    #     if 10 <= RB < 180:
+    #         Sf = rospy.get_param("Side_Factor/Stbd")
+    #     else:
+    #         Sf = rospy.get_param("Side_Factor/Port")
         
-        H = rospy.get_param("Harbor_Factor/outer")
+    #     H = rospy.get_param("Harbor_Factor/outer")
         
-        if self.Vt > self.Vo:
-            Sp = rospy.get_param("Speed_Factor/TS")
-        elif self.Vt == self.Vo:
-            Sp = rospy.get_param("Speed_Factor/eq")
-        else:
-            Sp = rospy.get_param("Speed_Factor/OS")
+    #     if self.Vt > self.Vo:
+    #         Sp = rospy.get_param("Speed_Factor/TS")
+    #     elif self.Vt == self.Vo:
+    #         Sp = rospy.get_param("Speed_Factor/eq")
+    #     else:
+    #         Sp = rospy.get_param("Speed_Factor/OS")
         
-        Sd = abs(self.Vt - self.Vo) * 0.5144
-        D = self.RD() / 1852
+    #     Sd = abs(self.Vt - self.Vo) * 0.5144
+    #     D = self.RD() / 1852
 
-        result = 5.081905 + Tp + Tf + Lf1 + Wf + Caf + Lf2 + Pf - 0.002517 * L + Crf + Sf + H + Sp - 0.00493 * Sd - 0.43071 * D
-        return result
+    #     result = 5.081905 + Tp + Tf + Lf1 + Wf + Caf + Lf2 + Pf - 0.002517 * L + Crf + Sf + H + Sp - 0.00493 * Sd - 0.43071 * D
+    #     return result
 
     def CoE(self):
         '''Coefficients of encounter situations'''
