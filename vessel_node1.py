@@ -102,60 +102,53 @@ class data_inNout:
         raw_psi = np.asanyarray(operation.m_fltHeading)
         self.Heading = raw_psi % 360
 
-    # def wp_idx_callback(self, idx):
-        # self.waypoint_idx = idx.m_idxWptOS
-        # self.waypoint_idx = idx.i_way[self.ship1_index]
 
-    # def static_OB_callback(self, static_OB):
-
-    #     self.static_obstacle_info = static_OB.data
-    #     self.static_point_info = static_OB.point
 
         ############################ for connect with KRISO format ##################################
 
-    # def static_unavailable_callback(self, static_OB):
-    #     self.len_static_obstacle_info = len(static_OB.group_boundary_info)
-    #     static_ob_list_x = []
-    #     static_ob_list_y = []
-    #     for i in range(self.len_static_obstacle_info):
-    #         static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
-    #         static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
+    def static_unavailable_callback(self, static_OB):
+        self.len_static_obstacle_info = len(static_OB.group_boundary_info)
+        static_ob_list_x = []
+        static_ob_list_y = []
+        for i in range(self.len_static_obstacle_info):
+            static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
+            static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
             
-    #     static_ob_info = []
+        static_ob_info = []
         
-    #     for k in range(len(static_ob_list_x)):
-    #         for l in range(len(static_ob_list_x[k])):
-    #             if l == 0:
-    #                 pass
-    #             else:
-    #                 static_ob_info.append(static_ob_list_x[k][l-1])
-    #                 static_ob_info.append(static_ob_list_y[k][l-1])
-    #                 static_ob_info.append(static_ob_list_x[k][l])
-    #                 static_ob_info.append(static_ob_list_y[k][l])
+        for k in range(len(static_ob_list_x)):
+            for l in range(len(static_ob_list_x[k])):
+                if l == 0:
+                    pass
+                else:
+                    static_ob_info.append(static_ob_list_x[k][l-1])
+                    static_ob_info.append(static_ob_list_y[k][l-1])
+                    static_ob_info.append(static_ob_list_x[k][l])
+                    static_ob_info.append(static_ob_list_y[k][l])
                     
-    #     self.static_unavailable_info = static_ob_info
+        self.static_unavailable_info = static_ob_info
         
-    # def static_available_callback(self, static_OB):
-    #     self.len_static_obstacle_info = len(static_OB.group_boundary_info)
-    #     static_ob_list_x = []
-    #     static_ob_list_y = []
-    #     for i in range(self.len_static_obstacle_info):
-    #         static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
-    #         static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
+    def static_available_callback(self, static_OB):
+        self.len_static_obstacle_info = len(static_OB.group_boundary_info)
+        static_ob_list_x = []
+        static_ob_list_y = []
+        for i in range(self.len_static_obstacle_info):
+            static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
+            static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
         
-    #     static_ob_info = []
+        static_ob_info = []
         
-    #     for k in range(len(static_ob_list_x)):
-    #         for l in range(len(static_ob_list_x[k])):
-    #             if l == 0:
-    #                 pass
-    #             else:
-    #                 static_ob_info.append(static_ob_list_x[k][l-1])
-    #                 static_ob_info.append(static_ob_list_y[k][l-1])
-    #                 static_ob_info.append(static_ob_list_x[k][l])
-    #                 static_ob_info.append(static_ob_list_y[k][l])
+        for k in range(len(static_ob_list_x)):
+            for l in range(len(static_ob_list_x[k])):
+                if l == 0:
+                    pass
+                else:
+                    static_ob_info.append(static_ob_list_x[k][l-1])
+                    static_ob_info.append(static_ob_list_y[k][l-1])
+                    static_ob_info.append(static_ob_list_x[k][l])
+                    static_ob_info.append(static_ob_list_y[k][l])
                     
-    #     self.static_available_info = static_ob_info
+        self.static_available_info = static_ob_info
 
         ############################ for connect with KRISO format ##################################
 
@@ -224,15 +217,6 @@ def main():
 
     update_rate = rospy.get_param("update_rate")
     dt =  rospy.get_param("mmg_dt")
-
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    # path = "/home/phl/문서/" + timestr + ".csv"
-    path = "/home/ldh/simul_log/" + timestr + ".csv"
-    header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
-    file = open(path, 'a', newline='')
-    writer = csv.writer(file)
-    writer.writerow(header)
-
     node_Name = "vessel_node1"
     rospy.init_node("{}".format(node_Name), anonymous=False)    
     rate = rospy.Rate(update_rate) # 10 Hz renew
@@ -519,23 +503,6 @@ def main():
             pub_collision_cone
         ]
 
-        ship_dic2list = list(OS_list.values())
-
-        savedata_list = [
-            int(OS_ID),
-            ship_dic2list[1],
-            ship_dic2list[2],
-            wp_x,
-            wp_y,
-            ship_dic2list[3],
-            OS_Vx,
-            OS_Vy,
-            ship_dic2list[4],
-            desired_heading,
-        ]
-
-        writer.writerow(savedata_list)
-
         data.path_out_publish(OS_pub_list)   
         data.vis_out(vis_pub_list)
         data.cri_out(cri_pub_list)
@@ -557,8 +524,6 @@ def main():
         
         print("Loop end time: ", time.time() - startTime)
         print("================ Node 1 loop end ================\n")
-
-    file.close()
 
     rospy.spin()
 
