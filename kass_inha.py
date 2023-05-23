@@ -15,36 +15,37 @@ with open('/home/hyogeun/catkin_ws/src/kass_inha/params/main_parameter.yaml') as
     
 class data_inNout:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
-    def __init__(self,waypoint_info,frm_info,unavailable_info,available_info):
-        
-        self.available_info = available_info
-        self.unavailable_info = unavailable_info
-        self.waypoint_info = waypoint_info
-        self.frm_info = frm_info
+    def __init__(self):
+
+        self.available_info = dict()
+        self.unavailable_info = dict()
+        self.waypoint_info = dict()
+        self.frm_info = dict()
 
         ###   frm_info 정의 ###
-        self.m_nPacketCode = self.frm_info["m_nPacketCode"]
-        self.m_nShipID = self.frm_info["m_nShipID"]
-        self.m_fltHeading = self.frm_info["m_fltHeading"]
-        self.m_fltDriftangle = self.frm_info["m_fltDriftangle"]
-        self.m_fltShipTime = self.frm_info["m_fltShipTime"]
-        self.m_fltRudderAngleFeedPORT = self.frm_info["m_fltRudderAngleFeedPORT"]
-        self.m_fltRudderAngleFeedSTBD = self.frm_info["m_fltRudderAngleFeedSTBD"]
-        self.m_fltPropellerRPSFeedPORT = self.frm_info["m_fltPropellerRPSFeedPORT"]
-        self.m_fltPropellerRPSFeedSTBD = self.frm_info["m_fltPropellerRPSFeedSTBD"]
-        self.m_fltFOGvel_rollx = self.frm_info["m_fltFOGvel_rollx"]
-        self.m_fltFOGvel_pitchy = self.frm_info["m_fltFOGvel_pitchy"]
-        self.m_fltFOGvel_yawz = self.frm_info["m_fltFOGvel_yawz"]
-        self.m_fltFOGang_rollx = self.frm_info["m_fltFOGang_rollx"]
-        self.m_fltFOGang_pitchy = self.frm_info["m_fltFOGang_pitchy"]
-        self.m_fltFOGang_yawz = self.frm_info["m_fltFOGang_yawz"]
-        self.m_fltFOGvel_yawzG = self.frm_info["m_fltFOGvel_yawzG"]
-        self.m_fltFOGang_yawzG = self.frm_info["m_fltFOGang_yawzG"]
-        self.m_fltIncl_heelx = self.frm_info["m_fltIncl_heelx"]
-        self.m_fltIncl_trimy = self.frm_info["m_fltIncl_trimy"]
-        self.m_fltVel_U = self.frm_info["m_fltVel_U"]
-        self.m_fltPos_X = self.frm_info["m_fltPos_X"]
-        self.m_fltPos_Y = self.frm_info["m_fltPos_Y"]
+        self.m_nPacketCode = []
+        self.m_nShipID = []
+        self.m_fltHeading = []
+        self.m_fltDriftangle = []
+        self.m_fltShipTime = []
+        self.m_fltRudderAngleFeedPORT = []
+        self.m_fltRudderAngleFeedSTBD = []
+        self.m_fltPropellerRPSFeedPORT = []
+        self.m_fltPropellerRPSFeedSTBD = []
+        self.m_fltFOGvel_rollx = []
+        self.m_fltFOGvel_pitchy = []
+        self.m_fltFOGvel_yawz = []
+        self.m_fltFOGang_rollx = []
+        self.m_fltFOGang_pitchy = []
+        self.m_fltFOGang_yawz = []
+        self.m_fltFOGvel_yawzG = []
+        self.m_fltFOGang_yawzG = []
+        self.m_fltIncl_heelx = []
+        self.m_fltIncl_trimy = []
+        self.m_fltVel_U = []
+        self.m_fltPos_X = []
+        self.m_fltPos_Y = []
+        
         ### vessel_node init 정의 ###
         self.ship_ID = []
         self.waypoint_idx = 0
@@ -167,7 +168,37 @@ class data_inNout:
         return path_out_inha
         # print(self.WP_pub.publish(inha))
 
-    def main(self):  
+    def main(self,waypoint_info,frm_info,unavailable_info,available_info):  
+
+        self.available_info = available_info
+        self.unavailable_info = unavailable_info
+        self.waypoint_info = waypoint_info
+        self.frm_info = frm_info
+
+        ###   frm_info 정의 ###
+        self.m_nPacketCode = self.frm_info["m_nPacketCode"]
+        self.m_nShipID = self.frm_info["m_nShipID"]
+        self.m_fltHeading = self.frm_info["m_fltHeading"]
+        self.m_fltDriftangle = self.frm_info["m_fltDriftangle"]
+        self.m_fltShipTime = self.frm_info["m_fltShipTime"]
+        self.m_fltRudderAngleFeedPORT = self.frm_info["m_fltRudderAngleFeedPORT"]
+        self.m_fltRudderAngleFeedSTBD = self.frm_info["m_fltRudderAngleFeedSTBD"]
+        self.m_fltPropellerRPSFeedPORT = self.frm_info["m_fltPropellerRPSFeedPORT"]
+        self.m_fltPropellerRPSFeedSTBD = self.frm_info["m_fltPropellerRPSFeedSTBD"]
+        self.m_fltFOGvel_rollx = self.frm_info["m_fltFOGvel_rollx"]
+        self.m_fltFOGvel_pitchy = self.frm_info["m_fltFOGvel_pitchy"]
+        self.m_fltFOGvel_yawz = self.frm_info["m_fltFOGvel_yawz"]
+        self.m_fltFOGang_rollx = self.frm_info["m_fltFOGang_rollx"]
+        self.m_fltFOGang_pitchy = self.frm_info["m_fltFOGang_pitchy"]
+        self.m_fltFOGang_yawz = self.frm_info["m_fltFOGang_yawz"]
+        self.m_fltFOGvel_yawzG = self.frm_info["m_fltFOGvel_yawzG"]
+        self.m_fltFOGang_yawzG = self.frm_info["m_fltFOGang_yawzG"]
+        self.m_fltIncl_heelx = self.frm_info["m_fltIncl_heelx"]
+        self.m_fltIncl_trimy = self.frm_info["m_fltIncl_trimy"]
+        self.m_fltVel_U = self.frm_info["m_fltVel_U"]
+        self.m_fltPos_X = self.frm_info["m_fltPos_X"]
+        self.m_fltPos_Y = self.frm_info["m_fltPos_Y"]
+
         self.static_available_callback(self.available_info)
         self.static_unavailable_callback(self.unavailable_info)
         self.wp_callback(self.waypoint_info)
@@ -331,7 +362,6 @@ class data_inNout:
             self.static_obstacle_info,
             self.static_point_info
             )
-        print(V_selected)
 
         # V_selected2 = Local_PP2.RVO_update(
         #     OS_list,
@@ -432,8 +462,8 @@ class data_inNout:
         return path_out_inha
         
 
-unavailable = {"group_boundary_info":[]}
-available = {"group_boundary_info":[]}
+unavailable_info = {"group_boundary_info":[]}
+available_info = {"group_boundary_info":[]}
 frm_info = {"m_nPacketCode":0,
             "m_nShipID":["1000","2001"],
             "m_fltHeading":[0,90],
@@ -461,11 +491,11 @@ waypoint_info = {"group_wpts_info":[{"shipID":1000,"wpts_x":[200,0],"wpts_y":[0,
                                     {"shipID":2001,"wpts_x":[100,100],"wpts_y":[-100,100],"target_spd":[1.0,1.0]}]}
 t = 0
 
-position_matrix = np.array([0,0,0,0])
+position_matrix = np.array([0,0,100,100])
+data = data_inNout()
 
-while t != 100:
-    data = data_inNout(waypoint_info,frm_info,unavailable,available)
-    path_out_inha = data.main()
+while t != 200:
+    path_out_inha = data.main(waypoint_info,frm_info,unavailable_info,available_info)
     print(path_out_inha)
     frm_info = {"m_nPacketCode":0,
             "m_nShipID":["1000","2001"],
