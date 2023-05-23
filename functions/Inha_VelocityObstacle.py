@@ -6,7 +6,7 @@ import yaml
 
 
 
-with open('/home/phlmy/catkin_ws/src/kass_inha/params/main_parameter.yaml') as f:
+with open('/home/hyogeun/catkin_ws/src/kass_inha/params/main_parameter.yaml') as f:
     parameter = yaml.full_load(f)
     
 class VO_module:
@@ -609,7 +609,10 @@ class VO_module:
                     timeHorizon=RVOdata['CRI']*self.cri_param,
                     # timeHorizon=self.time_horizon
                     ):
+                    
+                    reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
 
+                else:
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
 
             reachableVel_global_all_annotated.append(reachableVel_global_annotated)

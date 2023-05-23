@@ -8,7 +8,7 @@ from math import sin, cos, pi, sqrt, atan2
 import numpy as np
 import yaml
 
-with open('/home/phlmy/catkin_ws/src/kass_inha/params/main_parameter.yaml') as f:
+with open('/home/hyogeun/catkin_ws/src/kass_inha/params/main_parameter.yaml') as f:
     parameter = yaml.full_load(f)
     
     
