@@ -4,7 +4,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from math import *
 import numpy as np
-import rospy
+# import rospy
 
 class CRI:
     def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt):

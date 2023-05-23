@@ -9,7 +9,7 @@ import numpy as np
 import yaml
 
 with open('/home/phlmy/catkin_ws/src/kass_inha/params/main_parameter.yaml') as f:
-    parameter = yaml.full_load(f)
+    paramter = yaml.load(f)
     
     
 
@@ -33,7 +33,7 @@ class Inha_dataProcess:
         self.waypoint_dict = waypoint_dict
 
         self.ship_dic= {}
-        self.SD_param = parameter['SD_param']   #rospy.get_param('SD_param')
+        self.SD_param = paramter['SD_param']   #rospy.get_param('SD_param')
 
     def ship_list_container(self, OS_ID):
         ''' 
@@ -90,9 +90,9 @@ class Inha_dataProcess:
 
     def CRI_cal(self, OS, TS):
         cri = CRI(
-            parameter['shipInfo_all']['ship1_info']['ship_L'],
+            paramter['shipInfo_all']['ship1_info']['ship_L'],
             #rospy.get_param("shipInfo_all/ship1_info/ship_L"),
-            parameter['shipInfo_all']['ship1_info']['ship_B'],
+            paramter['shipInfo_all']['ship1_info']['ship_B'],
             #rospy.get_param("shipInfo_all/ship1_info/ship_B"),
             OS['Pos_X'],
             OS['Pos_Y'],

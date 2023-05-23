@@ -173,6 +173,7 @@ class data_inNout:
         inha.targetCourse = round(pub_list[11], 3)
         
         self.WP_pub.publish(inha)
+        # print(self.WP_pub.publish(inha))
 
 
     def vis_out(self, pub_list):
@@ -474,7 +475,7 @@ def main():
             desired_spd, 
             real_target_heading, 
             ]
-
+        
         vis_pub_list = [
             int(OS_ID), 
             pub_collision_cone,
@@ -503,7 +504,7 @@ def main():
             pub_collision_cone
         ]
 
-        data.path_out_publish(OS_pub_list)   
+        data.path_out_publish(OS_pub_list)  
         data.vis_out(vis_pub_list)
         data.cri_out(cri_pub_list)
         data.vo_out(vo_pub_list)

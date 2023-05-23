@@ -2,8 +2,13 @@
 # -*- coding: utf-8 -*-
 from math import pi, cos, sin, atan2, asin, sqrt, tan
 import numpy as np
-import rospy
+import yaml
 
+
+
+with open('/home/phlmy/catkin_ws/src/kass_inha/params/main_parameter.yaml') as f:
+    parameter = yaml.full_load(f)
+    
 class VO_module:
     """
     This class contains the computations regarding RVO (Receiprocal Velocity Obstacle) to generate the best velocity vector for the ship to avoid the obstacles.
@@ -201,21 +206,21 @@ class VO_module:
         """
 
         # NOTE: It is not clear what min and max of speed could be.
-        self.min_targetSpeed = rospy.get_param('min_targetSpeed')
-        self.max_targetSpeed = rospy.get_param('max_targetSpeed')
-        self.num_targetSpeedCandidates = int(rospy.get_param('num_targetSpeedCandidates'))
+        self.min_targetSpeed = parameter['min_targetSpeed']
+        self.max_targetSpeed = parameter['max_targetSpeed']
+        self.num_targetSpeedCandidates = int(parameter['num_targetSpeedCandidates'])
 
         # NOTE: It is not clear what min and max of heading angle could be.
-        self.min_targetHeading_deg_local = rospy.get_param('min_targetHeading_deg_local')
-        self.max_targetHeading_deg_local = rospy.get_param('max_targetHeading_deg_local')
-        self.num_targetHeadingCandidates = int(rospy.get_param('num_targetHeadingCandidates'))
+        self.min_targetHeading_deg_local = parameter['min_targetHeading_deg_local']
+        self.max_targetHeading_deg_local = parameter['max_targetHeading_deg_local']
+        self.num_targetHeadingCandidates = int(parameter['num_targetHeadingCandidates'])
 
-        self.weight_alpha = rospy.get_param('weight_focusObs')  
-        self.weight_aggresiveness = rospy.get_param('weight_agressivness')
-        self.cri_param = rospy.get_param('cri_param')
-        self.time_horizon = rospy.get_param('timeHorizon')
+        self.weight_alpha = parameter['weight_focusObs']
+        self.weight_aggresiveness = parameter['weight_agressivness']
+        self.cri_param = parameter['cri_param']
+        self.time_horizon = parameter['timeHorizon']
 
-        self.rule = rospy.get_param('Portside_rule')     
+        self.rule = parameter['Portside_rule']  
         
         
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
@@ -1017,8 +1022,8 @@ class VO_module:
         static_point_data = static_point_info
         
         pA = np.array([OS['Pos_X'], OS['Pos_Y']])
-        delta_t = rospy.get_param("delta_t") # constant
-        detecting_radious = rospy.get_param("detecting_radious")
+        delta_t = parameter['delta_t'] # constant
+        detecting_radious = parameter['detecting_radious']
 
         #initial number for while
         obstacle_number = 0
@@ -1127,7 +1132,7 @@ class VO_module:
         return reachableVel_global_all
     
     def if_all_vector_collidable(self, OS, effective_static_OB, detecting_radious, reachableVel_global_all_copy):
-        space_number = rospy.get_param("space_number")
+        space_number = parameter['space_number']
         pA = [OS['Pos_X'], OS['Pos_Y']]
         vector_radian_plus = 0
         vector_radian_minus = 0
