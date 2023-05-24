@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import sys, os
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from math import *
 import numpy as np
 # import rospy
@@ -18,7 +15,7 @@ class CRI:
         self.Ct = Ct    #타선 Heading angle [rad]
         self.Vo = Vo    #자선 속도   [knots]
         self.Vt = Vt    #타선 속도   [knots]
-        self.ratio = 1852/110
+        self.ratio = 1  #1852/110
 
     def RD(self):
         '''Relative Distance, 자선과 타선 사이의 상대 거리'''

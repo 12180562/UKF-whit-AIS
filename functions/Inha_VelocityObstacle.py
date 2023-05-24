@@ -1,13 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 from math import pi, cos, sin, atan2, asin, sqrt, tan
 import numpy as np
 import yaml
 
-
-
-with open('/home/hyogeun/catkin_ws/src/kass_inha/params/main_parameter.yaml') as f:
-    parameter = yaml.full_load(f)
     
 class VO_module:
     """
@@ -206,21 +200,21 @@ class VO_module:
         """
 
         # NOTE: It is not clear what min and max of speed could be.
-        self.min_targetSpeed = parameter['min_targetSpeed']
-        self.max_targetSpeed = parameter['max_targetSpeed']
-        self.num_targetSpeedCandidates = int(parameter['num_targetSpeedCandidates'])
+        self.min_targetSpeed = 0.9
+        self.max_targetSpeed = 1.1
+        self.num_targetSpeedCandidates = 3
 
         # NOTE: It is not clear what min and max of heading angle could be.
-        self.min_targetHeading_deg_local = parameter['min_targetHeading_deg_local']
-        self.max_targetHeading_deg_local = parameter['max_targetHeading_deg_local']
-        self.num_targetHeadingCandidates = int(parameter['num_targetHeadingCandidates'])
+        self.min_targetHeading_deg_local = -45.0
+        self.max_targetHeading_deg_local = 45.0
+        self.num_targetHeadingCandidates = 19
 
-        self.weight_alpha = parameter['weight_focusObs']
-        self.weight_aggresiveness = parameter['weight_agressivness']
-        self.cri_param = parameter['cri_param']
-        self.time_horizon = parameter['timeHorizon']
+        self.weight_alpha = 1
+        self.weight_aggresiveness = 1
+        self.cri_param = 150
+        self.time_horizon = 30
 
-        self.rule = parameter['Portside_rule']  
+        self.rule = True  
         
         
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
@@ -1025,8 +1019,8 @@ class VO_module:
         static_point_data = static_point_info
         
         pA = np.array([OS['Pos_X'], OS['Pos_Y']])
-        delta_t = parameter['delta_t'] # constant
-        detecting_radious = parameter['detecting_radious']
+        delta_t = 40 # constant
+        detecting_radious = 100
 
         #initial number for while
         obstacle_number = 0
@@ -1135,7 +1129,7 @@ class VO_module:
         return reachableVel_global_all
     
     def if_all_vector_collidable(self, OS, effective_static_OB, detecting_radious, reachableVel_global_all_copy):
-        space_number = parameter['space_number']
+        space_number = 20
         pA = [OS['Pos_X'], OS['Pos_Y']]
         vector_radian_plus = 0
         vector_radian_minus = 0
@@ -1796,14 +1790,12 @@ class VO_module:
 
                 in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
             '''
-            if self.rule == True:
-                if status == 'Safe' or status == 'Port crossing':
-                    boundLineAngle_left_rad_global = OS['Heading'] + pi
-                    boundLineAngle_right_rad_global = OS['Heading'] - pi
-                    RVOapexPos_global = pA
-                    LOSdist = 0
-            else:
-                pass
+
+            if status == 'Safe':
+                boundLineAngle_left_rad_global = OS['Heading'] + pi
+                boundLineAngle_right_rad_global = OS['Heading'] - pi
+                RVOapexPos_global = pA
+
 
             RVOdata = {
                 "TS_ID": ts_ID,

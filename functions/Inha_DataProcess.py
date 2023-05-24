@@ -1,15 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.CRI import CRI
 from numpy import deg2rad, rad2deg
 from math import sin, cos, pi, sqrt, atan2
 import numpy as np
-import yaml
-
-with open('/home/hyogeun/catkin_ws/src/kass_inha/params/main_parameter.yaml') as f:
-    parameter = yaml.full_load(f)
     
     
 
@@ -33,7 +27,7 @@ class Inha_dataProcess:
         self.waypoint_dict = waypoint_dict
 
         self.ship_dic= {}
-        self.SD_param = parameter['SD_param']   #rospy.get_param('SD_param')
+        self.SD_param = 4   #rospy.get_param('SD_param')
 
     def ship_list_container(self, OS_ID):
         ''' 
@@ -90,9 +84,9 @@ class Inha_dataProcess:
 
     def CRI_cal(self, OS, TS):
         cri = CRI(
-            parameter['shipInfo_all']['ship1_info']['ship_L'],
+            2.0,
             #rospy.get_param("shipInfo_all/ship1_info/ship_L"),
-            parameter['shipInfo_all']['ship1_info']['ship_B'],
+            0.6,
             #rospy.get_param("shipInfo_all/ship1_info/ship_B"),
             OS['Pos_X'],
             OS['Pos_Y'],

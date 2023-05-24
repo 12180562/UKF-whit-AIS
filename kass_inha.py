@@ -5,11 +5,11 @@ from math import sqrt, atan2,cos,sin,pi
 from numpy import rad2deg
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import time
 import yaml
 
-with open('/home/hyogeun/catkin_ws/src/kass_inha/params/main_parameter.yaml') as f:
+with open('./etc/main_parameter.yaml') as f:
     parameter = yaml.full_load(f)
     
     
@@ -168,7 +168,7 @@ class data_inNout:
         return path_out_inha
         # print(self.WP_pub.publish(inha))
 
-    def main(self,waypoint_info,frm_info,unavailable_info,available_info):  
+    def path_out(self,waypoint_info,frm_info,unavailable_info,available_info):  
 
         self.available_info = available_info
         self.unavailable_info = unavailable_info
@@ -211,19 +211,14 @@ class data_inNout:
         # 자선의 정보
         OS_scale = parameter["shipInfo_all"]["ship1_info"]["ship_scale"]
         target_speed = parameter["shipInfo_all"]["ship1_info"]["target_speed"]  * 0.5144 / sqrt(OS_scale)
-        ship_L = parameter["shipInfo_all"]["ship1_info"]["ship_L"] ## 향후 이부분은, 1) ship domain과 2) AIS data의 선박의 길이 부분으로 나누어 고려 및 받아야 함!
+        ship_L = parameter["shipInfo_all"]["ship1_info"]["ship_L"]
         
-        # # !----- 설문조사에서는 충돌회피 시점은 12m 어선 기준으로 일반적으론 HO 3nm/ CS & OT 2nm을 기준으로 하고 있으며, 최소 안전 이격거리는 0.5~ 1nm으로 조사됨
-        # # 다만, 2m급 모형선 테스트에서는 협소한 부분이 있으므로 스케일 다운(1/200)을 시켜서, "회피시점: 0.0015nm(27.78m) / 최소 안전 이격거리는 9.26m"가 되게끔 할 예정
-        # # 참고 논문: https://www.koreascience.or.kr/article/JAKO201427542599696.pdf 
         
         t = 0
         waypointIndex = 0
         targetspdIndex = 0    
 
         Local_PP = VO_module()
-        # Local_PP2 = VO_module2()
-        # data.static_obstacle_info = data.static_unavailable_info + data.static_available_info
 
         startTime = time.time()
 
@@ -234,7 +229,7 @@ class data_inNout:
             self.Vel_U, 
             self.Heading, 
             self.waypoint_dict,
-            )                       # inha_module의 data 송신을 위해 필요한 함수들이 정의됨
+            )
 
 
         ## <======== 서울대학교 전역경로를 위한 waypoint 수신 및 Local path의 goal로 처리
@@ -460,74 +455,6 @@ class data_inNout:
         print("================ Node 1 loop end ================\n")
 
         return path_out_inha
-        
 
-unavailable_info = {"group_boundary_info":[]}
-available_info = {"group_boundary_info":[]}
-frm_info = {"m_nPacketCode":0,
-            "m_nShipID":["1000","2001"],
-            "m_fltHeading":[0,90],
-            "m_fltDriftangle":[0,0],
-            "m_fltShipTime":[0,0],
-            "m_fltRudderAngleFeedPORT":[0,0],
-            "m_fltRudderAngleFeedSTBD":[0,0],
-            "m_fltPropellerRPSFeedPORT":[0,0],
-            "m_fltPropellerRPSFeedSTBD":[0,0],
-            "m_fltFOGvel_rollx":[0,0],
-            "m_fltFOGvel_pitchy":[0,0],
-            "m_fltFOGvel_yawz":[0,0],
-            "m_fltFOGang_rollx":[0,0],
-            "m_fltFOGang_pitchy":[0,0],
-            "m_fltFOGang_yawz":[0,0],
-            "m_fltFOGvel_yawzG":[0,0],
-            "m_fltFOGang_yawzG":[0,0],
-            "m_fltIncl_heelx":[0,0],
-            "m_fltIncl_trimy":[0,0],
-            "m_fltVel_U":[1,1],
-            "m_fltPos_X":[0,100],
-            "m_fltPos_Y":[0,100]}
-
-waypoint_info = {"group_wpts_info":[{"shipID":1000,"wpts_x":[200,0],"wpts_y":[0,0],"target_spd":[1.0,1.0]},
-                                    {"shipID":2001,"wpts_x":[100,100],"wpts_y":[-100,100],"target_spd":[1.0,1.0]}]}
-t = 0
-
-position_matrix = np.array([0,0,100,100])
-data = data_inNout()
-
-while t != 200:
-    path_out_inha = data.main(waypoint_info,frm_info,unavailable_info,available_info)
-    print(path_out_inha)
-    frm_info = {"m_nPacketCode":0,
-            "m_nShipID":["1000","2001"],
-            "m_fltHeading":[path_out_inha['targetCourse'],-90],
-            "m_fltDriftangle":[0,0],
-            "m_fltShipTime":[0,0],
-            "m_fltRudderAngleFeedPORT":[0,0],
-            "m_fltRudderAngleFeedSTBD":[0,0],
-            "m_fltPropellerRPSFeedPORT":[0,0],
-            "m_fltPropellerRPSFeedSTBD":[0,0],
-            "m_fltFOGvel_rollx":[0,0],
-            "m_fltFOGvel_pitchy":[0,0],
-            "m_fltFOGvel_yawz":[0,0],
-            "m_fltFOGang_rollx":[0,0],
-            "m_fltFOGang_pitchy":[0,0],
-            "m_fltFOGang_yawz":[0,0],
-            "m_fltFOGvel_yawzG":[0,0],
-            "m_fltFOGang_yawzG":[0,0],
-            "m_fltIncl_heelx":[0,0],
-            "m_fltIncl_trimy":[0,0],
-            "m_fltVel_U":[path_out_inha['targetSpeed'],1],
-            "m_fltPos_X":[frm_info["m_fltPos_X"][0]+path_out_inha['targetSpeed']*cos(path_out_inha['targetCourse']*pi/180),frm_info["m_fltPos_X"][1]+cos(frm_info["m_fltHeading"][1]*pi/180)],
-            "m_fltPos_Y":[frm_info["m_fltPos_Y"][0]+path_out_inha['targetSpeed']*sin(path_out_inha['targetCourse']*pi/180),frm_info["m_fltPos_Y"][1]+sin(frm_info["m_fltHeading"][1]*pi/180)]}
-    
-    new_position_matrix = np.array([frm_info["m_fltPos_X"][0],frm_info["m_fltPos_Y"][0],frm_info["m_fltPos_X"][1],frm_info["m_fltPos_Y"][1]])
-    position_matrix = np.vstack([position_matrix,new_position_matrix])
-
-    t = t+1
-
-plt.figure()
-plt.scatter(position_matrix[:,0],position_matrix[:,1],color = 'r')
-plt.scatter(position_matrix[:,2],position_matrix[:,3],color = 'b')
-plt.show()
 
         
