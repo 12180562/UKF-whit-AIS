@@ -424,8 +424,6 @@ class Inha_dataProcess:
                     'Vel_U' : self.Vel_U[i],
                     'Heading' : self.Heading[i],
                     }
-        # print(self.ship_dic[index_ship])
-        # print(self.ship_ID)
         return self.ship_dic, self.ship_ID
 
     def classify_OS_TS(self, ship_dic, ship_ID, OS_ID):
@@ -447,7 +445,7 @@ class Inha_dataProcess:
             TS_list = ship_dic.copy()
             # FIXME: `OS_ID` does not exist in `TS_list` when processing TSs? The `OS_ID` is not the "OS"????
             del(TS_list[OS_ID])
-        # print(TS_list)
+            
         return OS_list, TS_list
 
     def CRI_cal(self, OS, TS):
@@ -597,7 +595,6 @@ class Inha_dataProcess:
 
             TS_list[ts_ID]['CRI'] = cri_value
 
-            # print(enc)
 
         return TS_list
     
@@ -1600,7 +1597,7 @@ class VO_module:
         """
 
         reachableVel_global_all_after_obstacle = self.__delete_vector_inside_obstacle(reachableVel_global_all, OS, static_obstacle_info,static_point_info)
-        print("number of vector:",len(reachableVel_global_all_after_obstacle))
+        
 
         return reachableVel_global_all_after_obstacle
 
@@ -1790,7 +1787,6 @@ class VO_module:
                     pass
 
             if len(detecting_vector_list) == 0:
-                print("all the vector is collidable")
                 reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
 
             else:
@@ -2677,7 +2673,7 @@ class data_inNout:
         path_out_inha['targetCourse'] = round(pub_list[11], 3)
         
         return path_out_inha
-        # print(self.WP_pub.publish(inha))
+
 
     def path_out(self,waypoint_info,frm_info,unavailable_info,available_info):  
 
@@ -2844,11 +2840,6 @@ class data_inNout:
             TS_ENC_temp.append(temp_enc)
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
-            
-            if distance <= 20:
-                print(ts_ID,":",temp_enc, distance)
-
-        # print(TS_ENC_temp)
 
 
         # NOTE: `VO_update()` takes the majority of the computation time
@@ -2875,7 +2866,6 @@ class data_inNout:
         #     V_des,
         # )
 
-        # print(V_selected2)
 
         # TODO: Reduce the computation time for this part (~timeChckpt4_vesselNode)
         desired_spd_list = []
@@ -2962,8 +2952,6 @@ class data_inNout:
             # waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             # targetspdIndex = waypointIndex
         
-        print("Loop end time: ", time.time() - startTime)
-        print("================ Node 1 loop end ================\n")
 
         return path_out_inha
 

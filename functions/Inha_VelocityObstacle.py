@@ -1002,7 +1002,7 @@ class VO_module:
         """
 
         reachableVel_global_all_after_obstacle = self.__delete_vector_inside_obstacle(reachableVel_global_all, OS, static_obstacle_info,static_point_info)
-        print("number of vector:",len(reachableVel_global_all_after_obstacle))
+        # print("number of vector:",len(reachableVel_global_all_after_obstacle))
 
         return reachableVel_global_all_after_obstacle
 
@@ -1192,7 +1192,7 @@ class VO_module:
                     pass
 
             if len(detecting_vector_list) == 0:
-                print("all the vector is collidable")
+                # print("all the vector is collidable")
                 reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
 
             else:
