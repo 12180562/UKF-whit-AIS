@@ -3,7 +3,17 @@ from math import *
 from numpy import rad2deg
 
 import numpy as np
-import time
+import json
+
+
+def setParamUpdate():
+    with open("parameter.json", 'r') as param:
+        Update_parameter = json.load(param)
+        
+    parameter = Update_parameter
+    
+    print(parameter)
+    return parameter
 
 
 
@@ -386,57 +396,57 @@ class Inha_dataProcess:
             }
         return TS_list
 
-    def ship_list_container(self, OS_ID):
-        ''' 
-            Subscribe한 선박의 항해정보를 dictionary로 저장 
+    # def ship_list_container(self, OS_ID):
+    #     ''' 
+    #         Subscribe한 선박의 항해정보를 dictionary로 저장 
         
-            Return : 
-                ship_list_dic
-                ship_ID 
-        '''
-        for i in range(len(self.ship_ID)):
-            index_ship = self.ship_ID[i]
-            if index_ship == OS_ID:
-                self.ship_dic[OS_ID]= {
-                    'Ship_ID' : int(self.ship_ID[i]),
-                    'Pos_X' : self.Pos_X[i],
-                    'Pos_Y' : self.Pos_Y[i],
-                    'Vel_U' : self.Vel_U[i],
-                    'Heading' : self.Heading[i],
-                    }
+    #         Return : 
+    #             ship_list_dic
+    #             ship_ID 
+    #     '''
+    #     for i in range(len(self.ship_ID)):
+    #         index_ship = self.ship_ID[i]
+    #         if index_ship == OS_ID:
+    #             self.ship_dic[OS_ID]= {
+    #                 'Ship_ID' : int(self.ship_ID[i]),
+    #                 'Pos_X' : self.Pos_X[i],
+    #                 'Pos_Y' : self.Pos_Y[i],
+    #                 'Vel_U' : self.Vel_U[i],
+    #                 'Heading' : self.Heading[i],
+    #                 }
 
-            else:
-                self.ship_dic[index_ship]= {
-                    'Ship_ID' : int(self.ship_ID[i]),
-                    'Pos_X' : self.Pos_X[i],
-                    'Pos_Y' : self.Pos_Y[i],
-                    'Vel_U' : self.Vel_U[i],
-                    'Heading' : self.Heading[i],
-                    }
+    #         else:
+    #             self.ship_dic[index_ship]= {
+    #                 'Ship_ID' : int(self.ship_ID[i]),
+    #                 'Pos_X' : self.Pos_X[i],
+    #                 'Pos_Y' : self.Pos_Y[i],
+    #                 'Vel_U' : self.Vel_U[i],
+    #                 'Heading' : self.Heading[i],
+    #                 }
 
-        return self.ship_dic, self.ship_ID
+    #     return self.ship_dic, self.ship_ID
 
-    def classify_OS_TS(self, ship_dic, ship_ID, OS_ID):
-        ''' 자선과 타선의 운항정보 분리
+    # def classify_OS_TS(self, ship_dic, ship_ID, OS_ID):
+    #     ''' 자선과 타선의 운항정보 분리
         
-        Return :
-            OS_list, TS_list // (dataframe)
-        '''
-        if len(ship_ID) == 1:
-            OS_list = ship_dic[OS_ID]
-            TS_list = None
+    #     Return :
+    #         OS_list, TS_list // (dataframe)
+    #     '''
+    #     if len(ship_ID) == 1:
+    #         OS_list = ship_dic[OS_ID]
+    #         TS_list = None
 
-        else:
-            for i in range(len(ship_ID)):
-                if ship_ID[i] == OS_ID:
-                    OS_list = ship_dic[OS_ID]
+    #     else:
+    #         for i in range(len(ship_ID)):
+    #             if ship_ID[i] == OS_ID:
+    #                 OS_list = ship_dic[OS_ID]
 
             
-            TS_list = ship_dic.copy()
-            # FIXME: `OS_ID` does not exist in `TS_list` when processing TSs? The `OS_ID` is not the "OS"????
-            del(TS_list[OS_ID])
+    #         TS_list = ship_dic.copy()
+    #         # FIXME: `OS_ID` does not exist in `TS_list` when processing TSs? The `OS_ID` is not the "OS"????
+    #         del(TS_list[OS_ID])
 
-        return OS_list, TS_list
+    #     return OS_list, TS_list
 
     def CRI_cal(self, OS, TS):
         cri = CRI(
@@ -497,61 +507,65 @@ class Inha_dataProcess:
 
         return V_x, V_y
 
-    def waypoint_generator(self, OS, V_selected, dt):
+    def waypoint_generator(self, OS, V_selected):
         ''' `V_des` 방향 벡터를 기준으로 1초뒤 point를 waypoint 생성
         
         Return :
-            wp_x, wp_y [m]
+            V_des_x, V_des_y [m]
         '''
-
+        V_des_x = []
+        V_des_y = []
         OS_X = np.array([OS['Pos_X'], OS['Pos_Y']])
+        for i in range(1, 16):
+            V_des = OS_X + V_selected * np.array([i])
+            
+            V_des_x.append(V_des[0]) 
+            V_des_y.append(V_des[1])
 
-        wp = OS_X + V_selected * dt
-
-        wp_x = wp[0]
-        wp_y = wp[1]
-
-        return wp_x, wp_y
+        return V_des_x, V_des_y
 
     def eta_eda_assumption(self, WP, OS, target_U):
         ''' 목적지까지 도달 예상 시간 및 거리
         
         Return:
             eta [t], eda [m]
-        '''
-        OS_X = np.array([OS['Pos_X'], OS['Pos_Y']])
+        '''       
+        eta = []
+        eda = []
+        for i in range(15):
+            eda_x = WP[0][i] - OS['Pos_X']
+            eda_y = WP[1][i] - OS['Pos_Y']
+            distance = sqrt(eda_x**2 + eda_y**2)
+            eda.append(round(distance, 3))
+            time = distance / target_U
+            eta.append(round(time, 3))
+        # else:
+        #     OS_X = np.array([OS['Pos_X'], OS['Pos_Y']])
+        #     distance = np.linalg.norm(WP - OS_X)
 
-        distance = np.linalg.norm(WP - OS_X)
-
-        eta = distance/ target_U
-        eda = distance
+        #     eta = distance/ target_U
+        #     eda = distance
+        
 
         return eta, eda
 
     def desired_value_assumption(self, V_des):
-        ''' 목적지까지 향하기 위한 Desired heading angle
         
-        Return :
-            desired_speed [m/s], desired_heading [deg]
-        '''
         U_des = sqrt(V_des[0]**2 + V_des[1]**2)
-        target_head = rad2deg(atan2(V_des[1], V_des[0])) ## NED 좌표계 기준으로 목적지를 바라보는 방향각
-
+        target_head = rad2deg(atan2(V_des[1], V_des[0]))
         desired_heading = target_head        
         desired_spd = U_des
+        
+        desired_spd_list = []
+        desired_heading_list = []
+                
+        for i in range(15):
+            desired_heading_list.append(desired_heading)
+            desired_spd_list.append(desired_spd)      
 
-        return desired_spd, desired_heading
+        return desired_spd_list, desired_heading_list
 
     def TS_info_supplement(self, OS_list, TS_list):   
-        """ TS에 대한 추가적인 information 생성 
-
-        Returns:  
-            TS_info : pandas dataframe
-
-        Note : 
-            TS list =  {'Ship_ID': [], 'Pos_X' : [],  'Pos_Y' : [],   'Vel_U' : [],   'Heading' : [], 'V_x' : [], 'V_y' : [], 
-                        'radius' : [], 'RD' : [], 'RB' : [],'RC' : [], 'local_rc' : [], 'status' : []}
-        """
 
         TS_ID = TS_list.keys()
         for ts_ID in TS_ID:
@@ -588,201 +602,7 @@ class Inha_dataProcess:
 
 
 class VO_module:
-    """
-    This class contains the computations regarding RVO (Receiprocal Velocity Obstacle) to generate the best velocity vector for the ship to avoid the obstacles.
-
-    Attributes:
-
-        min_targetSpeed:
-            - Unit: m/s
-            - The minimum speed that the ship can have.
-
-        max_targetSpeed:
-            - Unit: m/s
-            - The maximum speed that the ship can have.
-
-        num_targetSpeedCandidates:
-            - Integer
-            - The number of the candidates of the ship speed that the ship can have at the moment.
-            - It is to generate the reachble range of the velocity candidates
-
-        min_targetHeading_deg_local:
-            - Unit: deg.
-            - The minimum heading angle that the ship can have at the moment.
-            - 0: Global heading angle of the ship
-            - +: Counterclockwise in x-y coordinates, clockwise in y-x coordinates.
-            - -: Colckwise in x-y coordinates, counterclockwise in y-x coordinates.
-
-        max_targetHeading_deg_local:
-            - Unit: deg.
-            - The minimum heading angle that the ship can have at the moment.
-            - 0: Global heading angle of the ship
-            - +: Counterclockwise in x-y coordinates, clockwise in y-x coordinates.
-            - -: Colckwise in x-y coordinates, counterclockwise in y-x coordinates.
-
-        num_targetHeadingCandidates:
-            - Integer
-            - The number of the candidates of the heading angle that the ship can have at the moment.
-            - It is to generate the reachble range of the velocity candidates.
-
-        weight_alpha: 
-            - Range: 0 < weight_alpha <= 1
-            - The weight for the effort that agent A takes to avoid agent B.
-            - The lower weight_alpha makes the later start of the avoidance action.
-            - >> 0: Nothing action to avoid. Does not consider agent B at all.
-            - 1: The same as VO. It considers the agnet B completely.
-            - More detail, see the section "IV. RECIPROCAL VELOCITY OBSTACLE" in the paper "Reciprocal Velocity Obstacles for Real-time Multi-Agent Naviagation".
-
-        weight_aggresiveness:
-            - Range: 0 < weight_aggresiveness <= 1
-            - This weight is activated when there's no avoidance velocities among the velocity candidates.
-            - This weight represents the extent how much you want the OS having "avoiding behavior" when there's no collision avoidance velocity.
-            - >> 0: Keep the course
-            - 1: Give up your course and focus on the most dangerous obstacle.
-            - More detail, see the section "IV. RECIPROCAL VELOCITY OBSTACLE" in the paper "Reciprocal Velocity Obstacles for Real-time Multi-Agent Naviagation"
-    
-    Private methods:
-
-        __is_all_vels_collidable(slef, vel_all_annotated, shipID_all):
-            - If all the velocity candiates are in collision cone it returns `True`. Otherwise, it returns `False`.
-
-        __is_all_vels_avoidable(self, vel_all_annotated, shipID_all):
-            - If all the velocity candidates are out of the collision cone it returns `True`. Otherwise, it returns `False`.
-
-        __include_mappedTSradius(self, OS, TS):
-            - It inserts the mapped radius of the TS (OS radius + TS radius) into the TS dictionary
-
-        __remove_annotation(self, vel_annotated_dict_all)
-            - It removes the annotations and takes only velocities from the dictionary of the set of velocities and annotations where the annotation is the indication of going left/right, in time horizon, and going into collision cone.
-
-        __annotate_vels(self, reachableVel_global_all, RVOdata_all):
-            - It gives the annotation (in left / in right / in time horizon / in collision cone) for each velocity.
-
-        __take_vels(self, vel_all_annotated, annotation, shipID_all):
-            - It takes the velocities that contains specific annotation (in left / in right / in time horizon / in collision cone).
-        
-        __is_in_between(self, theta_given, theta_left, theta_right):
-            - It returns `True` if a given angle is between two specific angles. Otherwise, it returns `False`
-
-        __is_in_left(
-            self,  
-            velVecAngle_rad_global, 
-            boundLineAngle_left_rad_global, 
-            boundLineAngle_right_rad_global, 
-            LOSangle_rad_global,
-            ): It returns `True` if the velocity vector is pointing out the left side that will not cause any collision. Otherwise, it returns `False`.
-
-        __is_in_right(
-            self, 
-            velVecAngle_rad_global, 
-            boundLineAngle_left_rad_global, 
-            boundLineAngle_right_rad_global, 
-            LOSangle_rad_global,
-            ): It returns `True` if the velocity vector is pointing out the right side that will not cause any collision. Otherwise, it returns `False`.
-
-        __is_within_time_horizon(
-            self, 
-            velVecAngle_rad_global, 
-            boundLineAngle_left_rad_global, 
-            boundLineAngle_right_rad_global, 
-            velVecNorm,
-            shortestRelativeDist, 
-            timeHorizon,
-            ): It returns `True` if the velocity vector is within time horizon. Otherwise, it returns `False`.
-
-        __is_in_collision_cone(
-            self, 
-            velVecNorm,
-            velVecAngle_rad_global, 
-            boundLineAngle_left_rad_global, 
-            boundLineAngle_right_rad_global, 
-            shortestRelativeDist, 
-            timeHorizon,
-            ): It returns `True` if the velocity vector is within collision cone. Otherwise, it returns `False`.
-
-        __generate_vel_candidates(self, targetSpeed_all, targetHeading_rad_global_all):
-            - It generates the velocity candidates based on given speeds and heading angles.
-
-        __select_vel_inside_RVOs(self, reachableCollisionVel_global_all, RVOdata_all, V_des):
-            - It selects the best velocity based on the RVO formulation when all the velocity candidates are causing collisions. 
-
-        __choose_velocity(self, V_des, RVOdata_all, OS, TS): 
-            - It chooses the best velocity for the collision avoidance task.
-
-        __extract_RVO_data(self, OS, TS, static_OB):
-            - It generates a container that contains the data for RVO formulation.
-
-    Public methods:
-
-        VO_update(self, OS_original, TS_original, static_OB, V_des):   
-            - It computes the velocity selection and returns selected velocity and collision cone information from the current state of the ships.
-        
-        vectorV_to_goal(self, OS, goal, V_max):
-            - It returns the velocity towards the next waypoint regardless of the ship's current state. The velocity is limited by the given maximum speed (Target speed).
-
-    """
     def __init__(self):
-        """
-        It loads the hyperparameters from `/params/main_parameter.yaml` for the computation in RVO formulation to select the velocity 
-
-        params:
-
-            min_targetSpeed: 
-                - Unit: m/s
-                - The assumed minimum speed that the ship can have at the moment.
-            
-            max_targetSpeed: 
-                - Unit: m/s
-                - The assumed maximum speed that the ship can have at the mement.
-            
-            num_targetSpeedCandidates:
-                - Integer
-                - The number of the candidates of the speed that the ship can have at the moment.
-                - It is for the generation of a set of velocity candidates.
-
-            min_targetHeading_deg_local:
-                - Unit: deg.
-                - The assumed minimum heading angle the the ship can have at the moment.
-                - 0: Global heading angle of the ship.
-                - +: Counterclockwise on x-y coordinates, clockwise on y-x coordinates.
-                - -: Clockwise on x-y coordinates, counterclockwise on y-x coordinates.
-
-            max_targetHeading_deg_local:
-                - Unit: deg.
-                - The assumed maximum heading angle the the ship can have at the moment.
-                - 0: Global heading angle of the ship.
-                - +: Counterclockwise on x-y coordinates, clockwise on y-x coordinates.
-                - -: Clockwise on x-y coordinates, counterclockwise on y-x coordinates.
-            
-            num_targetHeadingCandidates:
-                - Integer
-                - The number of candidates of the heading angle that the ship can have at the moment.
-                - It is for the generation of a set of velocity candidates.
-
-            weight_alpha:
-                - Range: 0 < weight_focusObs <= 1
-                - The weight for the effort agent A takes to avoid agent B.
-                - The lower alpha makes the later start of the avoidance action.
-                - >> 0: Nothing action to avoid. Does not consider agent B at all.
-                - 1: The same as VO. Consider the agnet B completely.
-                - For more details, see the section "IV. RECIPROCAL VELOCITY OBSTACLE" in the paper "Reciprocal Velocity Obstacles for Real-time Multi-Agent Naviagation".
-
-            weight_aggresivness:
-                - Range: 0 < weight_agressivness <= 1
-                - The 'weight_agressivness' is the extent how much you want the OS having "avoiding behavior" when there's no collision avoidance velocity.
-                - >> 0: Keep the course.
-                - 1: Give up your course and focus on the most dangerous obstacle.
-                - For more details, see the section "IV. RECIPROCAL VELOCITY OBSTACLE" in the paper "Reciprocal Velocity Obstacles for Real-time Multi-Agent Naviagation".
-
-            timeHorizon:
-                - Unit: sec.
-                - It allows for the ship going into the VO (Collision cone) as long as the expected collision time is larger than the `timeHorizon`.
-                - Range: 0 < timeHorizon
-                - >> 0: It removes all the area of the collision cone.
-                - inf: It does nothing on the original collision cone. 
-                - For More details, see the Eq.(5) in the paper "Motion Planning in Dynamic Environments using Velocity Obstacles".
-        """
-
         # NOTE: It is not clear what min and max of speed could be.
         self.min_targetSpeed = 0.9
         self.max_targetSpeed = 1.1
@@ -802,78 +622,6 @@ class VO_module:
         
         
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
-        """
-        If all the velocity candiates are in collision cone it returns `True`. Otherwise, it returns `False`.
-
-        Args:
-
-            vel_all_annotated: 
-                - A set of velocities annotated with the velocity's category('inLeft'/'inRight'/'inTimeHorizon'/'inCollisionCone') for each target ship.
-                - Example:
-                    [
-                        {
-                            'vel': ndarray([0.76, 0.87])
-                            '2001': 'inLeft',
-                            '2002': 'inTimeHorizon',
-                            ...,
-                        },
-                        {
-                            'vel': ndarray([0.23, 0.46])
-                            '2001': 'inRight',
-                            '2002': 'inCollisionCone',
-                            ...,
-                        },
-                        ...,
-                    ]
-
-            shipID_all: 
-                - All of the IDs of the ships to be simulated.
-                - Example: [OS, TS1, TS2, ...]
-
-        Return:
-
-            `True`: 
-                - If it is not that all the velociteis are causing a collision.
-                - Example:
-                    [
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inLeft',
-                            '2002': 'inRight',
-                        },
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inCollisionCone',
-                            '2002': 'inCollisionCone',
-                        },
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inTimeHorizon',
-                            '2002': 'inCollisionCone',
-                        },
-                    ]
-
-            `False`: 
-                - If all the velociteis are causing a collision.
-                - Example:
-                    [
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inCollisionCone',
-                            '2002': 'inRight',
-                        },
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inCollisionCone',
-                            '2002': 'inCollisionCone',
-                        },
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inTimeHorizon',
-                            '2002': 'inCollisionCone',
-                        },
-                    ]
-        """
         for vel_annotated in vel_all_annotated:
             isVelCollidable = False
             for shipID in shipID_all:
@@ -886,78 +634,6 @@ class VO_module:
         return True
 
     def __is_all_vels_avoidable(self, vel_all_annotated, shipID_all):
-        """
-        If all the velocity candiates are out of the collision cone it returns `True`. Otherwise, it returns `False`.
-
-        Args:
-
-            vel_all_annotated: 
-                - A set of velocities annotated with the velocity's category('inLeft'/'inRight'/'inTimeHorizon'/'inCollisionCone) for each other ship.
-                - Example:
-                    [
-                        {
-                            'vel': ndarray([xx, xx])
-                            '2001': 'inLeft',
-                            '2002': 'inTimeHorizon',
-                            ...,
-                        },
-                        {
-                            'vel': ndarray([xx, xx])
-                            '2001': 'inRight',
-                            '2002': 'inCollisionCone',
-                            ...,
-                        },
-                        ...,
-                    ]
-
-            shipID_all: 
-                - All of the IDs of the ships to be simulated.
-                - Example: [OS, TS1, TS2, ...]
-
-        Return:
-
-            `True`:
-                - If all the velociteis are not causing a collision.
-                - Example:
-                    [
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inLeft',
-                            '2002': 'inRight',
-                        },
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inRight',
-                            '2002': 'inLeft',
-                        },
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inTimeHorizon',
-                            '2002': 'inLeft',
-                        },
-                    ]
-
-            `False`:
-                - If it has at least one the velocity causing a collision.
-                - Example:
-                    [
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inCollisionCone',
-                            '2002': 'inRight',
-                        },
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inRight',
-                            '2002': 'inLeft',
-                        },
-                        {
-                            'vel': ndarray([xx, xx]),
-                            '2001': 'inTimeHorizon',
-                            '2002': 'inLeft',
-                        },
-                    ]
-        """
         for vel_annotated in vel_all_annotated:
             for shipID in shipID_all:
                 if (vel_annotated[shipID] == 'inCollisionCone'):
@@ -967,62 +643,6 @@ class VO_module:
 
     
     def __remove_annotation(self, vel_annotated_all):
-        """
-        It removes the annotations and takes only velocities from the dictionary of the set of velocities and annotations where the annotation is the indication of going left/right, in time horizon, and going into collision cone.
-
-        Example: 
-
-            From: 
-                [
-                    {
-                        'vel': array([0.20, 0.02]), 
-                        2001: 'inRight', 
-                        2002: 'inLeft,
-                    },
-                    {
-                        'vel': array([0.18, 0.12]), 
-                        2001: 'inLeft', 
-                        2002: 'inRight,
-                    },
-                    ...,
-                ]
-            To:
-                [
-                    array([0.20, 0.02]),
-                    array([0.18, 0.12]),
-                    ...,
-                ]
-
-        Args:
-
-            vel_annotated_dict_all: 
-                - A list of annoated velocities
-                - Example:
-                    [
-                        {
-                            'vel': array([0.20, 0.02]), 
-                            2001: 'inRight', 
-                            2002: 'inLeft,
-                        },
-                        {
-                            'vel': array([0.18, 0.12]), 
-                            2001: 'inLeft', 
-                            2002: 'inRight,
-                        },
-                        ...,
-                    ]
-
-        Returns:
-
-            vels:
-                - A list of velocities that does not incldue the annotations.
-                - Example:
-                    [
-                        array([0.20, 0.02]),
-                        array([0.18, 0.12]),
-                        ...,
-                    ]
-        """
         vels = []
         
         for vel_annotated in vel_annotated_all:
@@ -1031,92 +651,6 @@ class VO_module:
         return vels
 
     def __annotate_vels(self, reachableVel_global_all, RVOdata_all, TS):
-        """
-        It gives the annotation (in left / in right / in time horizon / in collision cone) for each velocity.
-
-        Example:
-
-            From:
-                [
-                    ndarray([0.82, 0.77]),
-                    ndarray([0.56, 0.45]),
-                    ...,
-                ]
-            To:print
-                [
-                    {
-                        'vel': ndarray([0.82, 0.77]),
-                        2001: 'inLeft',
-                        2002: 'inTimeHorizon',
-                        ...,
-                    },
-                    {
-                        'vel': ndarray([0.56, 0.45]),
-                        2001: 'inRight',
-                        2002: 'inCollisionCone',
-                        ...,
-                    }
-                ]
-            where 2001, 2002, ... are the ship IDs.
-
-        Args:
-
-            reachableVel_global_all: 
-                - A set of reachable velocities in global coordinates
-                - Example:
-                    [
-                        ndarray([0.82, 0.77]),
-                        ndarray([0.56, 0.45]),
-                        ...,
-                    ]
-            
-            RVOdata_all: 
-                - A set of dictionaries that contain the information to calculate RVO
-                - Example:
-                    [
-                        {
-                            "TS_ID": 2001,
-                            "LOSdist": 16.29, 
-                            "mapped_radius": 16.0, 
-                            "vA": ndarray([0.85, 1.15]),
-                            "vB": ndarray([-0.12, 0.52]),
-                            "boundLineAngle_left_rad_global: 0.24", 
-                            "boundLineAngle_right_rad_global: 0.31", 
-                            "collisionConeShifted_local: ndarray([0.12, 0.32])",
-                        },
-                        {
-                            "TS_ID": 2002,
-                            "LOSdist": 12.29, 
-                            "mapped_radius": 16.0, 
-                            "vA": ndarray([0.25, 1.25]),
-                            "vB": ndarray([-0.22, 0.42]),
-                            "boundLineAngle_left_rad_global: 0.21", 
-                            "boundLineAngle_right_rad_global: 0.35", 
-                            "collisionConeShifted_local: ndarray([0.32, 0.12])",
-                        },
-                        ...
-                    ]
-
-        Returns:
-
-            reachableVel_global_all_annotated:
-                - A set of annotated velocities by 'in left' / 'in right' / 'in time horizon' / 'in collision cone'.
-                - Example:
-                    [
-                        {
-                            'vel': ndarray([0.82, 0.77]),
-                            2001: 'inLeft',
-                            2002: 'inTimeHorizon',
-                            ...,
-                        },
-                        {
-                            'vel': ndarray([0.56, 0.45]),
-                            2001: 'inRight',
-                            2002: 'inCollisionCone',
-                            ...,
-                        }
-                    ]
-        """
         # Make the `reachableVel_global_all` dictionary
         reachableVel_global_all_annotated = []
 
@@ -1198,77 +732,6 @@ class VO_module:
         return reachableVel_global_all_annotated
 
     def __take_vels(self, vel_all_annotated, annotation, shipID_all):
-        """
-        It takes the velocities that contains specific annotation (in left / in right / in time horizon / in collision cone) given by the argument. 
-        
-        The categoriese that the argument `annotation` can take is:
-            (1) 'inLeft'
-            (2) 'inRight'
-            (3) 'inTimeHorizon'
-            (4) 'inCollisionCone'
-
-        Example:
-            Assuming the argument `annotation` is given as ['inLeft', 'inRight']. Then, it will convert the set of velocities:
-                From (`vel_all_annotated`): 
-                    [
-                        {
-                            'vel': ndarray([0.82, 0.77]),
-                            2001: 'inLeft',
-                            2002: 'inTimeHorizon',
-                        },
-                        {
-                            'vel': ndarray([0.56, 0.45]),
-                            2001: 'inRight',
-                            2002: 'inCollisionCone',
-                        },
-                        {
-                            'vel': ndarray([0.86, 0.35]),
-                            2001: 'inTimeHorizon',
-                            2002: 'inCollisionCone',
-                        }
-                    ]
-                To (`vel_hasAnnotation_all_annotated`):
-                    [
-                        ndarray([0.82, 0.77]),
-                        ndarray([0.56, 0.45]),
-                        ...,
-                    ]
-                where 2001, 2002, ... are the ship IDs.
-
-        Args:
-
-            vel_all_annotated:
-                - A set of velocities annotated with the velocity's category('inLeft'/'inRight'/'inTimeHorizon'/'inCollisionCone') for each target ship.
-                - Example:
-                    [
-                        {
-                            'vel': ndarray([xx, xx])
-                            '2001': 'inLeft',
-                            '2002': 'inTimeHorizon',
-                            ...,
-                        },
-                        {
-                            'vel': ndarray([xx, xx])
-                            '2001': 'inRight',
-                            '2002': 'inCollisionCone',
-                            ...,
-                        },
-                        ...,
-                    ]
-
-            annotation:
-                - A list of strings that includes the velocity categories to be taken.
-                - The categoriese that the argument `annotation` can take is:
-                    (1) 'inLeft'
-                    (2) 'inRight'
-                    (3) 'inTimeHorizon'
-                    (4) 'inCollisionCone'
-                - Example: ['inLeft', 'inTimeHorizon']
-
-            shipID_all:
-                - All of the IDs of the ships to be simulated.
-                - Example: [OS, TS1, TS2, ...]
-        """
         vel_hasAnnotation_all_annotated = []
         for vel_annotated in vel_all_annotated:
             hasAnnotation = True
@@ -1282,29 +745,6 @@ class VO_module:
         return vel_hasAnnotation_all_annotated
 
     def __is_in_between(self, theta_given, theta_left, theta_right):
-        """
-        It returns `True` if a given angle is between two given angles. Otherwise, it returns `False`.
-
-
-        Args:
-            
-            theta_given:
-                - Unit: rad.
-                - The given global angle to be evaluated
-
-            theta_left:
-                - Unit: rad.
-                - The global angle of the left boundary line of the collision cone.
-
-            theta_right:
-                - Unit: rad.
-                - The global angle of the right boundary line of the collision cone.
-
-        Returns:
-            `True`: If the given angle is between the angles of the left and right boundary lines.
-
-            `False`: If the given angle is NOT between the angles of the left and right boundary lines.
-        """
         if abs(theta_right -  theta_left) <= pi:
             if theta_right <= theta_given <= theta_left:
                 return True
@@ -1339,33 +779,7 @@ class VO_module:
         boundLineAngle_right_rad_global, 
         LOSangle_rad_global,
         ):
-        """
-        It returns `True` if the velocity vector is pointing out the left side that will not cause any collision. Otherwise, it returns `False`.
-
-        Args:
-
-            velVecAngle_rad_global:
-                - Unit: rad.
-                - The global angle of the velocity vector.
-
-            boundLIneAngle_left_rad_global:
-                - Unit: rad.
-                - The global angle of the left boundary line of the collision cone on x-y coordinate.
-
-            boundLIneAngle_right_rad_global:
-                - Unit: rad.
-                - The global angle of the right boundary line of the collision cone on x-y coordinate.
-
-            LOSangle_rad_global:
-                - Unit: rad.
-                - The global angle of the LOS (Line of sight) on x-y coordinate
-
-        Returns:
-
-            `True`: If the velocity vector is pointing out the left side that will not cause any collision.
-
-            `False`: If the velocity vector is pointing out towards the obstacle that will cause a collsion.
-        """
+        
         velVecAngle_translated_rad_global = velVecAngle_rad_global - LOSangle_rad_global
         while velVecAngle_translated_rad_global < 0:
             velVecAngle_translated_rad_global += 2*pi
@@ -1389,33 +803,7 @@ class VO_module:
         boundLineAngle_right_rad_global, 
         LOSangle_rad_global,
         ):
-        """
-        It returns `True` if the velocity vector is pointing out the right side that will not cause any collision. Otherwise, it returns `False`.
-
-        Args:
-
-            velVecAngle_rad_global:
-                - Unit: rad.
-                - The global angle of the velocity vector.
-
-            boundLIneAngle_left_rad_global:
-                - Unit: rad.
-                - The global angle of the left boundary line of the collision cone on x-y coordinate.
-
-            boundLIneAngle_right_rad_global:
-                - Unit: rad.
-                - The global angle of the right boundary line of the collision cone on x-y coordinate.
-
-            LOSangle_rad_global:
-                - Unit: rad.
-                - The global angle of the LOS (Line of sight)
-
-        Returns:
-
-            `True`: If the velocity vector is pointing out the right side that will not cause any collision.
-
-            `False`: If the velocity vector is pointing out towards the obstacle that will cause a collsion.
-        """
+        
         velVecAngle_translated_rad_global = velVecAngle_rad_global - LOSangle_rad_global
         while velVecAngle_translated_rad_global < 0:
             velVecAngle_translated_rad_global += 2*pi
@@ -1441,44 +829,6 @@ class VO_module:
         shortestRelativeDist, 
         timeHorizon,
         ):
-        """
-        It returns `True` if the velocity vector is within time horizon. Otherwise, it returns `False`.
-
-        Args:
-
-            velVecAngle_rad_global:
-                - Unit: rad.
-                - The global angle of the velocity vector.
-
-            boundLIneAngle_left_rad_global:
-                - Unit: rad.
-                - The global angle of the left boundary line of the collision cone on x-y coordinate.
-
-            boundLIneAngle_right_rad_global:
-                - Unit: rad.
-                - The global angle of the right boundary line of the collision cone on x-y coordinate.
-
-            velVecNorm:
-                - Unit: m/s
-                - The magnitude of the velocity vector (a.k.a. speed)
-
-            shortestRelatveDist:
-                - Unit: m
-                - The shortest distance to the obstacle.
-
-            timeHorizon:
-                - Unit: sec.
-                - The time horizon which is the parameter that how much you will allow the ship to go inside the collision cone.
-                - It will allow the velocities that are less than 'shortestRelativeDist/timeHorizon' even if the velocity vectors are in collision cone.
-                - It implies that, "if the velocity does not cause a collision within the time horizon, this velocity is allowable."
-                - For More details, see the Eq.(5) in the paper "Motion Planning in Dynamic Environments using Velocity Obstacles".
-
-        Returns:
-
-            `True`: If the velocity vector is within time horizon.
-
-            `False`: If the velocity vector is out of the time horizon.
-        """
         if self.__is_in_between(
             velVecAngle_rad_global,
             boundLineAngle_left_rad_global,
@@ -1497,43 +847,6 @@ class VO_module:
         shortestRelativeDist, 
         timeHorizon,
         ):
-        """
-        It returns `True` if the velocity vector is in collision cone. Otherwise, it returns `False`.
-
-        Args:
-
-            velVecAngle_rad_global:
-                - Unit: rad.
-                - The global angle of the velocity vector.
-
-            boundLIneAngle_left_rad_global:
-                - Unit: rad.
-                - The global angle of the left boundary line of the collision cone on x-y coordinate.
-
-            boundLIneAngle_right_rad_global:
-                - Unit: rad.
-                - The global angle of the right boundary line of the collision cone on x-y coordinate.
-
-            velVecNorm:
-                - Unit: m/s
-                - The magnitude of the velocity vector (a.k.a. speed)
-
-            shortestRelatveDist:
-                - Unit: m
-                - The shortest distance to the obstacle.
-
-            timeHorizon:
-                - Unit: sec.
-                - The time horizon which is the parameter that how much you will allow the ship to go inside the collision cone.
-                - It will allow the velocities that are less than 'shortestRelativeDist/timeHorizon' even if the velocity vectors are in collision cone.
-                - It implies that, "if the velocity does not cause a collision within the time horizon, this velocity is allowable."
-
-        Returns:
-
-            `True`: If the velocity vector is in collision cone.
-
-            `False`: If the velocity vector is out of the collision cone.
-        """
         if self.__is_in_between(
             velVecAngle_rad_global,
             boundLineAngle_left_rad_global,
@@ -1544,20 +857,6 @@ class VO_module:
             return False
 
     def __generate_vel_candidates(self, targetSpeed_all, targetHeading_rad_global_all, OS, static_obstacle_info, static_point_info):
-        """
-        It generates the velocity candidates based on given speeds and heading angles.
-
-        Args:
-
-            targetSpeed_all: A set of the speed that the ship can have
-
-            targetHeading_rad_global_all: A set of the heading angles that the ship can have
-
-        Returns:
-
-            reachableVel_global_all: A set of velocities that the ship can have.
-
-        """
         reachableVelX_global_all = np.zeros(self.num_targetSpeedCandidates * self.num_targetHeadingCandidates)
         reachableVelY_global_all = np.zeros(self.num_targetSpeedCandidates * self.num_targetHeadingCandidates)
         
@@ -1578,12 +877,6 @@ class VO_module:
              axis=-1,
              )
         
-        """
-        reachableVel_global_all_after_obstacle : The candidate of reachable vector that dosen't cross static obstacle.
-        
-        __delete_vector_inside_obstacle : The function that judge collision with static obstacle.
-
-        """
 
         reachableVel_global_all_after_obstacle = self.__delete_vector_inside_obstacle(reachableVel_global_all, OS, static_obstacle_info,static_point_info)
         
@@ -1909,57 +1202,6 @@ class VO_module:
 
 
     def __select_vel_inside_RVOs(self, reachableCollisionVel_global_all, RVOdata_all, V_des):
-        """
-        It selects the best velocity based on the RVO formulation when all the velocity candidates are causing collisions 
-
-        Args: 
-            
-            reachableCollisionVel_global_all:
-                - A set of the velocities that will cause a collision
-                - Example:
-                    [
-                        ndarray([0.82, 0.77]),
-                        ndarray([0.56, 0.45]),
-                        ...,
-                    ]
-
-            RVOdata_all:
-                - A set of dictionaries that contain the information to calculate RVO
-                - Example:
-                    [
-                        {
-                            "TS_ID": 2001,
-                            "LOSdist": 16.29, 
-                            "mapped_radius": 16.0, 
-                            "vA": ndarray([0.85, 1.15]),
-                            "vB": ndarray([-0.12, 0.52]),
-                            "boundLineAngle_left_rad_global: 0.24", 
-                            "boundLineAngle_right_rad_global: 0.31", 
-                            "collisionConeShifted_local: ndarray([0.12, 0.32])",
-                        },
-                        {
-                            "TS_ID": 2002,
-                            "LOSdist": 12.29, 
-                            "mapped_radius": 16.0, 
-                            "vA": ndarray([0.25, 1.25]),
-                            "vB": ndarray([-0.22, 0.42]),
-                            "boundLineAngle_left_rad_global: 0.21", 
-                            "boundLineAngle_right_rad_global: 0.35", 
-                            "collisionConeShifted_local: ndarray([0.32, 0.12])",
-                        },
-                        ...
-                    ]
-
-            V_des:
-                - Unit: m/s
-                - The desired velocity pointing out the next waypoint.RVOdata_all
-
-        Returns:
-
-            vA_post: 
-                - Unit: m/s
-                - Selected velocity by RVO formulation.
-        """
         # Compute the minimum time to collision(tc) for every velocity candidates
         velCandidates_dict = dict()
 
@@ -1970,19 +1212,6 @@ class VO_module:
 
             # Compute the minimum time to collision(tc) for a velocity candidate
             for RVOdata in RVOdata_all:
-                '''
-                Data structure of the `RVO_data`:
-                    {
-                        "TS_ID": 2001,
-                        "LOSdist": 16.29, 
-                        "mapped_radius": 16.0, 
-                        "vA": ndarray([0.85, 1.15]),
-                        "vB": ndarray([-0.12, 0.52]),
-                        "boundLineAngle_left_rad_global: 0.24", 
-                        "boundLineAngle_right_rad_global: 0.31", 
-                        "collisionConeShifted_local: ndarray([0.12, 0.32])",
-                    }
-                '''
 
                 vA2B_RVO = reachableCollisionVel_global - RVOdata['collisionConeTranslated']
 
@@ -2000,22 +1229,11 @@ class VO_module:
                 RVOdata['boundLineAngle_left_rad_global'],
                 ):
 
-                    # NOTE: The angle between
-                    #       (1) vA2B (on RVO config. space) 
-                    #       (2) LOS line and
                     angle_at_pA = abs(angle_vA2B_RVO_rad_global - 0.5 * (RVOdata['boundLineAngle_right_rad_global'] + RVOdata['boundLineAngle_left_rad_global']))   
                     angle_at_pA %= (2*pi)
                     if angle_at_pA > pi:
                         angle_at_pA = abs(angle_at_pA - (2*pi))                
-                    
-                    # NOTE: The angle between 
-                    #       (1) vA2B(on RVO config. space) and 
-                    #       (2) the line from the collision point on the B_hat surface 
-                    #       to the center of B_hat
-                    # TODO: Velocity vector here must be directed to the B_hat, 
-                    #       but some are to out of the B_hat. Review it. 
-                    #       Now force the length `abs(RVOdata['LOSdist'] * sin(angle_at_pA))`
-                    #       to be less than `RVOdata['mapped_radius']` temporarily.
+
                     if (abs(RVOdata['LOSdist'] * sin(angle_at_pA)) > RVOdata['mapped_radius']):
                         angle_at_collisionPoint = 0.0    
                     else:
@@ -2023,13 +1241,8 @@ class VO_module:
                             abs(RVOdata['LOSdist'] * sin(angle_at_pA)) / RVOdata['mapped_radius']
                             )
 
-
-                    # NOTE: The distance between pA and the surface of B_hat on the
-                    #       RVO config. space
                     dist_collision = abs(RVOdata['LOSdist'] * cos(angle_at_pA)) - abs(RVOdata['mapped_radius'] * cos(angle_at_collisionPoint))
 
-                    # NOTE: If collision already occured, 
-                    #       tc(time to collision) will be zero.
                     if dist_collision < 0: dist_collision = 0
                     tc = dist_collision / np.linalg.norm([vA2B_RVO])
                     
@@ -2043,89 +1256,11 @@ class VO_module:
 
             # Comput and store the penalty for each velocity candidate
             velCandidates_dict[tuple(reachableCollisionVel_global)]['penalty'] = self.weight_aggresiveness / tc_min + np.linalg.norm([V_des - reachableCollisionVel_global])
-            '''
-            Data structure of the `velCandidates_dict`:
-                {
-                    (0.82, 1.21): {"tc":10.52, "penalty":20.21}, 
-                    (0.67, 0.89): {"tc":12.43, "penalty":12.41}, 
-                    ... ,
-                }     
-            '''
-
         # Take the velocity that has the minimum penalty
         vA_post = min(velCandidates_dict, key=lambda k : velCandidates_dict[k]['penalty'])
         return vA_post
 
     def __choose_velocity(self, V_des, RVOdata_all, OS, TS, static_obstacle_info, static_point_info): 
-        """ 
-        It chooses the best velocity for the collision avoidance task.
-
-        Args:
-
-            V_des:
-                - Unit: m/s
-                - The desired velocity pointing out the next waypoint.
-
-            RVOdata_all:
-                - A set of dictionaries that contain the information to calculate RVO
-                - Example:
-                    [
-                        {
-                            "TS_ID": 2001,
-                            "LOSdist": 16.29, 
-                            "mapped_radius": 16.0, 
-                            "vA": ndarray([0.85, 1.15]),
-                            "vB": ndarray([-0.12, 0.52]),
-                            "boundLineAngle_left_rad_global: 0.24", 
-                            "boundLineAngle_right_rad_global: 0.31", 
-                            "collisionConeShifted_local: ndarray([0.12, 0.32])",
-                        },
-                        {
-                            "TS_ID": 2002,
-                            "LOSdist": 12.29, 
-                            "mapped_radius": 16.0, 
-                            "vA": ndarray([0.25, 1.25]),
-                            "vB": ndarray([-0.22, 0.42]),
-                            "boundLineAngle_left_rad_global: 0.21", 
-                            "boundLineAngle_right_rad_global: 0.35", 
-                            "collisionConeShifted_local: ndarray([0.32, 0.12])",
-                        },
-                        ...
-                    ]
-
-            OS: 
-                - State of the OS
-                - Example:
-                    {
-                        'Ship_ID': 2000,
-                        'Pos_X': -49.99,
-                        ...,
-                        'radius': 8.0,
-                    }
-
-            TS: 
-                - State of the TSs
-                - Example:
-                    {
-                        2001:{
-                            'Ship_ID': '2001',
-                            ...,
-                            'radius': 4.0,
-                            },
-                        2002:{
-                            'Ship_ID': '2002',
-                            ...,
-                            'radius': 4.0,
-                            },
-                        ...,
-                    }
-
-        Returns:
-
-            vA_post:
-                - Unit: m/s
-                - Selected velocity by RVO formulation.
-        """
         # Generate target speed candidates
         # NOTE: We generate the target velocity candidates manually, not deriving from mmg and feasible acc.
         targetSpeed_all = np.linspace(
@@ -2168,35 +1303,7 @@ class VO_module:
             TS,
             )
 
-        '''
-        Data structure of `vels_annotated`:
-            [
-                {
-                    'vel': array([xx, xx]), 
-                    2001: 'inTimeHorizon', 
-                    2002: 'inLeft', 
-                    2003: 'inRight'
-                    ...
-                }
-                {
-                    'vel': array([xx, xx]), 
-                    2001: 'inCollision', 
-                    2002: 'inTimeHorizon', 
-                    2003: 'inRight'
-                    ...
-                }
-                ...
-            ]
-            where 2001, 2002, 2003, ... are the ship IDs
-        '''
-
-        # NOTE: Our annotation is based on VO config. space which is x-y coord.
-        #       Thus, in y-x coord for the visualization,
-        #       going left/right is opposite.
-        #       That is, going left in VO config. space is going right in simulation space
-        #       and vice versa.
-        #       If you want to going right (a.k.a. complying with COLREGs),
-        #       you have to design it to be going left in VO config. space
+    
 
         isAllVelsCollidable = self.__is_all_vels_collidable(
             vel_all_annotated=reachableVel_all_annotated, 
@@ -2235,19 +1342,13 @@ class VO_module:
                 annotation=['inLeft', 'inRight', 'inTimeHorizon'],
                 shipID_all=TS.keys(),
                 )
+                                           
+            avoidanceAllRightVel_all_annotated = self.__take_vels(  
+                vel_all_annotated=reachableVel_all_annotated,       
+                annotation=['inLeft'],                              
+                shipID_all=TS.keys(),                               
+                )                                                   
             
-            #=========================================================+
-            """ <<<<<<<< IMPORTANT! MUST READ IT CAREFULLY! >>>>>>>>>>|
-            - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
-            - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
-            - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
-            """                                                        # |:
-            avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
-                vel_all_annotated=reachableVel_all_annotated,       # |
-                annotation=['inLeft'],                              # |
-                shipID_all=TS.keys(),                               # |
-                )                                                   # |
-            #=========================================================+
 
             if avoidanceAllRightVel_all_annotated:
                 velCandidates = self.__remove_annotation(avoidanceAllRightVel_all_annotated)
@@ -2264,70 +1365,6 @@ class VO_module:
 
     def __extract_RVO_data(self, OS, TS):
         # TODO: `static_OB` is used in the future?
-        """ 
-        It generates a container that contains the data for RVO formulation.
-
-        Args:
-
-            OS: 
-                - State of the OS
-                - Example:
-                    {
-                        'Ship_ID': 2000,
-                        'Pos_X': -49.99,
-                        ...,
-                        'radius': 8.0,
-                    }
-            TS: 
-                - State of the TSs
-                - Example:
-                    {
-                        2001:{
-                            'Ship_ID': '2001',
-                            ...,
-                            'radius': 4.0,
-                            },
-                        2002:{
-                            'Ship_ID': '2002',
-                            ...,
-                            'radius': 4.0,
-                            },
-                        ...,
-                    }
-
-        Return:
-
-            RVOdata_all: 
-                - A set of dictionaries that contain the information to calculate RVO
-                - Example:
-                    [
-                        {
-                            "TS_ID": 2001,
-                            "LOSdist": 16.29, 
-                            "mapped_radius": 16.0, 
-                            "vA": ndarray([0.85, 1.15]),
-                            "vB": ndarray([-0.12, 0.52]),
-                            "boundLineAngle_left_rad_global: 0.24", 
-                            "boundLineAngle_right_rad_global: 0.31", 
-                            "collisionConeShifted_local: ndarray([0.12, 0.32])",
-                        },
-                        {
-                            "TS_ID": 2002,
-                            "LOSdist": 12.29, 
-                            "mapped_radius": 16.0, 
-                            "vA": ndarray([0.25, 1.25]),
-                            "vB": ndarray([-0.22, 0.42]),
-                            "boundLineAngle_left_rad_global: 0.21", 
-                            "boundLineAngle_right_rad_global: 0.35", 
-                            "collisionConeShifted_local: ndarray([0.32, 0.12])",
-                        },
-                        ...
-                    ]
-
-            pub_collision_cone : 
-                TODO: Add explanations
-
-        """
 
         vA = np.array([OS['V_x'], OS['V_y']])
         pA = np.array([OS['Pos_X'], OS['Pos_Y']])
@@ -2412,54 +1449,6 @@ class VO_module:
         return RVOdata_all, pub_collision_cone
 
     def VO_update(self, OS_original, TS_original, V_des, static_obstacle_info, static_point_info):   
-        """ 
-        It computes the velocity selection with RVO formulation and returns selected velocity and collision cone information from the current state of the ships.
-
-        Args: 
-
-            OS_original: 
-                - State of the OS
-                - Example:
-                    {
-                        'Ship_ID': 2000,
-                        'Pos_X': -49.99,
-                        ...,
-                        'radius': 8.0,
-                    }
-
-            TS_original: 
-                - State of the TSs
-                - Example:
-                    {
-                        2001:{
-                            'Ship_ID': '2001',
-                            ...,
-                            'radius': 4.0,
-                            },
-                        2002:{
-                            'Ship_ID': '2002',
-                            ...,
-                            'radius': 4.0,
-                            },
-                        ...,
-                    }
-
-            static_OB:
-                TODO: Add explanations
-
-            V_des: 
-                - Unit: m/s
-                - The desired velocity pointing out the next waypoint.
-
-        Returns:
-
-            V_opt:
-                - Unit: m/s
-                - Selected velocity from RVO formulation
-
-            pub_collision_cone:
-                TODO: Add explanations
-        """
         # self.__include_mappedTSradius(OS_original, TS_original) 
 
         RVOdata_all, pub_collision_cone = self.__extract_RVO_data(
@@ -2473,34 +1462,6 @@ class VO_module:
         return V_opt, pub_collision_cone
 
     def vectorV_to_goal(self, OS, goal, V_max):
-        """ 
-        It returns the velocity towards the next waypoint regardless of the ship's current state. The velocity is limited by the given maximum speed (Target speed).
-
-        Args: 
-
-            OS:
-                - State of the OS
-                - Example:
-                    {
-                        'Ship_ID': 2000,
-                        'Pos_X': -49.99,
-                        ...,
-                        'radius': 8.0,
-                    }
-
-            goal: Next waypoint
-
-            V_max:
-                - Unit: m/s
-                - Designed maximum speed (Target speed)
-
-        Returns:
-
-            V_des:
-                - Unit: m/s
-                - The desired velocity pointing out the next waypoint.
-        """
-
         Pos_x = OS['Pos_X']
         Pos_y = OS['Pos_Y']
         dif_x = [goal[0] - Pos_x, goal[1] - Pos_y]
@@ -2539,7 +1500,7 @@ class kass_inha:
         self.waypoint_info = dict()
 
 
-    def wp_callback(self, latOfWayPoint, longOfWayPoint):
+    def V_des_callback(self, latOfWayPoint, longOfWayPoint):
         self.waypoint_info['waypoint_x'] = latOfWayPoint
         self.waypoint_info['waypoint_y'] = longOfWayPoint
 
@@ -2588,8 +1549,6 @@ class kass_inha:
         self.latOfWayPoint = inha_input["latOfWayPoint"]
         self.longOfWayPoint = inha_input["longOfWayPoint"]
 
-
-        dt = 10
         
 
         Local_PP = VO_module()
@@ -2600,7 +1559,7 @@ class kass_inha:
         target_speed = self.sog * 0.5144 / sqrt(OS_scale)
         ship_L = 2.0
 
-        waypoint_info = self.wp_callback(self.latOfWayPoint, self.longOfWayPoint)
+        waypoint_info = self.V_des_callback(self.latOfWayPoint, self.longOfWayPoint)
         self.op_callback()
 
         inha = Inha_dataProcess(self.idOfObject,
@@ -2614,9 +1573,9 @@ class kass_inha:
                                 self.sogOfObject,
                                 )
         
-        wpts_x_os = list(waypoint_info['waypoint_x'])
-        wpts_y_os = list(waypoint_info['waypoint_y'])
-        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]
+        V_dests_x_os = list(waypoint_info['waypoint_x'])
+        V_dests_y_os = list(waypoint_info['waypoint_y'])
+        Local_goal = [V_dests_x_os[waypointIndex], V_dests_y_os[waypointIndex]]
 
         OS_list = inha.os_info()
         TS_list = inha.ts_info()
@@ -2626,9 +1585,8 @@ class kass_inha:
         OS_list['V_x'] = OS_Vx
         OS_list['V_y'] = OS_Vy
 
-
-
-        _, local_goal_EDA = inha.eta_eda_assumption(Local_goal, OS_list, target_speed)
+        local_goal_EDA = sqrt((Local_goal[0]-OS_list['Pos_X'])**2 + (Local_goal[1]-OS_list['Pos_Y'])**2)
+        # _, local_goal_EDA = inha.eta_eda_assumption(Local_goal, OS_list, target_speed)
         V_des = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
 
         TS_list = inha.TS_info_supplement(
@@ -2690,8 +1648,6 @@ class kass_inha:
 
             temp_enc = TS_list[ts_ID]['status']
             TS_ENC_temp.append(temp_enc)
-
-            distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
         
 
         V_selected, pub_collision_cone = Local_PP.VO_update(OS_list,
@@ -2700,19 +1656,17 @@ class kass_inha:
                                                             self.static_obstacle_info,
                                                             self.static_point_info
                                                             )
-        desired_spd_list = []
-        desired_heading_list = []
+        # desired_spd_list = []
+        # desired_heading_list = []
 
-        wp = inha.waypoint_generator(OS_list, V_selected, dt)
-        wp_x = wp[0]
-        wp_y = wp[1]
+        V_des = inha.waypoint_generator(OS_list, V_selected)
+        V_des_x = V_des[0]
+        V_des_y = V_des[1]
         
-
-        ### 기존의 코드에서는 VO가 켜질때 안켜질때 구분 했었는데 구분 하지 않고 그냥 항상 켜져있을때로 구성    
-        eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)
+        eta, eda = inha.eta_eda_assumption(V_des, OS_list, target_speed)
         temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
-        desired_spd_list.append(temp_spd)
-        desired_heading_list.append(temp_heading_deg)
+        desired_spd_list = temp_spd
+        desired_heading_list = temp_heading_deg
         desired_spd = desired_spd_list[0]
         desired_heading = desired_heading_list[0]
 
@@ -2743,16 +1697,16 @@ class kass_inha:
         OS_pub_list = [
             # int(OS_ID), 
             False,
-            len(wpts_x_os),
-            [wp_x], 
-            [wp_y],  
+            len(V_des_x),
+            V_des_x, 
+            V_des_y,  
             desired_spd_list, 
-            [eta], 
-            [eda], 
+            eta, 
+            eda, 
             False, 
             0,  
-            desired_spd, 
-            real_target_heading, 
+            round(desired_spd,3),
+            round(real_target_heading, 3), 
             ]
         
         path_out_inha = self.path_out_publish(OS_pub_list)
@@ -2760,7 +1714,7 @@ class kass_inha:
         if local_goal_EDA < 2 * ship_L :
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
-            waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
+            waypointIndex = (waypointIndex + 1) % len(V_dests_x_os)
 
         # print(path_out_inha)
 
