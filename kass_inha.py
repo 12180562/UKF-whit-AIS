@@ -6,15 +6,6 @@ import numpy as np
 import json
 
 
-def setParamUpdate():
-    with open("parameter.json", 'r') as param:
-        Update_parameter = json.load(param)
-        
-    parameter = Update_parameter
-    
-    print(parameter)
-    return parameter
-
 
 
 class CRI:
@@ -457,21 +448,17 @@ class Inha_dataProcess:
         return V_x, V_y
 
     def waypoint_generator(self, OS, V_selected):
-        ''' `V_des` 방향 벡터를 기준으로 1초뒤 point를 waypoint 생성
-        
-        Return :
-            V_des_x, V_des_y [m]
-        '''
-        V_des_x = []
-        V_des_y = []
+  
+        wp_x = []
+        wp_y = []
         OS_X = np.array([OS['Pos_X'], OS['Pos_Y']])
         for i in range(1, 16):
-            V_des = OS_X + V_selected * np.array([i])
+            wp = OS_X + V_selected * np.array([i])
             
-            V_des_x.append(V_des[0]) 
-            V_des_y.append(V_des[1])
+            wp_x.append(wp[0]) 
+            wp_y.append(wp[1])
 
-        return V_des_x, V_des_y
+        return wp_x, wp_y
 
     def eta_eda_assumption(self, WP, OS, target_U):
         ''' 목적지까지 도달 예상 시간 및 거리
@@ -568,6 +555,8 @@ class VO_module:
         self.time_horizon = parameter['timeHorizon']
 
         self.rule = parameter['Portside_rule']
+        self.errorCode = None
+        self.error = False
         
         
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
@@ -949,6 +938,9 @@ class VO_module:
 
         if len(reachableVel_global_all) == 0:
             reachableVel_global_all = reachableVel_global_all = np.array([reachableVel_global_all_copy[-1,:]])
+            print("------ All of vector candidates have collision risk with static obstacle ------")
+            self.errorCode = 310
+            self.error = True
         else:
             pass
 
@@ -1448,6 +1440,10 @@ class kass_inha:
         self.static_point_info = []
         self.waypoint_info = dict()
         
+        self.error = False
+        self.errorCode = None
+        self.pub_list = []
+        
         ##VO parameter
         with open("parameter.json", "r") as param:
             Update_parameter = json.load(param)
@@ -1462,8 +1458,70 @@ class kass_inha:
         self.parameter = Update_parameter
         
 
+    def input_check(self, inha_input):
+        error = False
+        errorCode = None
+        if len(inha_input) < 11:
+            print("------insufficient number of input------")
+            errorCode = 300
+            error = True
+        else:
+            pass
+        return errorCode,error
+    
+    def OS_check(self, inha_input):
+        error = False
+        errorCode = None
+        latitude = inha_input["latitude"]
+        longitude = inha_input["longitude"]
+        if len([latitude]) != len([longitude]):
+            print("------OS position data is missing------")
+            errorCode = 301
+            error = True
+        else:
+            pass
+        return errorCode,error
+    
+    def TS_check(self, inha_input):
+        error = False
+        errorCode = None
+        idOfObject = inha_input["idOfObject"]
+        latOfObject = inha_input["latOfObject"]
+        longOfObject = inha_input["longOfObject"]
+        if len(idOfObject) != len(latOfObject):
+            print("------TS position data is missing------")
+            error = True
+            errorCode = 301
+        elif len(idOfObject) != len(longOfObject):
+            print("------TS position data is missing------")
+            error = True
+            errorCode = 301
+        else:
+            pass
+        return errorCode,error
+    
+    def wp_check(self, inha_input):
+        error = False
+        errorCode = None
+        latOfWayPoint = inha_input["latOfWayPoint"]
+        longOfWayPoint = inha_input["longOfWayPoint"]
+        if len(latOfWayPoint) != len(longOfWayPoint):
+            print("------Waypoints are missing------")
+            error = True
+        else:
+            pass
+        return errorCode,error
+    
+    def error_check(self, inha_input):
+        error = False
+        errorCode = None
+        errorCode,error = self.input_check(inha_input)
+        errorCode,error = self.OS_check(inha_input)
+        errorCode,error = self.TS_check(inha_input)
+        errorCode,error = self.wp_check(inha_input)
+        return errorCode,error
 
-    def V_des_callback(self, latOfWayPoint, longOfWayPoint):
+    def wp_callback(self, latOfWayPoint, longOfWayPoint):
         self.waypoint_info['waypoint_x'] = latOfWayPoint
         self.waypoint_info['waypoint_y'] = longOfWayPoint
 
@@ -1500,186 +1558,192 @@ class kass_inha:
 
 
     def kass_inha(self, inha_input):
-        self.latitude = inha_input["latitude"]
-        self.longitude = inha_input["longitude"]
-        self.idOfObject = inha_input["idOfObject"]
-        self.latOfObject = inha_input["latOfObject"]
-        self.longOfObject = inha_input["longOfObject"]
-        self.cog = inha_input["cog"]
-        self.cogOfObject = inha_input["cogOfObject"]
-        self.sog = inha_input["sog"]
-        self.sogOfObject = inha_input["sogOfObject"]
-        self.latOfWayPoint = inha_input["latOfWayPoint"]
-        self.longOfWayPoint = inha_input["longOfWayPoint"]
+        self.errorCode, self.error = self.error_check(inha_input)
 
-        
-        
-        Local_PP = VO_module(self.parameter)
-
-        t = 0
-        waypointIndex = 0
-        OS_scale = 11.0
-        target_speed = self.sog * 0.5144 / sqrt(OS_scale)
-        ship_L = 2.0
-
-        waypoint_info = self.V_des_callback(self.latOfWayPoint, self.longOfWayPoint)
-        self.op_callback()
-
-        inha = Inha_dataProcess(self.idOfObject,
-                                self.latitude,
-                                self.longitude,
-                                self.cog,
-                                target_speed,
-                                self.latOfObject,
-                                self.longOfObject,
-                                self.cogOfObject,
-                                self.sogOfObject,
-                                )
-        
-        V_dests_x_os = list(waypoint_info['waypoint_x'])
-        V_dests_y_os = list(waypoint_info['waypoint_y'])
-        Local_goal = [V_dests_x_os[waypointIndex], V_dests_y_os[waypointIndex]]
-
-        OS_list = inha.os_info()
-        TS_list = inha.ts_info()
-
-        OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
-
-        OS_list['V_x'] = OS_Vx
-        OS_list['V_y'] = OS_Vy
-
-        local_goal_EDA = sqrt((Local_goal[0]-OS_list['Pos_X'])**2 + (Local_goal[1]-OS_list['Pos_Y'])**2)
-        # _, local_goal_EDA = inha.eta_eda_assumption(Local_goal, OS_list, target_speed)
-        V_des = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
-
-        TS_list = inha.TS_info_supplement(
-                OS_list, 
-                TS_list,
-                )
-            
-        TS_DCPA_temp = []
-        TS_TCPA_temp = []
-        TS_UDCPA_temp = []
-        TS_UTCPA_temp = []
-        TS_UD_temp = []
-        TS_UB_temp = []
-        TS_UK_temp = []
-        TS_CRI_temp = []
-        TS_Rf_temp = []
-        TS_Ra_temp = []
-        TS_Rs_temp = []
-        TS_Rp_temp = []
-        TS_ENC_temp = []
-
-        for ts_ID in self.idOfObject:
-
-            temp_DCPA = TS_list[ts_ID]['DCPA']
-            TS_DCPA_temp.append(temp_DCPA)
-
-            temp_TCPA = TS_list[ts_ID]['TCPA']
-            TS_TCPA_temp.append(temp_TCPA)
-
-            temp_UDCPA = TS_list[ts_ID]['UDCPA']
-            TS_UDCPA_temp.append(temp_UDCPA)
-            
-            temp_UTCPA = TS_list[ts_ID]['UTCPA']
-            TS_UTCPA_temp.append(temp_UTCPA)
-
-            temp_UD = TS_list[ts_ID]['UD']
-            TS_UD_temp.append(temp_UD)
-
-            temp_UB = TS_list[ts_ID]['UB']
-            TS_UB_temp.append(temp_UB)
-
-            temp_UK = TS_list[ts_ID]['UK']
-            TS_UK_temp.append(temp_UK)
-
-            temp_cri = TS_list[ts_ID]['CRI']
-            TS_CRI_temp.append(temp_cri)
-
-            temp_Rf = TS_list[ts_ID]['Rf']
-            TS_Rf_temp.append(temp_Rf)
-
-            temp_Ra = TS_list[ts_ID]['Ra']
-            TS_Ra_temp.append(temp_Ra)
-
-            temp_Rs = TS_list[ts_ID]['Rs']
-            TS_Rs_temp.append(temp_Rs)
-
-            temp_Rp = TS_list[ts_ID]['Rp']
-            TS_Rp_temp.append(temp_Rp)
-
-            temp_enc = TS_list[ts_ID]['status']
-            TS_ENC_temp.append(temp_enc)
-        
-
-        V_selected, pub_collision_cone = Local_PP.VO_update(OS_list,
-                                                            TS_list,
-                                                            V_des,
-                                                            self.static_obstacle_info,
-                                                            self.static_point_info
-                                                            )
-        # desired_spd_list = []
-        # desired_heading_list = []
-
-        V_des = inha.waypoint_generator(OS_list, V_selected)
-        V_des_x = V_des[0]
-        V_des_y = V_des[1]
-        
-        eta, eda = inha.eta_eda_assumption(V_des, OS_list, target_speed)
-        temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
-        desired_spd_list = temp_spd
-        desired_heading_list = temp_heading_deg
-        desired_spd = desired_spd_list[0]
-        desired_heading = desired_heading_list[0]
-
-        if t%10 ==0:
-            pass
-
-        t += 1
-
-        if len(self.target_heading_list) != 10:
-            self.target_heading_list.append(desired_heading)
-        
+        if self.errorCode != None:
+            print(f"------error {self.errorCode}------")
+            return self.pub_list
         else:
-            del self.target_heading_list[0]
+            self.latitude = inha_input["latitude"]
+            self.longitude = inha_input["longitude"]
+            self.idOfObject = inha_input["idOfObject"]
+            self.latOfObject = inha_input["latOfObject"]
+            self.longOfObject = inha_input["longOfObject"]
+            self.cog = inha_input["cog"]
+            self.cogOfObject = inha_input["cogOfObject"]
+            self.sog = inha_input["sog"]
+            self.sogOfObject = inha_input["sogOfObject"]
+            self.latOfWayPoint = inha_input["latOfWayPoint"]
+            self.longOfWayPoint = inha_input["longOfWayPoint"]
 
-        sum_of_heading = 0
-        real_target_heading = 0
-        for i in self.target_heading_list:
-            sum_of_heading = sum_of_heading + i
+            
+            
+            Local_PP = VO_module(self.parameter)
 
-        if len(self.target_heading_list) >= 2:
-            if self.target_heading_list[len(self.target_heading_list)-1]*self.target_heading_list[len(self.target_heading_list)-2] < 0:
-                self.target_heading_list = [self.target_heading_list[-1]]
-                real_target_heading = desired_heading
+            t = 0
+            waypointIndex = 0
+            OS_scale = 11.0
+            target_speed = self.sog * 0.5144 / sqrt(OS_scale)
+            ship_L = 2.0
+
+            waypoint_info = self.wp_callback(self.latOfWayPoint, self.longOfWayPoint)
+            self.op_callback()
+
+            inha = Inha_dataProcess(self.idOfObject,
+                                    self.latitude,
+                                    self.longitude,
+                                    self.cog,
+                                    target_speed,
+                                    self.latOfObject,
+                                    self.longOfObject,
+                                    self.cogOfObject,
+                                    self.sogOfObject,
+                                    )
+            
+            wpts_x_os = list(waypoint_info['waypoint_x'])
+            wpts_y_os = list(waypoint_info['waypoint_y'])
+            Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]
+
+            OS_list = inha.os_info()
+            TS_list = inha.ts_info()
+
+            OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
+
+            OS_list['V_x'] = OS_Vx
+            OS_list['V_y'] = OS_Vy
+
+            local_goal_EDA = sqrt((Local_goal[0]-OS_list['Pos_X'])**2 + (Local_goal[1]-OS_list['Pos_Y'])**2)
+            # _, local_goal_EDA = inha.eta_eda_assumption(Local_goal, OS_list, target_speed)
+            V_des = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
+
+            TS_list = inha.TS_info_supplement(
+                    OS_list, 
+                    TS_list,
+                    )
+                
+            TS_DCPA_temp = []
+            TS_TCPA_temp = []
+            TS_UDCPA_temp = []
+            TS_UTCPA_temp = []
+            TS_UD_temp = []
+            TS_UB_temp = []
+            TS_UK_temp = []
+            TS_CRI_temp = []
+            TS_Rf_temp = []
+            TS_Ra_temp = []
+            TS_Rs_temp = []
+            TS_Rp_temp = []
+            TS_ENC_temp = []
+
+            for ts_ID in self.idOfObject:
+
+                temp_DCPA = TS_list[ts_ID]['DCPA']
+                TS_DCPA_temp.append(temp_DCPA)
+
+                temp_TCPA = TS_list[ts_ID]['TCPA']
+                TS_TCPA_temp.append(temp_TCPA)
+
+                temp_UDCPA = TS_list[ts_ID]['UDCPA']
+                TS_UDCPA_temp.append(temp_UDCPA)
+                
+                temp_UTCPA = TS_list[ts_ID]['UTCPA']
+                TS_UTCPA_temp.append(temp_UTCPA)
+
+                temp_UD = TS_list[ts_ID]['UD']
+                TS_UD_temp.append(temp_UD)
+
+                temp_UB = TS_list[ts_ID]['UB']
+                TS_UB_temp.append(temp_UB)
+
+                temp_UK = TS_list[ts_ID]['UK']
+                TS_UK_temp.append(temp_UK)
+
+                temp_cri = TS_list[ts_ID]['CRI']
+                TS_CRI_temp.append(temp_cri)
+
+                temp_Rf = TS_list[ts_ID]['Rf']
+                TS_Rf_temp.append(temp_Rf)
+
+                temp_Ra = TS_list[ts_ID]['Ra']
+                TS_Ra_temp.append(temp_Ra)
+
+                temp_Rs = TS_list[ts_ID]['Rs']
+                TS_Rs_temp.append(temp_Rs)
+
+                temp_Rp = TS_list[ts_ID]['Rp']
+                TS_Rp_temp.append(temp_Rp)
+
+                temp_enc = TS_list[ts_ID]['status']
+                TS_ENC_temp.append(temp_enc)
+            
+
+            V_selected, pub_collision_cone = Local_PP.VO_update(OS_list,
+                                                                TS_list,
+                                                                V_des,
+                                                                self.static_obstacle_info,
+                                                                self.static_point_info
+                                                                )
+            # desired_spd_list = []
+            # desired_heading_list = []
+
+            wp = inha.waypoint_generator(OS_list, V_selected)
+            wp_x = wp[0]
+            wp_y = wp[1]
+            
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list = temp_spd
+            desired_heading_list = temp_heading_deg
+            desired_spd = desired_spd_list[0]
+            desired_heading = desired_heading_list[0]
+
+            if t%10 ==0:
+                pass
+
+            t += 1
+
+            if len(self.target_heading_list) != 10:
+                self.target_heading_list.append(desired_heading)
+            
             else:
-                real_target_heading = sum_of_heading/len(self.target_heading_list)
+                del self.target_heading_list[0]
+
+            sum_of_heading = 0
+            real_target_heading = 0
+            for i in self.target_heading_list:
+                sum_of_heading = sum_of_heading + i
+
+            if len(self.target_heading_list) >= 2:
+                if self.target_heading_list[len(self.target_heading_list)-1]*self.target_heading_list[len(self.target_heading_list)-2] < 0:
+                    self.target_heading_list = [self.target_heading_list[-1]]
+                    real_target_heading = desired_heading
+                else:
+                    real_target_heading = sum_of_heading/len(self.target_heading_list)
 
 
-        OS_pub_list = [
-            # int(OS_ID), 
-            False,
-            len(V_des_x),
-            V_des_x, 
-            V_des_y,  
-            desired_spd_list, 
-            eta, 
-            eda, 
-            False, 
-            0,  
-            round(desired_spd,3),
-            round(real_target_heading, 3), 
-            ]
-        
-        path_out_inha = self.path_out_publish(OS_pub_list)
+            OS_pub_list = [
+                # int(OS_ID), 
+                False,
+                len(wp_x),
+                wp_x, 
+                wp_y,  
+                desired_spd_list, 
+                eta, 
+                eda, 
+                False, 
+                0,  
+                round(desired_spd,3),
+                round(real_target_heading, 3), 
+                ]
+            
+            path_out_inha = self.path_out_publish(OS_pub_list)
 
-        if local_goal_EDA < 2 * ship_L :
-        # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
-        # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
-            waypointIndex = (waypointIndex + 1) % len(V_dests_x_os)
+            if local_goal_EDA < 2 * ship_L :
+            # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
+            # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
+                waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
 
-        return path_out_inha
+            return path_out_inha
     
 
 
