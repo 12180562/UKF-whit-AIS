@@ -1,90 +1,126 @@
-from numpy import deg2rad, rad2deg
-from math import *
+import kass_inha
+from kass_inha import kass_inha
+
+
+
+from math import sqrt, atan2,cos,sin,pi
 from numpy import rad2deg
 
+
 import numpy as np
-import json
-
-def setParamUpdate():
-    with open("parameter.json", 'r') as param:
-        Update_parameter = json.load(param)
-        
-    parameter = Update_parameter
-    
-    # print(parameter)
-    return parameter
-
-a = setParamUpdate()
-
-print(a)
 
 
+inha_input = {
+  "cog": 210.0,
+  "sog": 8.2,
+  "latitude": 3046.99512,
+  "longitude": 12932.48609,
+  "latOfWayPoint": [
+    34.982813,
+    34.929951,
+    34.966123,
+    34.865359,
+    34.832428,
+    34.895181,
+    34.895181,
+    35.716109
+  ],
+  "longOfWayPoint": [
+    128.974371,
+    129.09702,
+    129.237384,
+    129.196501,
+    129.062349,
+    128.92242,
+    128.92242,
+    162.581832
+  ],
+  "numOfObject": 13,
+  "idOfObject": [
+    1000.0,
+    5001.0,
+    5002.0,
+    5003.0,
+    5004.0,
+    5005.0,
+    5006.0,
+    5007.0,
+    5008.0,
+    5009.0,
+    5010.0,
+    5011.0,
+    5012.0
+  ],
+  "cogOfObject": [
+    1.883908,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0
+  ],
+  "sogOfObject": [
+    5.756628,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "latOfObject": [
+    35.447928,
+    35.446721,
+    35.455861,
+    35.461408,
+    35.477105,
+    35.445567,
+    35.4324,
+    35.465134,
+    35.474048,
+    35.45409,
+    35.476987,
+    35.447834,
+    35.476608
+  ],
+  "longOfObject": [
+    129.406891,
+    129.366684,
+    129.406173,
+    129.37796,
+    129.386703,
+    129.413193,
+    129.408081,
+    129.391952,
+    129.406143,
+    129.368866,
+    129.38559,
+    129.404907,
+    129.40155
+  ]
+}
 
-# def waypoint_generator(OS):
-#     wp_x = []
-#     wp_y = []
-#     OS_X = np.array([OS['Pos_X'], OS['Pos_Y']])
-#     for i in range(1, 16):
-#         V_selected = [-0.28470095, -1.06251841]
-#         wp = OS_X + V_selected * np.array([i])
-#         wp_x.append(wp[0]) 
-#         wp_y.append(wp[1])
 
-#     return wp_x, wp_y
+data = kass_inha()
 
-# def eta_eda_assumption(wp, OS, target_U):
-#     eta = []
-#     eda = []
-#     target_U = 1.5
-    
-#     OS_X = np.array([OS['Pos_X'], OS['Pos_Y']])
-#     for i in range(15):
-#         eda_x = wp[0][i] - OS['Pos_X']
-#         eda_y = wp[1][i] - OS['Pos_Y']
-#         distance = sqrt(eda_x**2 + eda_y**2)
-#         eda.append(distance)
-#         time = distance / target_U
-#         eta.append(time)
-        
-#     return eta, eda
+path_out_inha = data.kass_inha(inha_input)
+# data.setParamaUpdate()
+# path_out_inha = data.kass_inha(inha_input)
 
 
-# def desired_value_assummption(wp):
-#     desired_spd_list = []
-#     desired_heading_list = []
-#     for i in range(15):
-#         U_des = sqrt(wp[0][i]**2 + wp[1][i]**2)
-#         target_head = rad2deg(atan2(wp[1][i], wp[0][i])) 
-        
-#         desired_heading = target_head
-#         desired_spd = U_des
-#         desired_spd_list.append(desired_spd)
-#         desired_heading_list.append(desired_heading)
-        
-#     return desired_spd_list, desired_heading_list
-               
-
-# OS = {'shipID': 1000, 'Pos_X': 3046.99512, 'Pos_Y': 12932.48609, 'Vel_U': 1.271798972336573, 'Heading': 210.0, 'V_x': -1.1014102185504147, 'V_y': -0.6358994861682866}
-# target_U = 1.0
-# wp = waypoint_generator(OS)
-# print('wp:', wp)
-# print(len(wp))
+print(path_out_inha)
 
 
-# eta, eda = eta_eda_assumption(wp, OS, target_U)
-# print('eta:', eta)
-# print('eda:', eda)
-
-# desired_spd = desired_value_assummption(wp)
-
-# print(desired_spd)
-
-
-
-
-
-
-
-
-
-        
