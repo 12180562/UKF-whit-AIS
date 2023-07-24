@@ -117,7 +117,10 @@ inha_input = {
 data = kass_inha()
 
 path_out_inha = data.kass_inha(inha_input)
+# data.setParamaUpdate()
+# path_out_inha = data.kass_inha(inha_input)
 
-print(path_out_inha)
+
+# print(path_out_inha)
 
 

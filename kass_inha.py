@@ -396,57 +396,6 @@ class Inha_dataProcess:
             }
         return TS_list
 
-    # def ship_list_container(self, OS_ID):
-    #     ''' 
-    #         Subscribe한 선박의 항해정보를 dictionary로 저장 
-        
-    #         Return : 
-    #             ship_list_dic
-    #             ship_ID 
-    #     '''
-    #     for i in range(len(self.ship_ID)):
-    #         index_ship = self.ship_ID[i]
-    #         if index_ship == OS_ID:
-    #             self.ship_dic[OS_ID]= {
-    #                 'Ship_ID' : int(self.ship_ID[i]),
-    #                 'Pos_X' : self.Pos_X[i],
-    #                 'Pos_Y' : self.Pos_Y[i],
-    #                 'Vel_U' : self.Vel_U[i],
-    #                 'Heading' : self.Heading[i],
-    #                 }
-
-    #         else:
-    #             self.ship_dic[index_ship]= {
-    #                 'Ship_ID' : int(self.ship_ID[i]),
-    #                 'Pos_X' : self.Pos_X[i],
-    #                 'Pos_Y' : self.Pos_Y[i],
-    #                 'Vel_U' : self.Vel_U[i],
-    #                 'Heading' : self.Heading[i],
-    #                 }
-
-    #     return self.ship_dic, self.ship_ID
-
-    # def classify_OS_TS(self, ship_dic, ship_ID, OS_ID):
-    #     ''' 자선과 타선의 운항정보 분리
-        
-    #     Return :
-    #         OS_list, TS_list // (dataframe)
-    #     '''
-    #     if len(ship_ID) == 1:
-    #         OS_list = ship_dic[OS_ID]
-    #         TS_list = None
-
-    #     else:
-    #         for i in range(len(ship_ID)):
-    #             if ship_ID[i] == OS_ID:
-    #                 OS_list = ship_dic[OS_ID]
-
-            
-    #         TS_list = ship_dic.copy()
-    #         # FIXME: `OS_ID` does not exist in `TS_list` when processing TSs? The `OS_ID` is not the "OS"????
-    #         del(TS_list[OS_ID])
-
-    #     return OS_list, TS_list
 
     def CRI_cal(self, OS, TS):
         cri = CRI(
@@ -602,23 +551,23 @@ class Inha_dataProcess:
 
 
 class VO_module:
-    def __init__(self):
+    def __init__(self, parameter):
         # NOTE: It is not clear what min and max of speed could be.
-        self.min_targetSpeed = 0.9
-        self.max_targetSpeed = 1.1
-        self.num_targetSpeedCandidates = 3
+        self.min_targetSpeed = parameter['min_targetSpeed']
+        self.max_targetSpeed = parameter['max_targetSpeed']
+        self.num_targetSpeedCandidates = parameter['num_targetSpeedCandidates']
 
         # NOTE: It is not clear what min and max of heading angle could be.
-        self.min_targetHeading_deg_local = -45.0
-        self.max_targetHeading_deg_local = 45.0
-        self.num_targetHeadingCandidates = 19
+        self.min_targetHeading_deg_local = parameter['min_targetHeading_deg_local']
+        self.max_targetHeading_deg_local = parameter['max_targetHeading_deg_local']
+        self.num_targetHeadingCandidates = parameter['num_targetHeadingCandidates']
 
-        self.weight_alpha = 1
-        self.weight_aggresiveness = 1
-        self.cri_param = 150
-        self.time_horizon = 30
+        self.weight_alpha = parameter['weight_focusObs']
+        self.weight_aggresiveness = parameter['weight_agressivness']
+        self.cri_param = parameter['cri_param']
+        self.time_horizon = parameter['timeHorizon']
 
-        self.rule = True  
+        self.rule = parameter['Portside_rule']
         
         
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
@@ -1498,6 +1447,20 @@ class kass_inha:
         self.static_obstacle_info = []
         self.static_point_info = []
         self.waypoint_info = dict()
+        
+        ##VO parameter
+        with open("parameter.json", "r") as param:
+            Update_parameter = json.load(param)
+        self.parameter = Update_parameter
+        
+        
+        
+    def setParamaUpdate(self):
+        with open("parameter.json", 'r') as param:
+            Update_parameter = json.load(param)
+        
+        self.parameter = Update_parameter
+        
 
 
     def V_des_callback(self, latOfWayPoint, longOfWayPoint):
@@ -1550,8 +1513,8 @@ class kass_inha:
         self.longOfWayPoint = inha_input["longOfWayPoint"]
 
         
-
-        Local_PP = VO_module()
+        
+        Local_PP = VO_module(self.parameter)
 
         t = 0
         waypointIndex = 0
@@ -1715,8 +1678,6 @@ class kass_inha:
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(V_dests_x_os)
-
-        # print(path_out_inha)
 
         return path_out_inha
     
