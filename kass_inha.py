@@ -6,15 +6,6 @@ import numpy as np
 import json
 
 
-def setParamUpdate():
-    with open("parameter.json", 'r') as param:
-        Update_parameter = json.load(param)
-        
-    parameter = Update_parameter
-    
-    print(parameter)
-    return parameter
-
 
 
 class CRI:
