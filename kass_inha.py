@@ -800,6 +800,7 @@ class VO_module:
 
         self.rule = True  
         self.errorCode = None
+        self.error = False
         
         
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
@@ -1709,6 +1710,7 @@ class VO_module:
             reachableVel_global_all = reachableVel_global_all = np.array([reachableVel_global_all_copy[-1,:]])
             print("------ All of vector candidates have collision risk with static obstacle ------")
             self.errorCode = 310
+            self.error = True
         else:
             pass
 
@@ -2540,61 +2542,72 @@ class kass_inha:
         self.static_point_info = []
         self.waypoint_info = dict()
 
+        self.error = False
         self.errorCode = None
         self.pub_list = []
 
     def input_check(self, inha_input):
+        error = False
         errorCode = None
         if len(inha_input) < 11:
             print("------insufficient number of input------")
             errorCode = 300
+            error = True
         else:
             pass
-        return errorCode
+        return errorCode,error
     
     def OS_check(self, inha_input):
+        error = False
         errorCode = None
         latitude = inha_input["latitude"]
         longitude = inha_input["longitude"]
         if len(latitude) != len(longitude):
             print("------OS position data is missing------")
             errorCode = 301
+            error = True
         else:
             pass
-        return errorCode
+        return errorCode,error
     
     def TS_check(self, inha_input):
+        error = False
         errorCode = None
         idOfObject = inha_input["idOfObject"]
         latOfObject = inha_input["latOfObject"]
         longOfObject = inha_input["longOfObject"]
         if len(idOfObject) != len(latOfObject):
-            print("------OS position data is missing------")
+            print("------TS position data is missing------")
+            error = True
             errorCode = 301
         elif len(idOfObject) != len(longOfObject):
             print("------TS position data is missing------")
+            error = True
             errorCode = 301
         else:
             pass
-        return errorCode
+        return errorCode,error
     
     def wp_check(self, inha_input):
+        error = False
         errorCode = None
         latOfWayPoint = inha_input["latOfWayPoint"]
         longOfWayPoint = inha_input["longOfWayPoint"]
         if len(latOfWayPoint) != len(longOfWayPoint):
             print("------Waypoints are missing------")
+            error = True
         else:
             pass
-        return errorCode
+        return errorCode,error
     
     def error_check(self, inha_input):
+        error = False
         errorCode = None
-        errorCode = self.input_check(inha_input)
-        errorCode = self.OS_check(inha_input)
-        errorCode = self.TS_check(inha_input)
-        errorCode = self.wp_check(inha_input)
-        return errorCode
+        errorCode,error = self.input_check(inha_input)
+        errorCode,error = self.OS_check(inha_input)
+        errorCode,error = self.TS_check(inha_input)
+        errorCode,error = self.wp_check(inha_input)
+        return errorCode,error
 
     def wp_callback(self, latOfWayPoint, longOfWayPoint):
         self.waypoint_info['waypoint_x'] = latOfWayPoint
@@ -2633,7 +2646,7 @@ class kass_inha:
 
 
     def kass_inha(self, inha_input):
-        self.errorCode = self.error_check(inha_input)
+        self.errorCode, self.error = self.error_check(inha_input)
 
         if self.errorCode != None:
             print(f"------error {self.errorCode}------")
@@ -2812,7 +2825,7 @@ class kass_inha:
                 desired_spd_list, 
                 [eta], 
                 [eda], 
-                False, 
+                self.error, 
                 self.errorCode,  
                 desired_spd, 
                 real_target_heading, 
