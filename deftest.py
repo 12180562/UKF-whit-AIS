@@ -121,6 +121,6 @@ path_out_inha = data.kass_inha(inha_input)
 # path_out_inha = data.kass_inha(inha_input)
 
 
-# print(path_out_inha)
+print(path_out_inha)
 
 
