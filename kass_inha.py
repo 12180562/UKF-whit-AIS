@@ -1451,11 +1451,14 @@ class kass_inha:
         
         
         
-    def setParamaUpdate(self):
-        with open("parameter.json", 'r') as param:
-            Update_parameter = json.load(param)
+    # def setParamaUpdate(self):
+    #     with open("parameter.json", 'r') as param:
+    #         Update_parameter = json.load(param)
         
-        self.parameter = Update_parameter
+    #     self.parameter = Update_parameter
+    def setParamUpdate(self, Update_Parameter):
+        self.parameter = Update_Parameter
+        print(self.parameter)
         
 
     def input_check(self, inha_input):

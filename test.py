@@ -8,6 +8,12 @@ from numpy import rad2deg
 
 
 import numpy as np
+import json
+
+
+with open("parameter.json", "r") as param:
+    Update_parameter = json.load(param)
+parameter = Update_parameter
 
 
 inha_input = {
@@ -117,10 +123,9 @@ inha_input = {
 data = kass_inha()
 
 path_out_inha = data.kass_inha(inha_input)
-# data.setParamaUpdate()
-# path_out_inha = data.kass_inha(inha_input)
+# data.setParamUpdate(parameter)
+# path_out_inha2 = data.kass_inha(inha_input)
 
 
-print(path_out_inha)
 
 

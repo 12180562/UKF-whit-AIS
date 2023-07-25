@@ -1,7 +1,7 @@
 {
 
 
-    "SD_param" :  4,
+    "SD_param" :  7,
     "cri_param" : 150,
     "Portside_rule" : true,
     "weight_focusObs" : 1,
