@@ -120,9 +120,10 @@ inha_input = {
 }
 
 
-data = kass_inha()
+data = kass_inha(parameter)
 
 path_out_inha = data.kass_inha(inha_input)
+print(path_out_inha)
 # data.setParamUpdate(parameter)
 # path_out_inha2 = data.kass_inha(inha_input)
 

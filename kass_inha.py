@@ -335,7 +335,7 @@ class CRI:
 
 class Inha_dataProcess:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
-    def __init__(self, idOfObject, latitude, longitude, cog, sog, latOfObject, longOfObject, cogOfObject, sogOfObject):
+    def __init__(self, idOfObject, latitude, longitude, cog, sog, latOfObject, longOfObject, cogOfObject, sogOfObject, parameter):
 
         # self.ship_ID = ship_ID
         self.idOfObject = idOfObject
@@ -350,7 +350,10 @@ class Inha_dataProcess:
         self.cogOfObject = cogOfObject
         self.sogOfObject = sogOfObject
         self.ship_dic= {}
-        self.SD_param = 4   #rospy.get_param('SD_param')
+        self.SD_param = parameter['SD_param']
+        self.ship_L = parameter['ship_L']
+        self.ship_B = parameter['ship_B']
+        #rospy.get_param('SD_param')
 
     def os_info(self):
         os_latitude = self.Pos_X
@@ -390,9 +393,9 @@ class Inha_dataProcess:
 
     def CRI_cal(self, OS, TS):
         cri = CRI(
-            2.0,
+            self.ship_L,
             #rospy.get_param("shipInfo_all/ship1_info/ship_L"),
-            0.6,
+            self.ship_B,
             #rospy.get_param("shipInfo_all/ship1_info/ship_B"),
             OS['Pos_X'],
             OS['Pos_Y'],
@@ -553,6 +556,7 @@ class VO_module:
         self.weight_aggresiveness = parameter['weight_agressivness']
         self.cri_param = parameter['cri_param']
         self.time_horizon = parameter['timeHorizon']
+        self.delta_t = parameter['delta_t']
 
         self.rule = parameter['Portside_rule']
         self.errorCode = None
@@ -834,7 +838,7 @@ class VO_module:
         static_point_data = static_point_info
         
         pA = np.array([OS['Pos_X'], OS['Pos_Y']])
-        delta_t = 40 # constant
+        delta_t = self.delta_t # constant
         detecting_radious = 100
 
         #initial number for while
@@ -1413,7 +1417,7 @@ class VO_module:
 
 
 class kass_inha:
-    def __init__(self):
+    def __init__(self, Update_parameter):
         self.available_info = dict()
         self.unavailable_info = dict()
         self.latitude = 0.0 
@@ -1429,6 +1433,10 @@ class kass_inha:
         self.longOfWayPoint = []
         
         self.ship_ID = []
+        self.ship_L = Update_parameter['ship_L']
+        self.ship_B = Update_parameter['ship_B']
+        self.ship_scale = Update_parameter['ship_scale']
+        self.target_speed = Update_parameter['target_speed']
         self.waypoint_idx = 0
         self.len_waypoint_info = 0
         
@@ -1443,10 +1451,6 @@ class kass_inha:
         self.error = False
         self.errorCode = None
         self.pub_list = []
-        
-        ##VO parameter
-        with open("parameter.json", "r") as param:
-            Update_parameter = json.load(param)
         self.parameter = Update_parameter
         
         
@@ -1458,7 +1462,6 @@ class kass_inha:
     #     self.parameter = Update_parameter
     def setParamUpdate(self, Update_Parameter):
         self.parameter = Update_Parameter
-        print(self.parameter)
         
 
     def input_check(self, inha_input):
@@ -1587,7 +1590,7 @@ class kass_inha:
             waypointIndex = 0
             OS_scale = 11.0
             target_speed = self.sog * 0.5144 / sqrt(OS_scale)
-            ship_L = 2.0
+            ship_L = self.ship_L
 
             waypoint_info = self.wp_callback(self.latOfWayPoint, self.longOfWayPoint)
             self.op_callback()
@@ -1601,6 +1604,7 @@ class kass_inha:
                                     self.longOfObject,
                                     self.cogOfObject,
                                     self.sogOfObject,
+                                    self.parameter
                                     )
             
             wpts_x_os = list(waypoint_info['waypoint_x'])
@@ -1722,6 +1726,12 @@ class kass_inha:
                     real_target_heading = desired_heading
                 else:
                     real_target_heading = sum_of_heading/len(self.target_heading_list)
+                    
+            if -180 <= real_target_heading < 0:
+                real_target_heading = real_target_heading + 360
+            
+            else:
+                real_target_heading = real_target_heading
 
 
             OS_pub_list = [
