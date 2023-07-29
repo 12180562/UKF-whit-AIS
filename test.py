@@ -128,5 +128,3 @@ print(path_out_inha)
 # path_out_inha2 = data.kass_inha(inha_input)
 
 
-
-
