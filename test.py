@@ -119,7 +119,7 @@ inha_input = {
   ]
 }
 
-
+# print(parameter)
 data = kass_inha(parameter)
 
 path_out_inha = data.kass_inha(inha_input)

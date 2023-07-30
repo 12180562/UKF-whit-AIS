@@ -24,8 +24,10 @@
     "ship_L": 2.0,
     "ship_B": 0.6,
     "ship_scale": 11.0,
+    "cri_ratio": 16.87,
     
     "target_speed": 6.0
+    
     
 
 }

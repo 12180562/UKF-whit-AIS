@@ -3,16 +3,15 @@ from math import *
 from numpy import rad2deg
 
 import numpy as np
-import json
 
 
 
 
 class CRI:
-    def __init__(self, L, B, latitude, longitude, latOfObject, longOfObject, cog, cogOfObject, sog, sogOfObject):
+    def __init__(self, L, B, latitude, longitude, latOfObject, longOfObject, cog, cogOfObject, sog, sogOfObject, parameter):
     # def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt):
-        self.L = L      #타선의 길이 [m] from pram
-        self.B = B      # [m]
+        self.L = parameter['ship_L']     #타선의 길이 [m] from pram
+        self.B = parameter['ship_B']   # [m]
         self.Xo = latitude    #자선 x좌표  [m]
         self.Yo = longitude    #자선 y좌표  [m] 
         self.Xt = latOfObject    #타선 x좌표  [m]
@@ -21,7 +20,7 @@ class CRI:
         self.Ct = cogOfObject    #타선 Heading angle [rad]
         self.Vo = sog    #자선 속도   [knots]
         self.Vt = sogOfObject    #타선 속도   [knots]
-        self.ratio = 1852/110
+        self.ratio = parameter['cri_ratio']
 
     def RD(self):
         '''Relative Distance, 자선과 타선 사이의 상대 거리'''
@@ -353,6 +352,7 @@ class Inha_dataProcess:
         self.SD_param = parameter['SD_param']
         self.ship_L = parameter['ship_L']
         self.ship_B = parameter['ship_B']
+        self.parameter = parameter
         #rospy.get_param('SD_param')
 
     def os_info(self):
@@ -394,9 +394,7 @@ class Inha_dataProcess:
     def CRI_cal(self, OS, TS):
         cri = CRI(
             self.ship_L,
-            #rospy.get_param("shipInfo_all/ship1_info/ship_L"),
             self.ship_B,
-            #rospy.get_param("shipInfo_all/ship1_info/ship_B"),
             OS['Pos_X'],
             OS['Pos_Y'],
             TS['Pos_X'],
@@ -405,6 +403,7 @@ class Inha_dataProcess:
             deg2rad(TS['Heading']),
             OS['Vel_U'],
             TS['Vel_U'],
+            self.parameter,
         )
 
         RD = cri.RD()
@@ -1454,12 +1453,6 @@ class kass_inha:
         self.parameter = Update_parameter
         
         
-        
-    # def setParamaUpdate(self):
-    #     with open("parameter.json", 'r') as param:
-    #         Update_parameter = json.load(param)
-        
-    #     self.parameter = Update_parameter
     def setParamUpdate(self, Update_Parameter):
         self.parameter = Update_Parameter
         
