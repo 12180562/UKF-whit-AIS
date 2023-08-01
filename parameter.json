@@ -9,8 +9,8 @@
     "timeHorizon" : 30,
     "filter_length" : 10,
 
-    "min_targetSpeed" : 0.9,
-    "max_targetSpeed" : 1.1,
+    "min_targetSpeed" : 5.5,
+    "max_targetSpeed" : 10.0,
     "num_targetSpeedCandidates" : 3,
 
     "min_targetHeading_deg_local" : -45.0,
@@ -26,7 +26,7 @@
     "ship_scale": 11.0,
     "cri_ratio": 16.87,
     
-    "target_speed": 6.0
+    "target_speed": 17.0
     
     
 

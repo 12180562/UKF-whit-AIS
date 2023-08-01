@@ -3,12 +3,12 @@ from math import *
 from numpy import rad2deg
 
 import numpy as np
-
+import pymap3d as pm
 
 
 
 class CRI:
-    def __init__(self, L, B, latitude, longitude, latOfObject, longOfObject, cog, cogOfObject, sog, sogOfObject, parameter):
+    def __init__(self, latitude, longitude, latOfObject, longOfObject, cog, cogOfObject, sog, sogOfObject, parameter):
     # def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt):
         self.L = parameter['ship_L']     #타선의 길이 [m] from pram
         self.B = parameter['ship_B']   # [m]
@@ -1451,8 +1451,23 @@ class kass_inha:
         self.errorCode = None
         self.pub_list = []
         self.parameter = Update_parameter
+        self.origin = [35.497383, 129.385912, 0]
+        self.eOfobject = []
+        self.nOfobject = []
+        self.eOfwaypoint = []
+        self.nOfwaypoint = []
         
-        
+    def setParamaUpdate(self, Update_parameter):
+        self.parameter = Update_parameter
+
+    def enu_convert(self,gnss,origin):
+        e, n, u = pm.geodetic2enu(gnss[0], gnss[1], gnss[2], origin[0], origin[1], origin[2])
+        return e, n, u
+    
+    def gnss_convert(self,enu,origin):
+        lat,long,alt = pm.enu2geodetic(enu[0], enu[1], enu[2], origin[0], origin[1], origin[2])
+        return lat, long, alt
+
     def setParamUpdate(self, Update_Parameter):
         self.parameter = Update_Parameter
         
@@ -1575,14 +1590,35 @@ class kass_inha:
             self.latOfWayPoint = inha_input["latOfWayPoint"]
             self.longOfWayPoint = inha_input["longOfWayPoint"]
 
-            
-            
+            self.latitude,self.longitude,_ = self.enu_convert([self.latitude,self.longitude,0],self.origin)
+            self.eOfobject = []
+            self.nOfobject = []
+            self.eOfwaypoint = []
+            self.nOfwaypoint = []
+
+            for i in range(len(self.latOfObject)):
+                gnss = [self.latOfObject[i],self.longOfObject[i],0]
+                e,n,u = self.enu_convert(gnss,self.origin)
+                self.eOfobject.append(e)
+                self.nOfobject.append(n)
+
+            for j in range(len(self.latOfWayPoint)):
+                gnss = [self.latOfWayPoint[j],self.longOfWayPoint[j],0]
+                e,n,u = self.enu_convert(gnss,self.origin)
+                self.eOfwaypoint.append(e)
+                self.nOfwaypoint.append(n)
+
+            self.latOfObject = self.eOfobject
+            self.longOfObject = self.nOfobject
+            self.latOfWayPoint = self.eOfwaypoint
+            self.longOfWayPoint = self.nOfwaypoint
+
+
             Local_PP = VO_module(self.parameter)
 
             t = 0
             waypointIndex = 0
-            OS_scale = 11.0
-            target_speed = self.sog * 0.5144 / sqrt(OS_scale)
+            target_speed = self.target_speed * 0.5144
             ship_L = self.ship_L
 
             waypoint_info = self.wp_callback(self.latOfWayPoint, self.longOfWayPoint)
@@ -1689,6 +1725,14 @@ class kass_inha:
             wp = inha.waypoint_generator(OS_list, V_selected)
             wp_x = wp[0]
             wp_y = wp[1]
+            wp_x_gnss = []
+            wp_y_gnss = []
+
+            for i in range(len(wp_x)):
+                wp_in_enu = [wp_x[i],wp_y[i],0]
+                wp_in_gnss = self.gnss_convert(wp_in_enu, self.origin)
+                wp_x_gnss.append(wp_in_gnss[0])
+                wp_y_gnss.append(wp_in_gnss[1])
             
             eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)
             temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
@@ -1731,8 +1775,8 @@ class kass_inha:
                 # int(OS_ID), 
                 False,
                 len(wp_x),
-                wp_x, 
-                wp_y,  
+                wp_x_gnss, 
+                wp_y_gnss,  
                 desired_spd_list, 
                 eta, 
                 eda, 
