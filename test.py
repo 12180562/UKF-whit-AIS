@@ -17,12 +17,12 @@ parameter = Update_parameter
 
 
 inha_input = {
-  "cog": 210.0,
+  "cog": 110.0,
   "sog": 8.2,
-  "latitude": 30.4699512,
-  "longitude": 129.3248609,
+  "latitude": 35.50460333333333,
+  "longitude": 129.36543833333332,
   "latOfWayPoint": [
-    34.982813,
+    35.5014,
     34.929951,
     34.966123,
     34.865359,
@@ -32,7 +32,7 @@ inha_input = {
     35.716109
   ],
   "longOfWayPoint": [
-    128.974371,
+    129.3667,
     129.09702,
     129.237384,
     129.196501,
@@ -118,6 +118,7 @@ inha_input = {
     129.40155
   ]
 }
+
 
 # print(parameter)
 data = kass_inha(parameter)

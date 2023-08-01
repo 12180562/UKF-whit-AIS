@@ -393,8 +393,6 @@ class Inha_dataProcess:
 
     def CRI_cal(self, OS, TS):
         cri = CRI(
-            self.ship_L,
-            self.ship_B,
             OS['Pos_X'],
             OS['Pos_Y'],
             TS['Pos_X'],
@@ -1451,7 +1449,7 @@ class kass_inha:
         self.errorCode = None
         self.pub_list = []
         self.parameter = Update_parameter
-        self.origin = [35.497383, 129.385912, 0]
+        self.origin = Update_parameter['origin']
         self.eOfobject = []
         self.nOfobject = []
         self.eOfwaypoint = []
@@ -1719,6 +1717,7 @@ class kass_inha:
                                                                 self.static_obstacle_info,
                                                                 self.static_point_info
                                                                 )
+            
             # desired_spd_list = []
             # desired_heading_list = []
 
@@ -1752,23 +1751,23 @@ class kass_inha:
             else:
                 del self.target_heading_list[0]
 
-            sum_of_heading = 0
-            real_target_heading = 0
-            for i in self.target_heading_list:
-                sum_of_heading = sum_of_heading + i
+            # sum_of_heading = 0
+            # real_target_heading = 0
+            # for i in self.target_heading_list:
+            #     sum_of_heading = sum_of_heading + i
 
-            if len(self.target_heading_list) >= 2:
-                if self.target_heading_list[len(self.target_heading_list)-1]*self.target_heading_list[len(self.target_heading_list)-2] < 0:
-                    self.target_heading_list = [self.target_heading_list[-1]]
-                    real_target_heading = desired_heading
-                else:
-                    real_target_heading = sum_of_heading/len(self.target_heading_list)
+            # if len(self.target_heading_list) >= 2:
+            #     if self.target_heading_list[len(self.target_heading_list)-1]*self.target_heading_list[len(self.target_heading_list)-2] < 0:
+            #         self.target_heading_list = [self.target_heading_list[-1]]
+            #         real_target_heading = desired_heading
+            #     else:
+            #         real_target_heading = sum_of_heading/len(self.target_heading_list)
                     
-            if -180 <= real_target_heading < 0:
-                real_target_heading = real_target_heading + 360
+            if -180 <= desired_heading < 0:
+                desired_heading = desired_heading + 360
             
             else:
-                real_target_heading = real_target_heading
+                desired_heading = desired_heading
 
 
             OS_pub_list = [
@@ -1783,7 +1782,7 @@ class kass_inha:
                 False, 
                 0,  
                 round(desired_spd,3),
-                round(real_target_heading, 3), 
+                round(desired_heading, 3), 
                 ]
             
             path_out_inha = self.path_out_publish(OS_pub_list)
