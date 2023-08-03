@@ -1428,6 +1428,7 @@ class kass_inha:
         self.sogOfObject = []
         self.latOfWayPoint = []
         self.longOfWayPoint = []
+        self.waypoint_idx = 0
         
         self.ship_ID = []
         self.ship_L = Update_parameter['ship_L']
@@ -1460,7 +1461,7 @@ class kass_inha:
 
     def enu_convert(self,gnss,origin):
         e, n, u = pm.geodetic2enu(gnss[0], gnss[1], gnss[2], origin[0], origin[1], origin[2])
-        return e, n, u
+        return n, e, u
     
     def gnss_convert(self,enu,origin):
         lat,long,alt = pm.enu2geodetic(enu[0], enu[1], enu[2], origin[0], origin[1], origin[2])
@@ -1587,6 +1588,7 @@ class kass_inha:
             self.sogOfObject = inha_input["sogOfObject"]
             self.latOfWayPoint = inha_input["latOfWayPoint"]
             self.longOfWayPoint = inha_input["longOfWayPoint"]
+            self.waypoint_idx = inha_input['nWptsID']
 
             self.latitude,self.longitude,_ = self.enu_convert([self.latitude,self.longitude,0],self.origin)
             self.eOfobject = []
@@ -1610,12 +1612,12 @@ class kass_inha:
             self.longOfObject = self.nOfobject
             self.latOfWayPoint = self.eOfwaypoint
             self.longOfWayPoint = self.nOfwaypoint
-
+            
 
             Local_PP = VO_module(self.parameter)
 
             t = 0
-            waypointIndex = 0
+            waypointIndex = self.waypoint_idx
             target_speed = self.target_speed * 0.5144
             ship_L = self.ship_L
 
@@ -1737,7 +1739,7 @@ class kass_inha:
             temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
             desired_spd_list = temp_spd
             desired_heading_list = temp_heading_deg
-            desired_spd = desired_spd_list[0]
+            desired_spd = desired_spd_list[0] / 0.5144
             desired_heading = desired_heading_list[0]
 
             if t%10 ==0:
@@ -1751,17 +1753,6 @@ class kass_inha:
             else:
                 del self.target_heading_list[0]
 
-            # sum_of_heading = 0
-            # real_target_heading = 0
-            # for i in self.target_heading_list:
-            #     sum_of_heading = sum_of_heading + i
-
-            # if len(self.target_heading_list) >= 2:
-            #     if self.target_heading_list[len(self.target_heading_list)-1]*self.target_heading_list[len(self.target_heading_list)-2] < 0:
-            #         self.target_heading_list = [self.target_heading_list[-1]]
-            #         real_target_heading = desired_heading
-            #     else:
-            #         real_target_heading = sum_of_heading/len(self.target_heading_list)
                     
             if -180 <= desired_heading < 0:
                 desired_heading = desired_heading + 360
@@ -1787,10 +1778,6 @@ class kass_inha:
             
             path_out_inha = self.path_out_publish(OS_pub_list)
 
-            if local_goal_EDA < 2 * ship_L :
-            # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
-            # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
-                waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
 
             return path_out_inha
     
