@@ -575,7 +575,7 @@ class VO_module:
     def __is_all_vels_avoidable(self, vel_all_annotated, shipID_all):
         for vel_annotated in vel_all_annotated:
             for shipID in shipID_all:
-                if (vel_annotated[shipID] == 'inCollisionCone'):
+                if (vel_annotated[shipID] == 'inColliself.degreeOfAxis[2]dsionCone'):
                    return False
 
         return True
@@ -822,9 +822,6 @@ class VO_module:
 
         return reachableVel_global_all_after_obstacle
 
-
-    # reachable velocity global all을 받아와서 detecting vector를 생성
-    # detecting vector가 장애물과 겹친다면 후보에서 삭제
 
     def __delete_vector_inside_obstacle(self, reachableVel_global_all, OS, static_obstacle_info, static_point_info):
 
@@ -1429,6 +1426,7 @@ class kass_inha:
         self.latOfWayPoint = []
         self.longOfWayPoint = []
         self.waypoint_idx = 0
+        self.standard_speed = Update_parameter['standard_speed']
         
         self.ship_ID = []
         self.ship_L = Update_parameter['ship_L']
@@ -1455,6 +1453,7 @@ class kass_inha:
         self.nOfobject = []
         self.eOfwaypoint = []
         self.nOfwaypoint = []
+
         
     def setParamaUpdate(self, Update_parameter):
         self.parameter = Update_parameter
@@ -1582,13 +1581,20 @@ class kass_inha:
             self.idOfObject = inha_input["idOfObject"]
             self.latOfObject = inha_input["latOfObject"]
             self.longOfObject = inha_input["longOfObject"]
-            self.cog = inha_input["cog"]
-            self.cogOfObject = inha_input["cogOfObject"]
             self.sog = inha_input["sog"]
+            self.cog = inha_input["cog"]
+            self.degreeOfAxis = inha_input['degreeOfAxis']
+
+            if self.sog >= self.standard_speed:
+                self.heading = self.cog
+            else:
+                self.heading = self.degreeOfAxis[2]
+            
+            self.cogOfObject = inha_input["cogOfObject"]
             self.sogOfObject = inha_input["sogOfObject"]
             self.latOfWayPoint = inha_input["latOfWayPoint"]
             self.longOfWayPoint = inha_input["longOfWayPoint"]
-            self.waypoint_idx = inha_input['nWptsID']
+            self.waypoint_idx = inha_input['nWptsID']          
 
             self.latitude,self.longitude,_ = self.enu_convert([self.latitude,self.longitude,0],self.origin)
             self.eOfobject = []
@@ -1627,8 +1633,9 @@ class kass_inha:
             inha = Inha_dataProcess(self.idOfObject,
                                     self.latitude,
                                     self.longitude,
-                                    self.cog,
-                                    target_speed,
+                                    self.heading,
+                                    # target_speed,
+                                    self.sog,
                                     self.latOfObject,
                                     self.longOfObject,
                                     self.cogOfObject,
@@ -1747,11 +1754,11 @@ class kass_inha:
 
             t += 1
 
-            if len(self.target_heading_list) != 10:
-                self.target_heading_list.append(desired_heading)
+            # if len(self.target_heading_list) != 10:
+            #     self.target_heading_list.append(desired_heading)
             
-            else:
-                del self.target_heading_list[0]
+            # else:
+            #     del self.target_heading_list[0]
 
                     
             if -180 <= desired_heading < 0:

@@ -19,6 +19,7 @@ parameter = Update_parameter
 inha_input = {
   "cog": 110.0,
   "sog": 8.2,
+  "degreeOfAxis" : [0, 0, 135.0],
   "latitude": 35.504645,
   "longitude": 129.36543,
   "latOfWayPoint": [
