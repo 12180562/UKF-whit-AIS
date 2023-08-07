@@ -340,7 +340,7 @@ class Inha_dataProcess:
         self.idOfObject = idOfObject
         self.Pos_X = latitude
         self.Pos_Y = longitude
-        self.Vel_U = sog
+        self.Vel_U = sog * 0.5144
         self.Heading = cog
         self.waypoint_dict = dict()
         
@@ -385,7 +385,7 @@ class Inha_dataProcess:
                 'ship_ID' : int(ts_idOfObject[i]),
                 'Pos_X' : ts_latOfObject[i],
                 'Pos_Y' : ts_longOfObject[i],
-                'Vel_U' : ts_sogOfObject[i],
+                'Vel_U' : ts_sogOfObject[i]*0.5144,
                 'Heading' : ts_cogOfObject[i],
             }
         return TS_list
@@ -460,21 +460,21 @@ class Inha_dataProcess:
 
         return wp_x, wp_y
 
-    def eta_eda_assumption(self, WP, OS, target_U):
-        ''' 목적지까지 도달 예상 시간 및 거리
+    # def eta_eda_assumption(self, WP, OS, target_U):
+    #     ''' 목적지까지 도달 예상 시간 및 거리
         
-        Return:
-            eta [t], eda [m]
-        '''       
-        eta = []
-        eda = []
-        for i in range(15):
-            eda_x = WP[0][i] - OS['Pos_X']
-            eda_y = WP[1][i] - OS['Pos_Y']
-            distance = sqrt(eda_x**2 + eda_y**2)
-            eda.append(round(distance, 3))
-            time = distance / target_U
-            eta.append(round(time, 3))
+    #     Return:
+    #         eta [t], eda [m]
+    #     '''       
+    #     eta = []
+    #     eda = []
+    #     for i in range(15):
+    #         eda_x = WP[0][i] - OS['Pos_X']
+    #         eda_y = WP[1][i] - OS['Pos_Y']
+    #         distance = sqrt(eda_x**2 + eda_y**2)
+    #         eda.append(round(distance, 3))
+    #         time = distance / target_U
+    #         eta.append(round(time, 3))
         # else:
         #     OS_X = np.array([OS['Pos_X'], OS['Pos_Y']])
         #     distance = np.linalg.norm(WP - OS_X)
@@ -1458,9 +1458,6 @@ class kass_inha:
         self.eOfwaypoint = []
         self.nOfwaypoint = []
 
-        
-    def setParamaUpdate(self, Update_parameter):
-        self.parameter = Update_parameter
 
     def enu_convert(self,gnss,origin):
         e, n, u = pm.geodetic2enu(gnss[0], gnss[1], gnss[2], origin[0], origin[1], origin[2])
@@ -1580,6 +1577,24 @@ class kass_inha:
         # path_out_inha['collisionRiskIndex'] = pub_list[11]
         
         return path_out_inha
+    
+    def eta_eda_assumption(self, WP, OS, target_speed):
+        ''' 목적지까지 도달 예상 시간 및 거리
+        
+        Return:
+            eta [t], eda [m]
+        '''       
+        eta = []
+        eda = []
+        for i in range(len(self.latOfWayPoint)):
+            eda_x = WP[0][i] - OS['Pos_X']
+            eda_y = WP[1][i] - OS['Pos_Y']
+            distance = sqrt(eda_x**2 + eda_y**2)
+            eda.append(round(distance, 3))
+            time = distance / target_speed
+            eta.append(round(time, 3))
+        
+        return eta, eda
 
 
     def kass_inha(self, inha_input):
@@ -1607,7 +1622,7 @@ class kass_inha:
             self.sogOfObject = inha_input["sogOfObject"]
             self.latOfWayPoint = inha_input["latOfWayPoint"]
             self.longOfWayPoint = inha_input["longOfWayPoint"]
-            self.waypoint_idx = inha_input['nWptsID']          
+            self.waypoint_idx = inha_input['nWptsID']       
 
             self.latitude,self.longitude,_ = self.enu_convert([self.latitude,self.longitude,0],self.origin)
             self.eOfobject = []
@@ -1648,7 +1663,6 @@ class kass_inha:
                                         self.latitude,
                                         self.longitude,
                                         self.heading,
-                                        # target_speed,
                                         self.sog,
                                         self.latOfObject,
                                         self.longOfObject,
@@ -1765,11 +1779,11 @@ class kass_inha:
                     'Heading' : self.heading,
                     }
                 V_selected = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
-                print(V_selected)
             # desired_spd_list = []
             # desired_heading_list = []
 
             wp = inha.waypoint_generator(OS_list, V_selected)
+            wp_eta_eda = (self.latOfWayPoint, self.longOfWayPoint)
             wp_x = wp[0]
             wp_y = wp[1]
             wp_x_gnss = []
@@ -1781,7 +1795,7 @@ class kass_inha:
                 wp_x_gnss.append(wp_in_gnss[0])
                 wp_y_gnss.append(wp_in_gnss[1])
             
-            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)
+            eta, eda = self.eta_eda_assumption(wp_eta_eda, OS_list, target_speed)
             temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
             desired_spd_list = temp_spd
             desired_heading_list = temp_heading_deg
@@ -1821,19 +1835,6 @@ class kass_inha:
                 round(desired_spd,3),
                 round(desired_heading, 3), 
                 ]
-            
-            # path_out_inha = dict()
-            # path_out_inha['modifyWayPoint'] = pub_list[0]
-            # path_out_inha['numOfWayPoint']  = pub_list[1]
-            # path_out_inha['latOfWayPoint'] = pub_list[2]
-            # path_out_inha['longOfWayPoint'] = pub_list[3]
-            # path_out_inha['speedOfWayPoint'] = pub_list[4]
-            # path_out_inha['ETAOfWayPoint'] = pub_list[5]
-            # path_out_inha['EDAOfWayPoint'] = pub_list[6]
-            # path_out_inha['error'] = pub_list[7]
-            # path_out_inha['errorCode'] = pub_list[8]
-            # path_out_inha['targetSpeed'] = round(pub_list[9], 3)
-            # path_out_inha['targetCourse'] = round(pub_list[10], 3)
             
             path_out_inha = self.path_out_publish(OS_pub_list)
 
