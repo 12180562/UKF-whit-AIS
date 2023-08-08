@@ -1,8 +1,8 @@
 {
 
 
-        "SD_param" :  7,
-        "cri_param" : 1700,
+        "SD_param" :  4,
+        "cri_param" : 1650,
         "Portside_rule" : true,
         "weight_focusObs" : 1,
         "weight_agressivness" : 1,
@@ -15,7 +15,7 @@
 
         "min_targetHeading_deg_local" : -45.0,
         "max_targetHeading_deg_local" : 45.0,
-        "num_targetHeadingCandidates" : 19,
+        "num_targetHeadingCandidates" : 31,
 
         "delta_t" : 40,
         "detecting_radious" : 100,

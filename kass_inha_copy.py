@@ -1271,6 +1271,7 @@ class VO_module:
                 RVOdata_all, 
                 V_des,
                 )
+            # print("all collision")
 
         # When no collision velocities
         elif isAllVelsAvoidable:
@@ -1280,7 +1281,6 @@ class VO_module:
                 velCandidates,
                 key= lambda v: np.linalg.norm(V_des-v)
                 )
-
 
         # When partially have avoidance velocities
         else:
@@ -1295,8 +1295,8 @@ class VO_module:
                 vel_all_annotated=reachableVel_all_annotated,       
                 annotation=['inLeft'],                              
                 shipID_all=TS.keys(),                               
-                )
-
+                )                                                   
+            
 
             if avoidanceAllRightVel_all_annotated:
                 velCandidates = self.__remove_annotation(avoidanceAllRightVel_all_annotated)
@@ -1308,9 +1308,8 @@ class VO_module:
                 key= lambda v: abs(np.linalg.norm(v - V_des)),
                 )
             
-            # print(vA_post)
-
-
+            # print("partial")
+            
 
         return vA_post 
 
@@ -1666,128 +1665,103 @@ class kass_inha:
             waypoint_info = self.wp_callback(self.latOfWayPoint, self.longOfWayPoint)
             self.op_callback()
 
-            if len(self.idOfObject) != 0:
-                inha = Inha_dataProcess(self.idOfObject,
-                                        self.latitude,
-                                        self.longitude,
-                                        self.heading,
-                                        self.sog,
-                                        self.latOfObject,
-                                        self.longOfObject,
-                                        self.cogOfObject,
-                                        self.sogOfObject,
-                                        self.parameter
-                                        )
+            inha = Inha_dataProcess(self.idOfObject,
+                                    self.latitude,
+                                    self.longitude,
+                                    self.heading,
+                                    # target_speed,
+                                    self.sog,
+                                    self.latOfObject,
+                                    self.longOfObject,
+                                    self.cogOfObject,
+                                    self.sogOfObject,
+                                    self.parameter
+                                    )
+            
+            wpts_x_os = list(waypoint_info['waypoint_x'])
+            wpts_y_os = list(waypoint_info['waypoint_y'])
+            Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]
+
+            OS_list = inha.os_info()
+            TS_list = inha.ts_info()
+
+            OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
+
+            OS_list['V_x'] = OS_Vx
+            OS_list['V_y'] = OS_Vy
+
+            local_goal_EDA = sqrt((Local_goal[0]-OS_list['Pos_X'])**2 + (Local_goal[1]-OS_list['Pos_Y'])**2)
+            # _, local_goal_EDA = inha.eta_eda_assumption(Local_goal, OS_list, target_speed)
+            V_des = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
+
+            TS_list = inha.TS_info_supplement(
+                    OS_list, 
+                    TS_list,
+                    )
                 
-                wpts_x_os = list(waypoint_info['waypoint_x'])
-                wpts_y_os = list(waypoint_info['waypoint_y'])
-                Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]
+            TS_DCPA_temp = []
+            TS_TCPA_temp = []
+            TS_UDCPA_temp = []
+            TS_UTCPA_temp = []
+            TS_UD_temp = []
+            TS_UB_temp = []
+            TS_UK_temp = []
+            TS_CRI_temp = []
+            TS_Rf_temp = []
+            TS_Ra_temp = []
+            TS_Rs_temp = []
+            TS_Rp_temp = []
+            TS_ENC_temp = []
 
-                OS_list = inha.os_info()
-                TS_list = inha.ts_info()
+            for ts_ID in self.idOfObject:
 
-                OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
+                temp_DCPA = TS_list[ts_ID]['DCPA']
+                TS_DCPA_temp.append(temp_DCPA)
 
-                OS_list['V_x'] = OS_Vx
-                OS_list['V_y'] = OS_Vy
+                temp_TCPA = TS_list[ts_ID]['TCPA']
+                TS_TCPA_temp.append(temp_TCPA)
 
-                local_goal_EDA = sqrt((Local_goal[0]-OS_list['Pos_X'])**2 + (Local_goal[1]-OS_list['Pos_Y'])**2)
-                # _, local_goal_EDA = inha.eta_eda_assumption(Local_goal, OS_list, target_speed)
-                V_des = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
-
-
-                TS_list = inha.TS_info_supplement(
-                        OS_list, 
-                        TS_list,
-                        )
-                    
-                TS_DCPA_temp = []
-                TS_TCPA_temp = []
-                TS_UDCPA_temp = []
-                TS_UTCPA_temp = []
-                TS_UD_temp = []
-                TS_UB_temp = []
-                TS_UK_temp = []
-                TS_CRI_temp = []
-                TS_Rf_temp = []
-                TS_Ra_temp = []
-                TS_Rs_temp = []
-                TS_Rp_temp = []
-                TS_ENC_temp = []
-
-                for ts_ID in self.idOfObject:
-
-                    temp_DCPA = TS_list[ts_ID]['DCPA']
-                    TS_DCPA_temp.append(temp_DCPA)
-
-                    temp_TCPA = TS_list[ts_ID]['TCPA']
-                    TS_TCPA_temp.append(temp_TCPA)
-
-                    temp_UDCPA = TS_list[ts_ID]['UDCPA']
-                    TS_UDCPA_temp.append(temp_UDCPA)
-                    
-                    temp_UTCPA = TS_list[ts_ID]['UTCPA']
-                    TS_UTCPA_temp.append(temp_UTCPA)
-
-                    temp_UD = TS_list[ts_ID]['UD']
-                    TS_UD_temp.append(temp_UD)
-
-                    temp_UB = TS_list[ts_ID]['UB']
-                    TS_UB_temp.append(temp_UB)
-
-                    temp_UK = TS_list[ts_ID]['UK']
-                    TS_UK_temp.append(temp_UK)
-
-                    temp_cri = TS_list[ts_ID]['CRI']
-                    TS_CRI_temp.append(temp_cri)
-
-                    temp_Rf = TS_list[ts_ID]['Rf']
-                    TS_Rf_temp.append(temp_Rf)
-
-                    temp_Ra = TS_list[ts_ID]['Ra']
-                    TS_Ra_temp.append(temp_Ra)
-
-                    temp_Rs = TS_list[ts_ID]['Rs']
-                    TS_Rs_temp.append(temp_Rs)
-
-                    temp_Rp = TS_list[ts_ID]['Rp']
-                    TS_Rp_temp.append(temp_Rp)
-
-                    temp_enc = TS_list[ts_ID]['status']
-
-
-                    TS_ENC_temp.append(temp_enc)
+                temp_UDCPA = TS_list[ts_ID]['UDCPA']
+                TS_UDCPA_temp.append(temp_UDCPA)
                 
+                temp_UTCPA = TS_list[ts_ID]['UTCPA']
+                TS_UTCPA_temp.append(temp_UTCPA)
 
-                V_selected, pub_collision_cone = Local_PP.VO_update(OS_list,
-                                                                    TS_list,
-                                                                    V_des,
-                                                                    self.static_obstacle_info,
-                                                                    self.static_point_info
-                                                                    )
-            else:
-                inha = Inha_dataProcess(self.idOfObject,
-                        self.latitude,
-                        self.longitude,
-                        self.heading,
-                        self.sog,
-                        self.latOfObject,
-                        self.longOfObject,
-                        self.cogOfObject,
-                        self.sogOfObject,
-                        self.parameter
-                        )
-                wpts_x_os = list(waypoint_info['waypoint_x'])
-                wpts_y_os = list(waypoint_info['waypoint_y'])
-                Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]
-                OS_list = {
-                    'shipID' : int,
-                    'Pos_X' : self.latitude,
-                    'Pos_Y' : self.longitude,
-                    'Vel_U' : self.sog,
-                    'Heading' : self.heading,
-                    }
-                V_selected = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
+                temp_UD = TS_list[ts_ID]['UD']
+                TS_UD_temp.append(temp_UD)
+
+                temp_UB = TS_list[ts_ID]['UB']
+                TS_UB_temp.append(temp_UB)
+
+                temp_UK = TS_list[ts_ID]['UK']
+                TS_UK_temp.append(temp_UK)
+
+                temp_cri = TS_list[ts_ID]['CRI']
+                TS_CRI_temp.append(temp_cri)
+
+                temp_Rf = TS_list[ts_ID]['Rf']
+                TS_Rf_temp.append(temp_Rf)
+
+                temp_Ra = TS_list[ts_ID]['Ra']
+                TS_Ra_temp.append(temp_Ra)
+
+                temp_Rs = TS_list[ts_ID]['Rs']
+                TS_Rs_temp.append(temp_Rs)
+
+                temp_Rp = TS_list[ts_ID]['Rp']
+                TS_Rp_temp.append(temp_Rp)
+
+                temp_enc = TS_list[ts_ID]['status']
+                TS_ENC_temp.append(temp_enc)
+            
+
+            V_selected, pub_collision_cone = Local_PP.VO_update(OS_list,
+                                                                TS_list,
+                                                                V_des,
+                                                                self.static_obstacle_info,
+                                                                self.static_point_info
+                                                                )
+            
             # desired_spd_list = []
             # desired_heading_list = []
 
@@ -1855,6 +1829,5 @@ class kass_inha:
 
 
             return path_out_inha
-    
 
 
