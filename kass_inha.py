@@ -283,6 +283,9 @@ class CRI:
         return s, t
 
     def ship_domain(self):
+        if self.Vo == 0.0: 
+            self.Vo = 0.1
+
         KAD = pow(10, (0.3591 * log10(self.Vo) + 0.0952))
         KDT = pow(10, (0.5411 * log10(self.Vo) - 0.0795))
         AD = self.L * KAD
@@ -489,7 +492,7 @@ class Inha_dataProcess:
         
         U_des = sqrt(V_des[0]**2 + V_des[1]**2)
         target_head = rad2deg(atan2(V_des[1], V_des[0]))
-        desired_heading = target_head        
+        desired_heading = target_head
         desired_spd = U_des
         
         desired_spd_list = []
@@ -507,7 +510,7 @@ class Inha_dataProcess:
         for ts_ID in TS_ID:
             RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value = self.CRI_cal(OS_list, TS_list[ts_ID])
 
-            TS_list[ts_ID]['RD'] = RD   
+            TS_list[ts_ID]['RD'] = RD 
             TS_list[ts_ID]['TB'] = TB  
             TS_list[ts_ID]['RB'] = RB
 
@@ -1746,6 +1749,7 @@ class kass_inha:
                     TS_Rp_temp.append(temp_Rp)
 
                     temp_enc = TS_list[ts_ID]['status']
+
                     TS_ENC_temp.append(temp_enc)
                 
 
@@ -1788,6 +1792,12 @@ class kass_inha:
             wp_y = wp[1]
             wp_x_gnss = []
             wp_y_gnss = []
+            speedOfWayPoint = []
+
+
+            for i in range(15):
+                speedOfWayPoint.append(self.sog)  
+                
 
             for i in range(len(wp_x)):
                 wp_in_enu = [wp_x[i],wp_y[i],0]
@@ -1827,13 +1837,13 @@ class kass_inha:
                 len(wp_x),
                 wp_x_gnss, 
                 wp_y_gnss,  
-                desired_spd_list, 
+                speedOfWayPoint, 
                 eta, 
                 eda, 
                 self.error, 
                 self.errorCode,  
                 round(desired_spd,3),
-                round(desired_heading, 3), 
+                round(desired_heading,3), 
                 ]
             
             path_out_inha = self.path_out_publish(OS_pub_list)

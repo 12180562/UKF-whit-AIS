@@ -1,7 +1,7 @@
 {
 
 
-        "SD_param" :  2,
+        "SD_param" :  7,
         "cri_param" : 1700,
         "Portside_rule" : true,
         "weight_focusObs" : 1,
@@ -10,8 +10,8 @@
         "filter_length" : 10,
 
         "min_targetSpeed" : 2,
-        "max_targetSpeed" : 7,
-        "num_targetSpeedCandidates" : 2,
+        "max_targetSpeed" : 6,
+        "num_targetSpeedCandidates" : 5,
 
         "min_targetHeading_deg_local" : -45.0,
         "max_targetHeading_deg_local" : 45.0,
@@ -26,8 +26,8 @@
         "ship_L": 22.0,
         "ship_B": 6.0,
         "ship_scale": 1.0,
-        "target_speed": 10,
-        "origin" : [35.50460333333333, 129.36543833333332, 0]
+        "target_speed": 8,
+        "origin" : [35.504516666667, 129.36537166666668, 0]
 
 
     
