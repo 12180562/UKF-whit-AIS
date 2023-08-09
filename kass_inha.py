@@ -435,6 +435,7 @@ class Inha_dataProcess:
 
         cri_value = cri.CRI()
 
+
         return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
     def U_to_vector_V(self, U, deg):
@@ -1396,6 +1397,7 @@ class VO_module:
             pub_collision_cone.append(bound_left_view[1] + RVOapexPos_global[1])
             pub_collision_cone.append(bound_right_view[0] + RVOapexPos_global[0])
             pub_collision_cone.append(bound_right_view[1] + RVOapexPos_global[1])
+            
 
         return RVOdata_all, pub_collision_cone
 

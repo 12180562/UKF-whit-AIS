@@ -218,6 +218,15 @@ def main():
 
     update_rate = rospy.get_param("update_rate")
     dt =  rospy.get_param("mmg_dt")
+
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    # path = "/home/phl/문서/" + timestr + ".csv"
+    path = "/home/phl/Documents/" + timestr + ".csv"
+    header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
+    file = open(path, 'a', newline='')
+    writer = csv.writer(file)
+    writer.writerow(header)
+
     node_Name = "vessel_node1"
     rospy.init_node("{}".format(node_Name), anonymous=False)    
     rate = rospy.Rate(update_rate) # 10 Hz renew
@@ -504,6 +513,23 @@ def main():
             pub_collision_cone
         ]
 
+        ship_dic2list = list(OS_list.values())
+
+        savedata_list = [
+            int(OS_ID),
+            ship_dic2list[1],
+            ship_dic2list[2],
+            wp_x,
+            wp_y,
+            ship_dic2list[3],
+            OS_Vx,
+            OS_Vy,
+            ship_dic2list[4],
+            desired_heading,
+        ]
+
+        writer.writerow(savedata_list)
+
         data.path_out_publish(OS_pub_list)  
         data.vis_out(vis_pub_list)
         data.cri_out(cri_pub_list)
@@ -525,6 +551,8 @@ def main():
         
         print("Loop end time: ", time.time() - startTime)
         print("================ Node 1 loop end ================\n")
+
+    file.close()
 
     rospy.spin()
 
