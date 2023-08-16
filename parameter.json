@@ -2,15 +2,15 @@
 
 
         "SD_param" :  1,
-        "cri_param" : 1650,
+        "cri_param" : 10,
         "Portside_rule" : true,
         "weight_focusObs" : 1,
         "weight_agressivness" : 1,
         "timeHorizon" : 30,
         "filter_length" : 10,
 
-        "min_targetSpeed" : 2,
-        "max_targetSpeed" : 6,
+        "min_targetSpeed" : 3,
+        "max_targetSpeed" : 7,
         "num_targetSpeedCandidates" : 5,
 
         "min_targetHeading_deg_local" : -45.0,
@@ -25,9 +25,9 @@
 
         "ship_L": 22.0,
         "ship_B": 6.0,
-        "ship_scale": 1.0,
+        "ship_scale": 1,
         "target_speed": 8,
-        "origin" : [35.504516666667, 129.36537166666668, 0]
+        "origin" : [35.494797, 129.459028, 0]
 
 
     

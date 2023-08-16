@@ -211,10 +211,10 @@ class VO_module:
 
         self.weight_alpha = 1
         self.weight_aggresiveness = 1
-        self.cri_param = 150
+        self.cri_param = 1650
         self.time_horizon = 30
 
-        self.rule = True  
+        self.rule = False
         
         
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
@@ -1639,9 +1639,9 @@ class VO_module:
         # When no collision velocities
         elif isAllVelsAvoidable:
             velCandidates = self.__remove_annotation(reachableVel_all_annotated)
-            vA_post = min(
+            vA_post = max(
                 velCandidates,
-                key= lambda v: np.linalg.norm(v - V_des),
+                key= lambda v: np.linalg.norm(v + V_des),
                 )
 
         # When partially have avoidance velocities

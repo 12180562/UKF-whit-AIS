@@ -201,7 +201,7 @@ class CRI:
     def CRI(self):
         '''충돌위험도지수, UDCPA, UTCPA, UD, UB, UK 5개의 파라미터에 가중치를 곱하여 계산'''
         result = 0.4 * self.UDCPA() + 0.367 * self.UTCPA() + 0.133 * self.UD() + 0.067 * self.UB() + 0.033 * self.UK()
-        return result
+        return round(result, 3)
 
     def encounter_classification(self):
         HAD = np.rad2deg(self.HAD())
@@ -1276,12 +1276,11 @@ class VO_module:
         # When no collision velocities
         elif isAllVelsAvoidable:
             velCandidates = self.__remove_annotation(reachableVel_all_annotated)
-            # print(V_des)
             vA_post = min(
                 velCandidates,
-                key= lambda v: np.linalg.norm(V_des-v)
+                key= lambda v: np.linalg.norm(v - V_des),
                 )
-
+            
 
         # When partially have avoidance velocities
         else:
@@ -1303,14 +1302,10 @@ class VO_module:
                 velCandidates = self.__remove_annotation(avoidanceAllRightVel_all_annotated)
             else:
                 velCandidates = self.__remove_annotation(avoidanceVel_all_annotated)
-            # Take the closest velocity to V_des among the chosen velocities
             vA_post = min(
                 velCandidates,
-                key= lambda v: abs(np.linalg.norm(v - V_des)),
+                key= lambda v: np.linalg.norm(v - V_des),
                 )
-            
-            # print(vA_post)
-
 
 
         return vA_post 
@@ -1410,7 +1405,6 @@ class VO_module:
             )
 
         V_opt = self.__choose_velocity(V_des, RVOdata_all, OS_original, TS_original,static_obstacle_info, static_point_info)
-
 
         return V_opt, pub_collision_cone
 
@@ -1584,7 +1578,7 @@ class kass_inha:
         path_out_inha['errorCode'] = pub_list[8]
         path_out_inha['targetSpeed'] = round(pub_list[9], 3)
         path_out_inha['targetCourse'] = round(pub_list[10], 3)
-        # path_out_inha['collisionRiskIndex'] = pub_list[11]
+        path_out_inha['cri'] = pub_list[11]
         
         return path_out_inha
     
@@ -1632,7 +1626,7 @@ class kass_inha:
             self.sogOfObject = inha_input["sogOfObject"]
             self.latOfWayPoint = inha_input["latOfWayPoint"]
             self.longOfWayPoint = inha_input["longOfWayPoint"]
-            self.waypoint_idx = inha_input['nWptsID']       
+            self.waypoint_idx = inha_input['nWptsID']    
 
             self.latitude,self.longitude,_ = self.enu_convert([self.latitude,self.longitude,0],self.origin)
             self.eOfobject = []
@@ -1668,6 +1662,28 @@ class kass_inha:
             waypoint_info = self.wp_callback(self.latOfWayPoint, self.longOfWayPoint)
             self.op_callback()
 
+            self.idOfObject_copy =[]
+            self.latOfObject_copy = []
+            self.longOfObject_copy = []
+            self.cogOfObject_copy = []
+            self.sogOfObject_copy = []
+
+            for i in range(len(self.idOfObject)):
+                distance = sqrt((self.latitude-self.latOfObject[i])**2+(self.longitude-self.longOfObject[i])**2)
+                if distance <= 500:
+                    self.idOfObject_copy.append(self.idOfObject[i])
+                    self.latOfObject_copy.append(self.latOfObject[i])
+                    self.longOfObject_copy.append(self.longOfObject[i])
+                    self.cogOfObject_copy.append(self.cogOfObject[i])
+                    self.sogOfObject_copy.append(self.sogOfObject[i])
+
+            self.idOfObject = self.idOfObject_copy
+            self.latOfObject = self.latOfObject_copy
+            self.longOfObject = self.longOfObject_copy
+            self.cogOfObject = self.cogOfObject_copy
+            self.sogOfObject = self.sogOfObject_copy
+            
+
             if len(self.idOfObject) != 0:
                 inha = Inha_dataProcess(self.idOfObject,
                                         self.latitude,
@@ -1687,7 +1703,7 @@ class kass_inha:
 
                 OS_list = inha.os_info()
                 TS_list = inha.ts_info()
-
+                print(TS_list)
                 OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
                 OS_list['V_x'] = OS_Vx
@@ -1759,7 +1775,8 @@ class kass_inha:
 
 
                     TS_ENC_temp.append(temp_enc)
-                
+
+                               
 
                 V_selected, pub_collision_cone = Local_PP.VO_update(OS_list,
                                                                     TS_list,
@@ -1790,8 +1807,8 @@ class kass_inha:
                     'Heading' : self.heading,
                     }
                 V_selected = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
-            # desired_spd_list = []
-            # desired_heading_list = []
+
+                TS_CRI_temp = []
 
             wp = inha.waypoint_generator(OS_list, V_selected)
             wp_eta_eda = (self.latOfWayPoint, self.longOfWayPoint)
@@ -1850,7 +1867,8 @@ class kass_inha:
                 self.error, 
                 self.errorCode,  
                 round(desired_spd,3),
-                round(desired_heading,3), 
+                round(desired_heading,3),
+                TS_CRI_temp 
                 ]
             
             path_out_inha = self.path_out_publish(OS_pub_list)
