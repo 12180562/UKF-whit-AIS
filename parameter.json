@@ -1,8 +1,8 @@
 {
 
 
-        "SD_param" :  1,
-        "cri_param" : 10,
+        "SD_param" :  2,
+        "cri_param" : 1500,
         "Portside_rule" : true,
         "weight_focusObs" : 1,
         "weight_agressivness" : 1,
@@ -23,7 +23,7 @@
         "cri_ratio": 84.2,
         "standard_speed" : 10.0,
 
-        "ship_L": 22.0,
+        "ship_L": 10.0,
         "ship_B": 6.0,
         "ship_scale": 1,
         "target_speed": 8,

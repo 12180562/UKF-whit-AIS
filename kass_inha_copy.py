@@ -248,7 +248,7 @@ class CRI:
 
 
         elif 270 <= RB < 337.5:
-            if 157.5 <= HAD <= 202.5:
+            if 157.5 <= HAD <= 202.5:   
                 return "Head-on"
             elif 67.5 <= HAD < 157.5:
                 return "Port crossing"

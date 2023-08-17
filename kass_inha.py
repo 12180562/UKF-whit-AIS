@@ -298,6 +298,8 @@ class CRI:
         R_stbd = self.B + DT * (1 + t)
         R_port = self.B + (0.75 * DT * (1 + t))
 
+        print(R_fore, R_aft, R_stbd, R_port)
+
         return R_fore, R_aft, R_stbd, R_port
 
     def Rf(self):
@@ -332,6 +334,8 @@ class CRI:
             result = sqrt(pow(Ra,2)/(pow(sin(RB),2) + pow(cos(RB),2) * (pow(Ra,2)/pow(Rp,2))))
         else:
             result = sqrt(pow(Rf,2)/(pow(sin(RB),2) + pow(cos(RB),2) * (pow(Rf,2)/pow(Rp,2))))
+
+        print(result)
         return result
     
 
@@ -1670,7 +1674,7 @@ class kass_inha:
 
             for i in range(len(self.idOfObject)):
                 distance = sqrt((self.latitude-self.latOfObject[i])**2+(self.longitude-self.longOfObject[i])**2)
-                if distance <= 500:
+                if distance <= 1000:
                     self.idOfObject_copy.append(self.idOfObject[i])
                     self.latOfObject_copy.append(self.latOfObject[i])
                     self.longOfObject_copy.append(self.longOfObject[i])
@@ -1703,7 +1707,6 @@ class kass_inha:
 
                 OS_list = inha.os_info()
                 TS_list = inha.ts_info()
-                print(TS_list)
                 OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
                 OS_list['V_x'] = OS_Vx
