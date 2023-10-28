@@ -4,6 +4,7 @@ from numpy import rad2deg
 
 import numpy as np
 import pymap3d as pm
+import pyproj
 
 
 
@@ -286,8 +287,8 @@ class CRI:
         if self.Vo == 0.0: 
             self.Vo = 0.1
 
-        KAD = pow(10, (0.3591 * log10(self.Vo) + 0.0952))
-        KDT = pow(10, (0.5411 * log10(self.Vo) - 0.0795))
+        KAD = pow(10, (0.3591 * log10(self.Vo) + 0.0952))  ## 논문에서 보면 지수함수를 사용
+        KDT = pow(10, (0.5411 * log10(self.Vo) - 0.0795))  ## 논문에서 보면 지수함수를 사용 -> 
         AD = self.L * KAD
         DT = self.L * KDT
 
@@ -298,7 +299,7 @@ class CRI:
         R_stbd = self.B + DT * (1 + t)
         R_port = self.B + (0.75 * DT * (1 + t))
 
-        print(R_fore, R_aft, R_stbd, R_port)
+        # print(R_fore, R_aft, R_stbd, R_port)
 
         return R_fore, R_aft, R_stbd, R_port
 
@@ -335,7 +336,6 @@ class CRI:
         else:
             result = sqrt(pow(Rf,2)/(pow(sin(RB),2) + pow(cos(RB),2) * (pow(Rf,2)/pow(Rp,2))))
 
-        print(result)
         return result
     
 
@@ -439,7 +439,6 @@ class Inha_dataProcess:
 
         cri_value = cri.CRI()
 
-
         return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
     def U_to_vector_V(self, U, deg):
@@ -467,31 +466,7 @@ class Inha_dataProcess:
             wp_y.append(wp[1])
 
         return wp_x, wp_y
-
-    # def eta_eda_assumption(self, WP, OS, target_U):
-    #     ''' 목적지까지 도달 예상 시간 및 거리
-        
-    #     Return:
-    #         eta [t], eda [m]
-    #     '''       
-    #     eta = []
-    #     eda = []
-    #     for i in range(15):
-    #         eda_x = WP[0][i] - OS['Pos_X']
-    #         eda_y = WP[1][i] - OS['Pos_Y']
-    #         distance = sqrt(eda_x**2 + eda_y**2)
-    #         eda.append(round(distance, 3))
-    #         time = distance / target_U
-    #         eta.append(round(time, 3))
-        # else:
-        #     OS_X = np.array([OS['Pos_X'], OS['Pos_Y']])
-        #     distance = np.linalg.norm(WP - OS_X)
-
-        #     eta = distance/ target_U
-        #     eda = distance
-        
-
-        return eta, eda
+ 
 
     def desired_value_assumption(self, V_des):
         
@@ -1362,10 +1337,15 @@ class VO_module:
                 in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
             '''
 
-            if status == 'Safe':
-                boundLineAngle_left_rad_global = OS['Heading'] + pi
-                boundLineAngle_right_rad_global = OS['Heading'] - pi
-                RVOapexPos_global = pA
+            if self.rule == True:
+                if status == 'Safe' or status == 'Port crossing':
+                    boundLineAngle_left_rad_global = OS['Heading'] + pi
+                    boundLineAngle_right_rad_global = OS['Heading'] - pi
+                    RVOapexPos_global = pA
+                    LOSdist = 0
+
+                else: 
+                    pass
 
 
             RVOdata = {
@@ -1378,7 +1358,9 @@ class VO_module:
                 "boundLineAngle_right_rad_global" : boundLineAngle_right_rad_global,
                 "collisionConeTranslated": collisionConeTranslated,
                 "CRI": CRI,
+                "status": status
                 }
+            
             RVOdata_all.append(RVOdata)
             # To publish the collision cone data for visualization
             bound_left_view = [
@@ -1465,6 +1447,18 @@ class kass_inha:
         self.nOfobject = []
         self.eOfwaypoint = []
         self.nOfwaypoint = []
+
+    def latlong_to_utm(self, latitude, longitude, northern_hemisphere=True):
+        utm_zone = pyproj.Proj(proj='utm', zone=52, datum='WGS84')
+        utm_east, utm_north = utm_zone(longitude, latitude)
+
+        return utm_east, utm_north
+    
+    def utm_to_latlong(self, utm_east, utm_north, northern_hemisphere=True):
+        utm_zone = pyproj.Proj(proj='utm', zone=52, datum='WGS84', ellps='WGS84')
+        longitude, latitude = utm_zone(utm_east, utm_north, inverse=True)
+
+        return latitude, longitude
 
 
     def enu_convert(self,gnss,origin):
@@ -1583,6 +1577,7 @@ class kass_inha:
         path_out_inha['targetSpeed'] = round(pub_list[9], 3)
         path_out_inha['targetCourse'] = round(pub_list[10], 3)
         path_out_inha['cri'] = pub_list[11]
+        path_out_inha['V_selected'] = np.round(pub_list[12], 3)
         
         return path_out_inha
     
@@ -1632,21 +1627,24 @@ class kass_inha:
             self.longOfWayPoint = inha_input["longOfWayPoint"]
             self.waypoint_idx = inha_input['nWptsID']    
 
-            self.latitude,self.longitude,_ = self.enu_convert([self.latitude,self.longitude,0],self.origin)
+            self.latitude,self.longitude = self.latlong_to_utm(self.latitude,self.longitude)
+            # self.latitude,self.longitude,_ = self.enu_convert([self.latitude,self.longitude,0],self.origin)
             self.eOfobject = []
             self.nOfobject = []
             self.eOfwaypoint = []
             self.nOfwaypoint = []
 
             for i in range(len(self.latOfObject)):
-                gnss = [self.latOfObject[i],self.longOfObject[i],0]
-                e,n,u = self.enu_convert(gnss,self.origin)
+                # gnss = [self.latOfObject[i],self.longOfObject[i]]
+                e,n = self.latlong_to_utm(self.latOfObject[i],self.longOfObject[i])
+                # e,n,u = self.enu_convert(gnss,self.origin)
                 self.eOfobject.append(e)
                 self.nOfobject.append(n)
 
             for j in range(len(self.latOfWayPoint)):
-                gnss = [self.latOfWayPoint[j],self.longOfWayPoint[j],0]
-                e,n,u = self.enu_convert(gnss,self.origin)
+                # gnss = [self.latOfWayPoint[j],self.longOfWayPoint[j],0]
+                e,n = self.latlong_to_utm(self.latOfWayPoint[j],self.longOfWayPoint[j])
+                # e,n,u = self.enu_convert(gnss,self.origin)
                 self.eOfwaypoint.append(e)
                 self.nOfwaypoint.append(n)
 
@@ -1674,7 +1672,7 @@ class kass_inha:
 
             for i in range(len(self.idOfObject)):
                 distance = sqrt((self.latitude-self.latOfObject[i])**2+(self.longitude-self.longOfObject[i])**2)
-                if distance <= 1000:
+                if distance <= self.parameter['detecting_distance']:
                     self.idOfObject_copy.append(self.idOfObject[i])
                     self.latOfObject_copy.append(self.latOfObject[i])
                     self.longOfObject_copy.append(self.longOfObject[i])
@@ -1827,8 +1825,9 @@ class kass_inha:
                 
 
             for i in range(len(wp_x)):
-                wp_in_enu = [wp_x[i],wp_y[i],0]
-                wp_in_gnss = self.gnss_convert(wp_in_enu, self.origin)
+                # wp_in_enu = [wp_x[i],wp_y[i],0]
+                wp_in_gnss = self.utm_to_latlong(wp_x[i], wp_y[i])
+                # wp_in_gnss = self.gnss_convert(wp_in_enu, self.origin)
                 wp_x_gnss.append(wp_in_gnss[0])
                 wp_y_gnss.append(wp_in_gnss[1])
             
@@ -1871,7 +1870,8 @@ class kass_inha:
                 self.errorCode,  
                 round(desired_spd,3),
                 round(desired_heading,3),
-                TS_CRI_temp 
+                TS_CRI_temp,
+                V_selected
                 ]
             
             path_out_inha = self.path_out_publish(OS_pub_list)

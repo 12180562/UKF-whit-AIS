@@ -100,7 +100,8 @@ class data_inNout:
         self.delta_deg = operation.m_fltRudderAngleFeedSTBD # deg.
 
         raw_psi = np.asanyarray(operation.m_fltHeading)
-        self.Heading = raw_psi % 360
+        # self.Heading = raw_psi % 360
+        self.Heading = 45.0
 
 
 
@@ -173,7 +174,6 @@ class data_inNout:
         inha.targetCourse = round(pub_list[11], 3)
         
         self.WP_pub.publish(inha)
-        # print(self.WP_pub.publish(inha))
 
 
     def vis_out(self, pub_list):
@@ -270,6 +270,7 @@ def main():
             continue
 
         startTime = time.time()
+
 
         inha = Inha_dataProcess(
             data.ship_ID,
@@ -382,11 +383,8 @@ def main():
             TS_ENC_temp.append(temp_enc)
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
-            
-            # if distance <= rospy.get_param('timeHorizon'):
-            #     print(ts_ID,":",temp_enc, distance)
 
-        # print(TS_ENC_temp)
+        # print(TS_list)
 
 
         # NOTE: `VO_update()` takes the majority of the computation time
@@ -540,6 +538,7 @@ def main():
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             targetspdIndex = waypointIndex
+            # if waypointIndex == len(wpts_x_os) - 1:
             # data.waypoint_idx = (data.waypoint_idx + 1) % len(wpts_x_os)  # kriso 
             # data.waypoint_idx = (int(data.waypoint_idx) + 1) % len(wpts_x_os) # 부경대
 
@@ -547,6 +546,7 @@ def main():
             # waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             # targetspdIndex = waypointIndex
 
+                # rospy.signal_shutdown("종료")
         rate.sleep()
         
         print("Loop end time: ", time.time() - startTime)

@@ -9,6 +9,14 @@ from numpy import rad2deg
 
 import numpy as np
 import json
+import pyproj
+
+
+def latlon_to_utm(latitude, longitude, zone_number):
+    utm_zone = pyproj.Proj(proj='utm', zone=zone_number, datum='WGS84')
+    utm_easting, utm_northing = utm_zone(longitude, latitude)
+
+    return utm_easting, utm_northing
 
 
 with open("parameter.json", "r") as param:
@@ -17,41 +25,34 @@ parameter = Update_parameter
 
 
 inha_input = {
-  "cog": 184.32,
-  "sog": 9.37,
-  "degreeOfAxis" : [0, 0, 228.4],
-  "latitude": 35.585754214824256,  #35.504645,
-  "longitude": 129.35889378536336, #129.36543,
+  "cog": 41.75,
+  "sog": 15.43,
+  "degreeOfAxis" : [0, 0, 90.72],
+  "latitude": 33.9299805555,  #35.504645,
+  "longitude": 17.5846405555, #129.36543,
   "latOfWayPoint": [
-    35.477006,
-    35.502873    
+    33.93319666,
+    # 35.502873    
   ],
   "longOfWayPoint": [
-    129.464499,
-    129.357958
+    127.588063888,
+    # 129.357958
   ],
-  "numOfObject": 2,
+  "numOfObject": 1,
   "idOfObject": [
-    0.0,
-    15001.0
+    4400
   ],
   "cogOfObject": [
-    0.0,
-    5.189
+    90.72
   ],
   "sogOfObject": [
-    0.0,
-    10.0
+    0.7
   ],
   "latOfObject": [ 
-    0.0,
-    #35.5045180468848
-    35.4959599727472,
+    33.9837977814753,
   ],
   "longOfObject": [
-    124.511256,
-    #129.365460337617
-    129.465400152324,
+    127.627241224811
   ],
 
   "nWptsID" : 0

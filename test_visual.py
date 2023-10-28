@@ -122,3 +122,8 @@ plt.scatter(inha_input["longOfObject"][1],inha_input["latOfObject"][1])
 # plt.plot(TS_position_matrix[:,1],TS_position_matrix[:,0])
 plt.show()
 
+
+data = kass_inha(parameter)
+
+path_out_inha = data.kass_inha(inha_input)
+print(path_out_inha)

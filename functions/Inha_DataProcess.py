@@ -4,6 +4,7 @@ from functions.CRI import CRI
 from numpy import deg2rad, rad2deg
 from math import sin, cos, pi, sqrt, atan2
 import numpy as np
+import rospy
     
     
 
@@ -27,7 +28,7 @@ class Inha_dataProcess:
         self.waypoint_dict = waypoint_dict
 
         self.ship_dic= {}
-        self.SD_param = 4   #rospy.get_param('SD_param')
+        self.SD_param = rospy.get_param('SD_param')
 
     def ship_list_container(self, OS_ID):
         ''' 
@@ -84,10 +85,8 @@ class Inha_dataProcess:
 
     def CRI_cal(self, OS, TS):
         cri = CRI(
-            2.0,
-            #rospy.get_param("shipInfo_all/ship1_info/ship_L"),
-            0.6,
-            #rospy.get_param("shipInfo_all/ship1_info/ship_B"),
+            rospy.get_param("shipInfo_all/ship1_info/ship_L"),
+            rospy.get_param("shipInfo_all/ship1_info/ship_B"),
             OS['Pos_X'],
             OS['Pos_Y'],
             TS['Pos_X'],
@@ -125,7 +124,7 @@ class Inha_dataProcess:
         SD_dist = cri.SD_dist()
 
         cri_value = cri.CRI()
-
+        
         return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
 

@@ -214,8 +214,6 @@ class VO_module:
         self.weight_aggresiveness = rospy.get_param('weight_agressivness')
         self.cri_param = rospy.get_param('cri_param')
         self.time_horizon = rospy.get_param('timeHorizon')
-        self.rule = rospy.get_param('Portside_rule')     
-
         
         
         
@@ -590,10 +588,10 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=self.time_horizon
+                    # timeHorizon=RVOdata['CRI']*self.cri_param,
+                    timeHorizon=self.time_horizon
                     ):
-                    # print("is within timehorizon",RVOdata['CRI']*self.cri_param)
+
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
                 
                 elif self.__is_in_collision_cone(
@@ -602,13 +600,10 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=self.time_horizon
+                    # timeHorizon=RVOdata['CRI']*self.cri_param,
+                    timeHorizon=self.time_horizon
                     ):
-                    # print('is in collision cone',RVOdata['CRI']*self.cri_param)
-                    reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
 
-                else:
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
 
             reachableVel_global_all_annotated.append(reachableVel_global_annotated)
@@ -751,7 +746,7 @@ class VO_module:
                     return False
 
     def __is_in_left(
-        self, 
+        self,  
         velVecAngle_rad_global, 
         boundLineAngle_left_rad_global, 
         boundLineAngle_right_rad_global, 
@@ -1004,7 +999,7 @@ class VO_module:
         """
 
         reachableVel_global_all_after_obstacle = self.__delete_vector_inside_obstacle(reachableVel_global_all, OS, static_obstacle_info,static_point_info)
-        # print("number of vector:",len(reachableVel_global_all_after_obstacle))
+        print("number of vector:",len(reachableVel_global_all_after_obstacle))
 
         return reachableVel_global_all_after_obstacle
 
@@ -1194,7 +1189,7 @@ class VO_module:
                     pass
 
             if len(detecting_vector_list) == 0:
-                # print("all the vector is collidable")
+                print("all the vector is collidable")
                 reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
 
             else:
@@ -1763,6 +1758,7 @@ class VO_module:
             CRI = TS[ts_ID]['CRI']
             status = TS[ts_ID]['status']
 
+
             RVOapexPos_global = pA + (1 - self.weight_alpha) * vA + self.weight_alpha * vB
 
             # NOTE: LOS: line of sight. The line between pA and pB = relative distance
@@ -1793,21 +1789,11 @@ class VO_module:
                 in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
             '''
 
-            # if status == 'Safe':
-            #     boundLineAngle_left_rad_global = OS['Heading'] + pi
-            #     boundLineAngle_right_rad_global = OS['Heading'] - pi
+            # if TCPA <= 0 :
+            #     boundLineAngle_left_rad_global = OS['Heading']+pi
+            #     boundLineAngle_right_rad_global = OS['Heading']-pi
             #     RVOapexPos_global = pA
-
-            if self.rule == True:
-                if status == 'Safe' or status == 'Port crossing':
-                    boundLineAngle_left_rad_global = OS['Heading'] + pi
-                    boundLineAngle_right_rad_global = OS['Heading'] - pi
-                    RVOapexPos_global = pA
-                    LOSdist = 0
-
-                else: 
-                    pass
-
+            #     LOSdist = 0
 
             RVOdata = {
                 "TS_ID": ts_ID,
