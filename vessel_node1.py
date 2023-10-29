@@ -100,9 +100,7 @@ class data_inNout:
         self.delta_deg = operation.m_fltRudderAngleFeedSTBD # deg.
 
         raw_psi = np.asanyarray(operation.m_fltHeading)
-        # self.Heading = raw_psi % 360
-        self.Heading = 45.0
-
+        self.Heading = raw_psi % 360
 
 
         ############################ for connect with KRISO format ##################################
@@ -326,6 +324,8 @@ def main():
             OS_list, 
             TS_list,
             )
+        
+        print(TS_list)
         
         TS_DCPA_temp = []
         TS_TCPA_temp = []
