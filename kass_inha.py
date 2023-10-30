@@ -1442,7 +1442,6 @@ class kass_inha:
         self.errorCode = None
         self.pub_list = []
         self.parameter = Update_parameter
-        self.origin = Update_parameter['origin']
         self.eOfobject = []
         self.nOfobject = []
         self.eOfwaypoint = []
@@ -1628,23 +1627,18 @@ class kass_inha:
             self.waypoint_idx = inha_input['nWptsID']    
 
             self.latitude,self.longitude = self.latlong_to_utm(self.latitude,self.longitude)
-            # self.latitude,self.longitude,_ = self.enu_convert([self.latitude,self.longitude,0],self.origin)
             self.eOfobject = []
             self.nOfobject = []
             self.eOfwaypoint = []
             self.nOfwaypoint = []
 
             for i in range(len(self.latOfObject)):
-                # gnss = [self.latOfObject[i],self.longOfObject[i]]
                 e,n = self.latlong_to_utm(self.latOfObject[i],self.longOfObject[i])
-                # e,n,u = self.enu_convert(gnss,self.origin)
                 self.eOfobject.append(e)
                 self.nOfobject.append(n)
 
             for j in range(len(self.latOfWayPoint)):
-                # gnss = [self.latOfWayPoint[j],self.longOfWayPoint[j],0]
                 e,n = self.latlong_to_utm(self.latOfWayPoint[j],self.longOfWayPoint[j])
-                # e,n,u = self.enu_convert(gnss,self.origin)
                 self.eOfwaypoint.append(e)
                 self.nOfwaypoint.append(n)
 
@@ -1825,9 +1819,7 @@ class kass_inha:
                 
 
             for i in range(len(wp_x)):
-                # wp_in_enu = [wp_x[i],wp_y[i],0]
                 wp_in_gnss = self.utm_to_latlong(wp_x[i], wp_y[i])
-                # wp_in_gnss = self.gnss_convert(wp_in_enu, self.origin)
                 wp_x_gnss.append(wp_in_gnss[0])
                 wp_y_gnss.append(wp_in_gnss[1])
             

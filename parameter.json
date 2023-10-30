@@ -27,8 +27,7 @@
         "ship_L": 22.0,
         "ship_B": 6.0,
         "ship_scale": 1,
-        "target_speed": 8,
-        "origin" : [35.494797, 129.459028, 0]
+        "target_speed": 8
 
 
 
