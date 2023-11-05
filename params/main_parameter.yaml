@@ -149,7 +149,7 @@ meta: |
   
   ---------------------------------------------------------------
 
-update_rate: 50   ## rospy.Rate(update_rate)
+update_rate: 10  ## rospy.Rate(update_rate)
 mmg_dt: 1
 ############################################
 

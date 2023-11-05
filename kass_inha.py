@@ -10,33 +10,32 @@ import pyproj
 
 class CRI:
     def __init__(self, latitude, longitude, latOfObject, longOfObject, cog, cogOfObject, sog, sogOfObject, parameter):
-    # def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt):
-        self.L = parameter['ship_L']     #타선의 길이 [m] from pram
-        self.B = parameter['ship_B']   # [m]
-        self.Xo = latitude    #자선 x좌표  [m]
-        self.Yo = longitude    #자선 y좌표  [m] 
-        self.Xt = latOfObject    #타선 x좌표  [m]
-        self.Yt = longOfObject    #타선 y좌표  [m]
-        self.Co = cog    #자선 Heading angle [rad]
-        self.Ct = cogOfObject    #타선 Heading angle [rad]
-        self.Vo = sog    #자선 속도   [knots]
-        self.Vt = sogOfObject    #타선 속도   [knots]
+        self.L = parameter['ship_L']
+        self.B = parameter['ship_B']
+        self.Xo = latitude
+        self.Yo = longitude
+        self.Xt = latOfObject
+        self.Yt = longOfObject
+        self.Co = cog 
+        self.Ct = cogOfObject
+        self.Vo = sog 
+        self.Vt = sogOfObject
         self.ratio = parameter['cri_ratio']
 
     def RD(self):
-        '''Relative Distance, 자선과 타선 사이의 상대 거리'''
+
         result = sqrt(((self.Xt - self.Xo) ** 2) + ((self.Yt - self.Yo) ** 2)) + 0.0001
         return result
 
     def TB(self):
-        '''True Bearing, 자선의 위치 기준 타선의 절대 방위, rad'''
+
         Xot = self.Xt - self.Xo
         Yot = self.Yt - self.Yo
         result = atan2(Yot, Xot) % (2*pi)
         return result
 
     def RB(self):
-        '''Relative Bearing, 자선의 Heading angle에 대한 타선의 방위, rad'''
+
         if self.TB() - self.Co >= 0:
             result = self.TB() - self.Co
         else:
@@ -44,29 +43,28 @@ class CRI:
         return result
 
     def HAD(self):
-        '''Heading angle difference, rad'''
         result = self.Ct - self.Co
         if result < 0 :
             result += 2*pi
         return result
 
     def Vox(self):
-        '''자선 x방향 속도'''
+       
         result = self.Vo * cos(self.Co)
         return result
 
     def Voy(self):
-        '''자선 y방향 속도'''
+       
         result = self.Vo * sin(self.Co)
         return result
 
     def Vtx(self):
-        '''타선 x방향 속도'''
+       
         result = self.Vt * cos(self.Ct)
         return result
 
     def Vty(self):
-        '''타선 y방향 속도'''
+       
         result = self.Vt * sin(self.Ct)
         return result
 
@@ -79,12 +77,12 @@ class CRI:
         return result
 
     def RV(self):
-        '''Relative Velocity, 자선에 대한 타선의 상대속도'''
+       
         result = sqrt(pow(self.Vrx(), 2) + pow(self.Vry(), 2)) + 0.001
         return result
 
     def RC(self):
-        '''Relative speed heading direction, 상대속도(RV)의 방향'''
+       
         result = atan2(self.Vry(), self.Vrx()) % (2*pi)
         return result
 
@@ -97,26 +95,16 @@ class CRI:
         return result
 
     def d1(self):
-        '''Safe approaching distance'''
-        # RB = np.rad2deg(self.RB())
-        # if 0 <= RB < 112.5:
-        #     result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
-        # elif 112.5 <= RB < 180:
-        #     result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
-        # elif 180 <= RB < 247.5:
-        #     result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
-        # else:
-        #     result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
         result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
         return result
 
     def d2(self):
-        '''Safe passing distance'''
+       
         result = 2 * self.d1()
         return result
 
     def UDCPA(self):
-        '''#d1, d2의 범위에 따른 DCPA의 계수'''
+       
         if abs(self.dcpa()) <= self.d1():
             result = 1
         elif self.d2() < abs(self.dcpa()):
@@ -126,17 +114,17 @@ class CRI:
         return result
 
     def D1(self):
-        '''Distance of action'''
+       
         result = 12 * self.L
         return result
 
     def D2(self):
-        '''Distance of last action'''
+       
         result = self.ratio * (1.7 * cos(self.RB() - np.deg2rad(19))) + sqrt(4.4 + 2.89 * pow(cos(self.RB() - np.deg2rad(19)), 2))
         return result
 
     def UD(self):
-        '''D1, D2의 범위에 따른 Relative distance의 계수'''
+       
         if self.RD() <= self.D1():
             result = 1
         elif self.D2() < self.RD():
@@ -146,7 +134,7 @@ class CRI:
         return result
 
     def t1(self):
-        '''Collision time'''
+       
         D1 = self.D1()
         if abs(self.dcpa()) <= D1:
             result = sqrt(pow(D1, 2) - pow(self.dcpa(), 2)) / self.RV()
@@ -155,7 +143,7 @@ class CRI:
         return result
 
     def t2(self):
-        '''Avoidance time'''
+       
         D2 = 12 * self.ratio
         if abs(self.dcpa()) <= D2:
             result = sqrt(pow(D2, 2) - pow(self.dcpa(), 2)) / self.RV()
@@ -164,7 +152,7 @@ class CRI:
         return result
 
     def UTCPA(self):
-        '''t1, t2의 범위에 따른 TCPA의 계수'''
+       
         if self.tcpa() < 0:
             result = 0
         else:
@@ -299,7 +287,6 @@ class CRI:
         R_stbd = self.B + DT * (1 + t)
         R_port = self.B + (0.75 * DT * (1 + t))
 
-        # print(R_fore, R_aft, R_stbd, R_port)
 
         return R_fore, R_aft, R_stbd, R_port
 
@@ -343,7 +330,6 @@ class Inha_dataProcess:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
     def __init__(self, idOfObject, latitude, longitude, cog, sog, latOfObject, longOfObject, cogOfObject, sogOfObject, parameter):
 
-        # self.ship_ID = ship_ID
         self.idOfObject = idOfObject
         self.Pos_X = latitude
         self.Pos_Y = longitude
@@ -360,7 +346,6 @@ class Inha_dataProcess:
         self.ship_L = parameter['ship_L']
         self.ship_B = parameter['ship_B']
         self.parameter = parameter
-        #rospy.get_param('SD_param')
 
     def os_info(self):
         os_latitude = self.Pos_X
@@ -1263,7 +1248,6 @@ class VO_module:
 
         # When partially have avoidance velocities
         else:
-            # No strategy (only avoidance velocities)
             avoidanceVel_all_annotated = self.__take_vels(
                 vel_all_annotated=reachableVel_all_annotated,
                 annotation=['inLeft', 'inRight', 'inTimeHorizon'],
@@ -1272,8 +1256,8 @@ class VO_module:
 
             avoidanceAllRightVel_all_annotated = self.__take_vels(  
                 vel_all_annotated=reachableVel_all_annotated,       
-                annotation=['inLeft'],                              
-                shipID_all=TS.keys(),                               
+                annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
+                shipID_all=TS.keys(),
                 )
 
 
@@ -1290,7 +1274,6 @@ class VO_module:
         return vA_post 
 
     def __extract_RVO_data(self, OS, TS):
-        # TODO: `static_OB` is used in the future?
 
         vA = np.array([OS['V_x'], OS['V_y']])
         pA = np.array([OS['Pos_X'], OS['Pos_Y']])
@@ -1301,53 +1284,21 @@ class VO_module:
 
         for ts_ID in TS_ID:
 
-            vB = np.array([TS[ts_ID]['V_x'], TS[ts_ID]['V_y']]) # velocity of the obstacle
-            pB = np.array([TS[ts_ID]['Pos_X'], TS[ts_ID]['Pos_Y']]) # position of of the obstacle
+            vB = np.array([TS[ts_ID]['V_x'], TS[ts_ID]['V_y']])
+            pB = np.array([TS[ts_ID]['Pos_X'], TS[ts_ID]['Pos_Y']])
 
             CRI = TS[ts_ID]['CRI']
             status = TS[ts_ID]['status']
 
             RVOapexPos_global = pA + (1 - self.weight_alpha) * vA + self.weight_alpha * vB
-
-            # NOTE: LOS: line of sight. The line between pA and pB = relative distance
             LOSdist = np.linalg.norm([pA - pB]) 
-            # NOTE: atan2(y, x) = arctangent of y/x 
             LOSangle_rad = atan2(pB[1] - pA[1], pB[0] - pA[0])
             
-            # TODO: It represents the "collision" with the configured radius of objects. 
-            #       Forcing to change of LOSdist would distort some calculation afterwards.
-            #       Revisit and review it if there would be an calculation issue.
-            #       I highly expect there must be.
-            if TS[ts_ID]['mapped_radius'] > LOSdist:
-                LOSdist = TS[ts_ID]['mapped_radius']
-            
-            boundLineAngle_left_rad_global = LOSangle_rad + asin(TS[ts_ID]['mapped_radius']/LOSdist)
-            boundLineAngle_right_rad_global = LOSangle_rad - asin(TS[ts_ID]['mapped_radius']/LOSdist)
+            boundLineAngle_left_rad_global = LOSangle_rad + atan2(TS[ts_ID]['mapped_radius'],LOSdist)
+            boundLineAngle_right_rad_global = LOSangle_rad - atan2(TS[ts_ID]['mapped_radius'],LOSdist)
             
             collisionConeTranslated = (1 - self.weight_alpha) * vA + self.weight_alpha * vB
-            '''
-            collisionConeTranslated: 
-                - It's a collision cone's translated position from where the cone's apex is at the center of the agent A. 
-                - This translation is from RVO formulation. For more details, see section:
-
-                    - IV. RECIPROCAL VELOCITY OBSTACLES
-                        |
-                        + C.Generalized Reciprocal Velocity Obstacles"
-
-                in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
-            '''
-
-            if self.rule == True:
-                if status == 'Safe' or status == 'Port crossing':
-                    boundLineAngle_left_rad_global = OS['Heading'] + pi
-                    boundLineAngle_right_rad_global = OS['Heading'] - pi
-                    RVOapexPos_global = pA
-                    LOSdist = 0
-
-                else: 
-                    pass
-
-
+            
             RVOdata = {
                 "TS_ID": ts_ID,
                 "LOSdist": LOSdist,
@@ -1358,15 +1309,12 @@ class VO_module:
                 "boundLineAngle_right_rad_global" : boundLineAngle_right_rad_global,
                 "collisionConeTranslated": collisionConeTranslated,
                 "CRI": CRI,
-                "status": status
                 }
-            
             RVOdata_all.append(RVOdata)
-            # To publish the collision cone data for visualization
             bound_left_view = [
                 cos(boundLineAngle_left_rad_global)* int(LOSdist)/2,
                 sin(boundLineAngle_left_rad_global)* int(LOSdist)/2,
-                ]  # cone visualization /3 하면 장애물까지 거리의 1/3만 생김
+                ]
             bound_right_view = [
                 cos(boundLineAngle_right_rad_global)* int(LOSdist)/2,
                 sin(boundLineAngle_right_rad_global)* int(LOSdist)/2,
@@ -1383,7 +1331,6 @@ class VO_module:
         return RVOdata_all, pub_collision_cone
 
     def VO_update(self, OS_original, TS_original, V_des, static_obstacle_info, static_point_info):   
-        # self.__include_mappedTSradius(OS_original, TS_original) 
 
         RVOdata_all, pub_collision_cone = self.__extract_RVO_data(
             OS_original,
@@ -1449,13 +1396,13 @@ class kass_inha:
 
     def latlong_to_utm(self, latitude, longitude, northern_hemisphere=True):
         utm_zone = pyproj.Proj(proj='utm', zone=52, datum='WGS84')
-        utm_east, utm_north = utm_zone(longitude, latitude)
+        utm_east,utm_north  = utm_zone(longitude, latitude)
 
         return utm_east, utm_north
     
     def utm_to_latlong(self, utm_east, utm_north, northern_hemisphere=True):
         utm_zone = pyproj.Proj(proj='utm', zone=52, datum='WGS84', ellps='WGS84')
-        longitude, latitude = utm_zone(utm_east, utm_north, inverse=True)
+        longitude,latitude  = utm_zone(utm_east, utm_north, inverse=True)
 
         return latitude, longitude
 
@@ -1576,7 +1523,7 @@ class kass_inha:
         path_out_inha['targetSpeed'] = round(pub_list[9], 3)
         path_out_inha['targetCourse'] = round(pub_list[10], 3)
         path_out_inha['cri'] = pub_list[11]
-        path_out_inha['V_selected'] = np.round(pub_list[12], 3)
+        path_out_inha['V_selected'] = pub_list[12]
         
         return path_out_inha
     
@@ -1705,7 +1652,6 @@ class kass_inha:
                 OS_list['V_y'] = OS_Vy
 
                 local_goal_EDA = sqrt((Local_goal[0]-OS_list['Pos_X'])**2 + (Local_goal[1]-OS_list['Pos_Y'])**2)
-                # _, local_goal_EDA = inha.eta_eda_assumption(Local_goal, OS_list, target_speed)
                 V_des = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
 
 
@@ -1779,6 +1725,8 @@ class kass_inha:
                                                                     self.static_obstacle_info,
                                                                     self.static_point_info
                                                                     )
+                V_selected = V_selected.tolist()
+
             else:
                 inha = Inha_dataProcess(self.idOfObject,
                         self.latitude,
@@ -1802,6 +1750,7 @@ class kass_inha:
                     'Heading' : self.heading,
                     }
                 V_selected = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
+                V_selected = V_selected.tolist()
 
                 TS_CRI_temp = []
 
@@ -1834,13 +1783,6 @@ class kass_inha:
                 pass
 
             t += 1
-
-            # if len(self.target_heading_list) != 10:
-            #     self.target_heading_list.append(desired_heading)
-            
-            # else:
-            #     del self.target_heading_list[0]
-
                     
             if -180 <= desired_heading < 0:
                 desired_heading = desired_heading + 360
@@ -1850,7 +1792,6 @@ class kass_inha:
 
 
             OS_pub_list = [
-                # int(OS_ID), 
                 False,
                 len(wp_x),
                 wp_x_gnss, 

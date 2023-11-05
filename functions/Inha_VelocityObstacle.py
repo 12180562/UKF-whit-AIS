@@ -1634,9 +1634,9 @@ class VO_module:
             #       all the reachable velocities are inside the collision cones
             vA_post = self.__select_vel_inside_RVOs(
                 velCandidates, 
-                RVOdata_all, 
+                RVOdata_all,
                 V_des,
-                )
+            )
 
         # When no collision velocities
         elif isAllVelsAvoidable:
@@ -1777,8 +1777,8 @@ class VO_module:
             if TS[ts_ID]['mapped_radius'] > LOSdist:
                 LOSdist = TS[ts_ID]['mapped_radius']
             
-            boundLineAngle_left_rad_global = LOSangle_rad + asin(TS[ts_ID]['mapped_radius']/LOSdist)
-            boundLineAngle_right_rad_global = LOSangle_rad - asin(TS[ts_ID]['mapped_radius']/LOSdist)
+            boundLineAngle_left_rad_global = LOSangle_rad + atan2(TS[ts_ID]['mapped_radius'], LOSdist)
+            boundLineAngle_right_rad_global = LOSangle_rad - atan2(TS[ts_ID]['mapped_radius'], LOSdist)
             
             collisionConeTranslated = (1 - self.weight_alpha) * vA + self.weight_alpha * vB
             '''
