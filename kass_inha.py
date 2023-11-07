@@ -1398,9 +1398,9 @@ class kass_inha:
         utm_zone = pyproj.Proj(proj='utm', zone=52, datum='WGS84')
         utm_east,utm_north  = utm_zone(longitude, latitude)
 
-        return utm_east, utm_north
+        return utm_north, utm_east
     
-    def utm_to_latlong(self, utm_east, utm_north, northern_hemisphere=True):
+    def utm_to_latlong(self, utm_north, utm_east, northern_hemisphere=True):
         utm_zone = pyproj.Proj(proj='utm', zone=52, datum='WGS84', ellps='WGS84')
         longitude,latitude  = utm_zone(utm_east, utm_north, inverse=True)
 
@@ -1580,19 +1580,19 @@ class kass_inha:
             self.nOfwaypoint = []
 
             for i in range(len(self.latOfObject)):
-                e,n = self.latlong_to_utm(self.latOfObject[i],self.longOfObject[i])
+                n, e = self.latlong_to_utm(self.latOfObject[i],self.longOfObject[i])
                 self.eOfobject.append(e)
                 self.nOfobject.append(n)
 
             for j in range(len(self.latOfWayPoint)):
-                e,n = self.latlong_to_utm(self.latOfWayPoint[j],self.longOfWayPoint[j])
+                n, e = self.latlong_to_utm(self.latOfWayPoint[j],self.longOfWayPoint[j])
                 self.eOfwaypoint.append(e)
                 self.nOfwaypoint.append(n)
 
-            self.latOfObject = self.eOfobject
-            self.longOfObject = self.nOfobject
-            self.latOfWayPoint = self.eOfwaypoint
-            self.longOfWayPoint = self.nOfwaypoint
+            self.latOfObject = self.nOfobject
+            self.longOfObject = self.eOfobject
+            self.latOfWayPoint = self.nOfwaypoint
+            self.longOfWayPoint = self.eOfwaypoint
             
 
             Local_PP = VO_module(self.parameter)
@@ -1725,7 +1725,11 @@ class kass_inha:
                                                                     self.static_obstacle_info,
                                                                     self.static_point_info
                                                                     )
-                V_selected = V_selected.tolist()
+
+
+                # if not isinstance(V_selected, list):
+                #     V_selected = V_selected.tolist()
+
 
             else:
                 inha = Inha_dataProcess(self.idOfObject,
@@ -1750,9 +1754,16 @@ class kass_inha:
                     'Heading' : self.heading,
                     }
                 V_selected = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
-                V_selected = V_selected.tolist()
+                # V_selected = [float(V_selected[0]),float(V_selected[1])]
+
+                # if not isinstance(V_selected, list):
+                #     V_selected = V_selected.tolist()
 
                 TS_CRI_temp = []
+                
+            if 'tolist' in dir(V_selected):
+                V_selected = V_selected.tolist()
+
 
             wp = inha.waypoint_generator(OS_list, V_selected)
             wp_eta_eda = (self.latOfWayPoint, self.longOfWayPoint)

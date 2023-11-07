@@ -1665,7 +1665,12 @@ class VO_module:
                 vel_all_annotated=reachableVel_all_annotated,       # |
                 annotation=['inLeft'],                              # |
                 shipID_all=TS.keys(),                               # |
-                )                                                   # |
+                )
+            # avoidanceAllRightVel_all_annotated = self.__take_vels(  
+            #     vel_all_annotated=reachableVel_all_annotated,       
+            #     annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
+            #     shipID_all=TS.keys(),
+            #     )                                                   # |
             #=========================================================+
 
             if avoidanceAllRightVel_all_annotated:

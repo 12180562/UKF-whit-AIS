@@ -31,10 +31,10 @@ inha_input = {
   "degreeOfAxis": [
     0,
     0,
-    233.9
+    230.4
   ],
-  "latitude": 35.50452833333333,
-  "longitude": 129.36532333333335,
+  "latitude": 35.30270,
+  "longitude": 129.21923,
   "latOfWayPoint": [
     35.474149,
     35.474927,

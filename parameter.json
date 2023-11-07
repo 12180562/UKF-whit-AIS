@@ -1,33 +1,33 @@
 {
 
 
-        "SD_param" :  2,
-        "cri_param" : 1500,
-        "Portside_rule" : true,
-        "weight_focusObs" : 1,
-        "weight_agressivness" : 1,
-        "timeHorizon" : 30,
-        "filter_length" : 10,
+        "SD_param":4,
+        "cri_param":5000,
+        "Portside_rule":true,
+        "weight_focusObs":1,
+        "weight_agressivness":1,
+        "timeHorizon":30,
+        "filter_length":10,
 
-        "min_targetSpeed" : 3,
-        "max_targetSpeed" : 7,
-        "num_targetSpeedCandidates" : 5,
+        "min_targetSpeed":3,
+        "max_targetSpeed":7,
+        "num_targetSpeedCandidates":5,
 
-        "min_targetHeading_deg_local" : -45.0,
-        "max_targetHeading_deg_local" : 45.0,
-        "num_targetHeadingCandidates" : 31,
+        "min_targetHeading_deg_local":-45.0,
+        "max_targetHeading_deg_local":45.0,
+        "num_targetHeadingCandidates":31,
 
-        "delta_t" : 40,
-        "detecting_radious" : 100,
-        "detecting_distance" : 1000,
-        "space_number" : 20, 
+        "delta_t":40,
+        "detecting_radious":100,
+        "detecting_distance":1000,
+        "space_number":20, 
         "cri_ratio": 84.2,
-        "standard_speed" : 10.0,
+        "standard_speed":10.0,
 
-        "ship_L": 22.0,
-        "ship_B": 6.0,
-        "ship_scale": 1,
-        "target_speed": 8
+        "ship_L":22.0,
+        "ship_B":6.0,
+        "ship_scale":1,
+        "target_speed":8.0
 
 
 
