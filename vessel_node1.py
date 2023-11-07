@@ -441,8 +441,7 @@ def main():
             pass
 
         t += 1
-        print(V_selected)
-
+        
         if len(data.target_heading_list) != rospy.get_param('filter_length'):
             data.target_heading_list.append(desired_heading)
         

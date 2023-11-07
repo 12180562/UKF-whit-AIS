@@ -149,12 +149,12 @@ meta: |
   
   ---------------------------------------------------------------
 
-update_rate: 50  ## rospy.Rate(update_rate)
+update_rate: 30  ## rospy.Rate(update_rate)
 mmg_dt: 1
 ############################################
 
 ########### 1852/110 ###########
-SD_param: 4
+SD_param: 2
 cri_param: 2000
 Portside_rule : True
 
@@ -173,7 +173,7 @@ num_targetSpeedCandidates : 3
 
 min_targetHeading_deg_local : -45.0
 max_targetHeading_deg_local: 45.0
-num_targetHeadingCandidates: 31
+num_targetHeadingCandidates: 19
 
 Kp : 1.0
 Ki : 0.0
@@ -201,12 +201,12 @@ shipInfo_all:
     ship_B : 6.0,
     ship_scale : 1.0,
     ship_ID : 1000, ## 자선의 ship ID 정의
-    ship_domain_radius : 4.0,  # original
+    ship_domain_radius : 44.0,  # original
     target_speed : 6.0,  #[knots]
-    initial_start_x : -1000.0,    # [m]
+    initial_start_x : 1000.0,    # [m]
     initial_start_y : 0.0,    # [m]
     initial_start_U : 6.0,    # [knots] // 너무 작으면 발산함
-    initial_start_psi : 0,   # [deg]
+    initial_start_psi : 180,   # [deg]
     include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
@@ -215,12 +215,12 @@ shipInfo_all:
     ship_B : 6.0,
     ship_scale : 1.0,
     ship_ID : 2001, ## 자선의 ship ID 정의
-    ship_domain_radius : 4.0,  # original
+    ship_domain_radius : 44.0,  # original
     target_speed : 6.0,  #[knots]
-    initial_start_x : 1000.0,    # [m]
-    initial_start_y : .0,    # [m]
+    initial_start_x : -1000.0,    # [m]
+    initial_start_y : -200.0,    # [m]
     initial_start_U : 6.0 ,    # [knots] // 너무 작으면 발산함
-    initial_start_psi : 180,   # [deg]
+    initial_start_psi : 45,   # [deg]
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
@@ -229,7 +229,7 @@ shipInfo_all:
   #   ship_B : 6.0,
   #   ship_scale : 1.0,
   #   ship_ID : 2002, ## 자선의 ship ID 정의
-  #   ship_domain_radius : 4.0,  # original
+  #   ship_domain_radius : 44.0,  # original
   #   target_speed : 6.0,       #[knots]
   #   initial_start_x : 0.0,    # [m]
   #   initial_start_y : 1000.0,    # [m]
@@ -269,14 +269,14 @@ shipInfo_all:
 
 waypoint_List: {
   wpts_x_ship1: [
-    1000.0, -1000.0,
+    -1000.0, 1000.0,
   ],
   wpts_y_ship1: [
     0.0, 0.0, 
   ],
 
   wpts_x_ship2: [
-    -1000.0, 1000.0,  #450, 250, 50, 50, 450
+    1000.0, -1000.0,  #450, 250, 50, 50, 450
   ],
   wpts_y_ship2: [
     0.0, 0.0, #325, 50, 325, 450, 450

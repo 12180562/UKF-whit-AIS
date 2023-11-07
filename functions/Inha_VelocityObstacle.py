@@ -995,7 +995,6 @@ class VO_module:
             (reachableVelX_global_all, reachableVelY_global_all),
              axis=-1,
              )
-        
         """
         reachableVel_global_all_after_obstacle : The candidate of reachable vector that dosen't cross static obstacle.
         
@@ -1843,6 +1842,7 @@ class VO_module:
             pub_collision_cone.append(bound_left_view[1] + RVOapexPos_global[1])
             pub_collision_cone.append(bound_right_view[0] + RVOapexPos_global[0])
             pub_collision_cone.append(bound_right_view[1] + RVOapexPos_global[1])
+        print(RVOdata_all)
 
         return RVOdata_all, pub_collision_cone
 
