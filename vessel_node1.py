@@ -459,7 +459,13 @@ def main():
                 real_target_heading = desired_heading
             else:
                 real_target_heading = sum_of_heading/len(data.target_heading_list)
-
+        
+        if -180<= real_target_heading < 0:
+            real_target_heading = real_target_heading + 360
+        else:
+            real_target_heading = real_target_heading
+        
+        print(TS_ENC_temp)
         
 
         # # < =========  인하대 모듈에서 나온 데이터를 최종적으로 송신하는 부분

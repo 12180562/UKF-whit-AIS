@@ -723,8 +723,14 @@ class VO_module:
 
             `False`: If the given angle is NOT between the angles of the left and right boundary lines.
         """
-        if abs(theta_right -  theta_left) <= pi:
-            if theta_right <= theta_given <= theta_left:
+        if abs(theta_right - theta_left) <= pi:
+            if theta_left < 0 and theta_right < 0:
+                if theta_given > 0:
+                    theta_given -= 2*pi
+            elif theta_left > 0 and theta_right > 0:
+                if theta_given < 0:
+                    theta_given += 2*pi
+            if theta_right <= theta_given <= theta_left:    
                 return True
             else :
                 return False
@@ -749,6 +755,7 @@ class VO_module:
                     return True
                 else:
                     return False
+        # print(theta_left, theta_right, theta_given)
 
     def __is_in_left(
         self, 
@@ -1381,97 +1388,92 @@ class VO_module:
         # Compute the minimum time to collision(tc) for every velocity candidates
         velCandidates_dict = dict()
 
-        for reachableCollisionVel_global in reachableCollisionVel_global_all:
+        # for reachableCollisionVel_global in reachableCollisionVel_global_all:
             
-            velCandidates_dict[tuple(reachableCollisionVel_global)] = dict()
-            tc_min = 99999.9 # initialize the time to collision to a large enough
+        #     velCandidates_dict[tuple(reachableCollisionVel_global)] = dict()
+        #     tc_min = 99999.9 # initialize the time to collision to a large enough
 
-            # Compute the minimum time to collision(tc) for a velocity candidate
-            for RVOdata in RVOdata_all:
-                '''
-                Data structure of the `RVO_data`:
-                    {
-                        "TS_ID": 2001,
-                        "LOSdist": 16.29, 
-                        "mapped_radius": 16.0, 
-                        "vA": ndarray([0.85, 1.15]),
-                        "vB": ndarray([-0.12, 0.52]),
-                        "boundLineAngle_left_rad_global: 0.24", 
-                        "boundLineAngle_right_rad_global: 0.31", 
-                        "collisionConeShifted_local: ndarray([0.12, 0.32])",
-                    }
-                '''
+        #     # Compute the minimum time to collision(tc) for a velocity candidate
+        #     for RVOdata in RVOdata_all:
+        #         '''
+        #         Data structure of the `RVO_data`:
+        #             {
+        #                 "TS_ID": 2001,
+        #                 "LOSdist": 16.29, 
+        #                 "mapped_radius": 16.0, 
+        #                 "vA": ndarray([0.85, 1.15]),
+        #                 "vB": ndarray([-0.12, 0.52]),
+        #                 "boundLineAngle_left_rad_global: 0.24", 
+        #                 "boundLineAngle_right_rad_global: 0.31", 
+        #                 "collisionConeShifted_local: ndarray([0.12, 0.32])",
+        #             }
+        #         '''
 
-                vA2B_RVO = reachableCollisionVel_global - RVOdata['collisionConeTranslated']
+        #         vA2B_RVO = reachableCollisionVel_global - RVOdata['collisionConeTranslated']
 
-                angle_vA2B_RVO_rad_global = atan2(
-                    vA2B_RVO[1],
-                    vA2B_RVO[0],
-                    )
+        #         angle_vA2B_RVO_rad_global = atan2(
+        #             vA2B_RVO[1],
+        #             vA2B_RVO[0],
+        #             )
 
-                # Consider only collidable agent.
-                # NOTE: tc will maintain a large initial value if no collision 
-                #       for the corresponding agent.
-                if self.__is_in_between(
-                RVOdata['boundLineAngle_right_rad_global'],
-                angle_vA2B_RVO_rad_global, 
-                RVOdata['boundLineAngle_left_rad_global'],
-                ):
+        #         # Consider only collidable agent.
+        #         # NOTE: tc will maintain a large initial value if no collision 
+        #         #       for the corresponding agent.
+        #         if self.__is_in_between(
+        #         RVOdata['boundLineAngle_right_rad_global'],
+        #         angle_vA2B_RVO_rad_global, 
+        #         RVOdata['boundLineAngle_left_rad_global'],
+        #         ):
 
-                    # NOTE: The angle between
-                    #       (1) vA2B (on RVO config. space) 
-                    #       (2) LOS line and
-                    angle_at_pA = abs(angle_vA2B_RVO_rad_global - 0.5 * (RVOdata['boundLineAngle_right_rad_global'] + RVOdata['boundLineAngle_left_rad_global']))   
-                    angle_at_pA %= (2*pi)
-                    if angle_at_pA > pi:
-                        angle_at_pA = abs(angle_at_pA - (2*pi))                
+        #             # NOTE: The angle between
+        #             #       (1) vA2B (on RVO config. space) 
+        #             #       (2) LOS line and
+        #             angle_at_pA = abs(angle_vA2B_RVO_rad_global - 0.5 * (RVOdata['boundLineAngle_right_rad_global'] + RVOdata['boundLineAngle_left_rad_global']))   
+        #             angle_at_pA %= (2*pi)
+        #             if angle_at_pA > pi:
+        #                 angle_at_pA = abs(angle_at_pA - (2*pi))                
                     
-                    # NOTE: The angle between 
-                    #       (1) vA2B(on RVO config. space) and 
-                    #       (2) the line from the collision point on the B_hat surface 
-                    #       to the center of B_hat
-                    # TODO: Velocity vector here must be directed to the B_hat, 
-                    #       but some are to out of the B_hat. Review it. 
-                    #       Now force the length `abs(RVOdata['LOSdist'] * sin(angle_at_pA))`
-                    #       to be less than `RVOdata['mapped_radius']` temporarily.
-                    if (abs(RVOdata['LOSdist'] * sin(angle_at_pA)) > RVOdata['mapped_radius']):
-                        angle_at_collisionPoint = 0.0    
-                    else:
-                        angle_at_collisionPoint = asin(
-                            abs(RVOdata['LOSdist'] * sin(angle_at_pA)) / RVOdata['mapped_radius']
-                            )
+        #             # NOTE: The angle between 
+        #             #       (1) vA2B(on RVO config. space) and 
+        #             #       (2) the line from the collision point on the B_hat surface 
+        #             #       to the center of B_hat
+        #             # TODO: Velocity vector here must be directed to the B_hat, 
+        #             #       but some are to out of the B_hat. Review it. 
+        #             #       Now force the length `abs(RVOdata['LOSdist'] * sin(angle_at_pA))`
+        #             #       to be less than `RVOdata['mapped_radius']` temporarily.
+        #             if (abs(RVOdata['LOSdist'] * sin(angle_at_pA)) > RVOdata['mapped_radius']):
+        #                 angle_at_collisionPoint = 0.0    
+        #             else:
+        #                 angle_at_collisionPoint = asin(
+        #                     abs(RVOdata['LOSdist'] * sin(angle_at_pA)) / RVOdata['mapped_radius']
+        #                     )
 
 
-                    # NOTE: The distance between pA and the surface of B_hat on the
-                    #       RVO config. space
-                    dist_collision = abs(RVOdata['LOSdist'] * cos(angle_at_pA)) - abs(RVOdata['mapped_radius'] * cos(angle_at_collisionPoint))
+        #             # NOTE: The distance between pA and the surface of B_hat on the
+        #             #       RVO config. space
+        #             dist_collision = abs(RVOdata['LOSdist'] * cos(angle_at_pA)) - abs(RVOdata['mapped_radius'] * cos(angle_at_collisionPoint))
 
-                    # NOTE: If collision already occured, 
-                    #       tc(time to collision) will be zero.
-                    if dist_collision < 0: dist_collision = 0
-                    tc = dist_collision / np.linalg.norm([vA2B_RVO])
+        #             # NOTE: If collision already occured, 
+        #             #       tc(time to collision) will be zero.
+        #             if dist_collision < 0: dist_collision = 0
+        #             tc = dist_collision / np.linalg.norm([vA2B_RVO])
                     
-                    # NOTE: Avoid zero division for the penalty calculation
-                    if tc < 0.00001: tc = 0.00001
+        #             # NOTE: Avoid zero division for the penalty calculation
+        #             if tc < 0.00001: tc = 0.00001
 
-                    if tc < tc_min: tc_min = tc
+        #             if tc < tc_min: tc_min = tc
 
             # Store the minimum time to collision for each velocity candidate
-            velCandidates_dict[tuple(reachableCollisionVel_global)]['tc_min'] = tc_min
+            # velCandidates_dict[tuple(reachableCollisionVel_global)]['tc_min'] = tc_min
 
             # Comput and store the penalty for each velocity candidate
-            velCandidates_dict[tuple(reachableCollisionVel_global)]['penalty'] = self.weight_aggresiveness / tc_min + np.linalg.norm([V_des - reachableCollisionVel_global])
-            '''
-            Data structure of the `velCandidates_dict`:
-                {
-                    (0.82, 1.21): {"tc":10.52, "penalty":20.21}, 
-                    (0.67, 0.89): {"tc":12.43, "penalty":12.41}, 
-                    ... ,
-                }     
-            '''
+            # velCandidates_dict[tuple(reachableCollisionVel_global)]['penalty'] = self.weight_aggresiveness / tc_min + np.linalg.norm([V_des - reachableCollisionVel_global])
+           
 
         # Take the velocity that has the minimum penalty
-        vA_post = min(velCandidates_dict, key=lambda k : velCandidates_dict[k]['penalty'])
+        # vA_post = min(velCandidates_dict, key=lambda k : velCandidates_dict[k]['penalty'])
+        # print(reachableCollisionVel_global_all)
+        vA_post = reachableCollisionVel_global_all[-1]
         return vA_post
 
     def __choose_velocity(self, V_des, RVOdata_all, OS, TS, static_obstacle_info, static_point_info): 
@@ -1842,7 +1844,6 @@ class VO_module:
             pub_collision_cone.append(bound_left_view[1] + RVOapexPos_global[1])
             pub_collision_cone.append(bound_right_view[0] + RVOapexPos_global[0])
             pub_collision_cone.append(bound_right_view[1] + RVOapexPos_global[1])
-        print(RVOdata_all)
 
         return RVOdata_all, pub_collision_cone
 

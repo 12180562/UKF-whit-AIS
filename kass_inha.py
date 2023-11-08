@@ -656,8 +656,14 @@ class VO_module:
         return vel_hasAnnotation_all_annotated
 
     def __is_in_between(self, theta_given, theta_left, theta_right):
-        if abs(theta_right -  theta_left) <= pi:
-            if theta_right <= theta_given <= theta_left:
+        if abs(theta_right - theta_left) <= pi:
+            if theta_left < 0 and theta_right < 0:
+                if theta_given > 0:
+                    theta_given -= 2*pi
+            elif theta_left > 0 and theta_right > 0:
+                if theta_given < 0:
+                    theta_given += 2*pi
+            if theta_right <= theta_given <= theta_left:    
                 return True
             else :
                 return False
@@ -1256,7 +1262,7 @@ class VO_module:
 
             avoidanceAllRightVel_all_annotated = self.__take_vels(  
                 vel_all_annotated=reachableVel_all_annotated,       
-                annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
+                annotation=['inLeft'],                              
                 shipID_all=TS.keys(),
                 )
 
@@ -1754,10 +1760,6 @@ class kass_inha:
                     'Heading' : self.heading,
                     }
                 V_selected = Local_PP.vectorV_to_goal(OS_list, Local_goal, target_speed)
-                # V_selected = [float(V_selected[0]),float(V_selected[1])]
-
-                # if not isinstance(V_selected, list):
-                #     V_selected = V_selected.tolist()
 
                 TS_CRI_temp = []
                 
