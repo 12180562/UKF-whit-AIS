@@ -542,13 +542,9 @@ class VO_module:
 
     def __is_all_vels_avoidable(self, vel_all_annotated, shipID_all):
         for vel_annotated in vel_all_annotated:
-            isVelCollidable = False
             for shipID in shipID_all:
                 if (vel_annotated[shipID] == 'inCollisionCone'):
-                   isVelCollidable = True
-                   break
-            if not isVelCollidable:
-                return False
+                   return False
 
         return True
 
