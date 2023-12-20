@@ -226,7 +226,7 @@ def main():
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     # path = "/home/phl/문서/" + timestr + ".csv"
-    path = "/home/phl/Documents/" + timestr + ".csv"
+    path = "/home/phlyoo/Documents/" + timestr + ".csv"
     header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
     file = open(path, 'a', newline='')
     writer = csv.writer(file)
