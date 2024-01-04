@@ -1637,7 +1637,7 @@ class VO_module:
                 velCandidates, 
                 RVOdata_all,
                 V_des,
-            )
+                )
 
         # When no collision velocities
         elif isAllVelsAvoidable:
@@ -1904,7 +1904,6 @@ class VO_module:
             )
 
         V_opt = self.__choose_velocity(V_des, RVOdata_all, OS_original, TS_original,static_obstacle_info, static_point_info)
-
 
         return V_opt, pub_collision_cone
 

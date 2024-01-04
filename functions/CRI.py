@@ -6,7 +6,7 @@ import numpy as np
 class CRI:
     def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt):
         self.L = L      #타선의 길이 [m] from pram
-        self.B = B      # [m]
+        self.B = B      #타선의 폭 [m]
         self.Xo = Xo    #자선 x좌표  [m]
         self.Yo = Yo    #자선 y좌표  [m] 
         self.Xt = Xt    #타선 x좌표  [m]
@@ -196,7 +196,7 @@ class CRI:
     def CRI(self):
         '''충돌위험도지수, UDCPA, UTCPA, UD, UB, UK 5개의 파라미터에 가중치를 곱하여 계산'''
         result = 0.4 * self.UDCPA() + 0.367 * self.UTCPA() + 0.133 * self.UD() + 0.067 * self.UB() + 0.033 * self.UK()
-        return result
+        return round(result, 3)
 
     def encounter_classification(self):
         HAD = np.rad2deg(self.HAD())
@@ -261,7 +261,6 @@ class CRI:
             else:
                 return "Safe"
 
-
     def CoE(self):
         '''Coefficients of encounter situations'''
         if self.encounter_classification() == "Head-on":
@@ -279,8 +278,11 @@ class CRI:
         return s, t
 
     def ship_domain(self):
-        KAD = pow(10, (0.3591 * log10(self.Vo) + 0.0952))
-        KDT = pow(10, (0.5411 * log10(self.Vo) - 0.0795))
+        if self.Vo == 0.0: 
+            self.Vo = 0.1
+
+        KAD = pow(10, (0.3591 * log10(self.Vo) + 0.0952))  ## 논문에서 보면 지수함수를 사용
+        KDT = pow(10, (0.5411 * log10(self.Vo) - 0.0795))  ## 논문에서 보면 지수함수를 사용 -> 
         AD = self.L * KAD
         DT = self.L * KDT
 
@@ -325,4 +327,5 @@ class CRI:
             result = sqrt(pow(Ra,2)/(pow(sin(RB),2) + pow(cos(RB),2) * (pow(Ra,2)/pow(Rp,2))))
         else:
             result = sqrt(pow(Rf,2)/(pow(sin(RB),2) + pow(cos(RB),2) * (pow(Rf,2)/pow(Rp,2))))
+
         return result

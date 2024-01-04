@@ -124,9 +124,8 @@ class Inha_dataProcess:
         SD_dist = cri.SD_dist()
 
         cri_value = cri.CRI()
-        
-        return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
+        return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
     def U_to_vector_V(self, U, deg):
         ''' Heading angle을 지구좌표계 기준의 속도벡터로 변환
@@ -202,7 +201,7 @@ class Inha_dataProcess:
         for ts_ID in TS_ID:
             RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value = self.CRI_cal(OS_list, TS_list[ts_ID])
 
-            TS_list[ts_ID]['RD'] = RD   
+            TS_list[ts_ID]['RD'] = RD 
             TS_list[ts_ID]['TB'] = TB  
             TS_list[ts_ID]['RB'] = RB
 

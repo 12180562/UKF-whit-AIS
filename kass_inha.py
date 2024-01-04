@@ -43,28 +43,29 @@ class CRI:
         return result
 
     def HAD(self):
+
         result = self.Ct - self.Co
         if result < 0 :
             result += 2*pi
         return result
 
     def Vox(self):
-       
+
         result = self.Vo * cos(self.Co)
         return result
 
     def Voy(self):
-       
+
         result = self.Vo * sin(self.Co)
         return result
 
     def Vtx(self):
-       
+
         result = self.Vt * cos(self.Ct)
         return result
 
     def Vty(self):
-       
+
         result = self.Vt * sin(self.Ct)
         return result
 
@@ -77,12 +78,12 @@ class CRI:
         return result
 
     def RV(self):
-       
+
         result = sqrt(pow(self.Vrx(), 2) + pow(self.Vry(), 2)) + 0.001
         return result
 
     def RC(self):
-       
+
         result = atan2(self.Vry(), self.Vrx()) % (2*pi)
         return result
 
@@ -99,12 +100,12 @@ class CRI:
         return result
 
     def d2(self):
-       
+
         result = 2 * self.d1()
         return result
 
     def UDCPA(self):
-       
+
         if abs(self.dcpa()) <= self.d1():
             result = 1
         elif self.d2() < abs(self.dcpa()):
@@ -114,17 +115,17 @@ class CRI:
         return result
 
     def D1(self):
-       
+
         result = 12 * self.L
         return result
 
     def D2(self):
-       
+
         result = self.ratio * (1.7 * cos(self.RB() - np.deg2rad(19))) + sqrt(4.4 + 2.89 * pow(cos(self.RB() - np.deg2rad(19)), 2))
         return result
 
     def UD(self):
-       
+
         if self.RD() <= self.D1():
             result = 1
         elif self.D2() < self.RD():
@@ -134,7 +135,7 @@ class CRI:
         return result
 
     def t1(self):
-       
+
         D1 = self.D1()
         if abs(self.dcpa()) <= D1:
             result = sqrt(pow(D1, 2) - pow(self.dcpa(), 2)) / self.RV()
@@ -143,7 +144,7 @@ class CRI:
         return result
 
     def t2(self):
-       
+
         D2 = 12 * self.ratio
         if abs(self.dcpa()) <= D2:
             result = sqrt(pow(D2, 2) - pow(self.dcpa(), 2)) / self.RV()
@@ -152,7 +153,7 @@ class CRI:
         return result
 
     def UTCPA(self):
-       
+
         if self.tcpa() < 0:
             result = 0
         else:
@@ -286,7 +287,6 @@ class CRI:
         R_aft = self.L + (0.67 * sqrt(pow(AD,2) + pow(DT/2,2)))
         R_stbd = self.B + DT * (1 + t)
         R_port = self.B + (0.75 * DT * (1 + t))
-
 
         return R_fore, R_aft, R_stbd, R_port
 
