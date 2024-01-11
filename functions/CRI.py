@@ -1,6 +1,7 @@
 import sys, os
 from math import *
 import numpy as np
+from numpy import deg2rad,rad2deg
 # import rospy
 
 class CRI:
@@ -22,7 +23,6 @@ class CRI:
     def RD(self):
         '''Relative Distance, 자선과 타선 사이의 상대 거리'''
         result = sqrt(((self.Xt - self.Xo) ** 2) + ((self.Yt - self.Yo) ** 2)) + 0.0001
-        print(result)
         return result
 
     def TB(self):
@@ -95,16 +95,17 @@ class CRI:
 
     def d1(self):
         '''Safe approaching distance'''
-        # RB = np.rad2deg(self.RB())
-        # if 0 <= RB < 112.5:
-        #     result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
-        # elif 112.5 <= RB < 180:
-        #     result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
-        # elif 180 <= RB < 247.5:
-        #     result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
-        # else:
-        #     result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
-        result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
+        RB = np.rad2deg(self.RB())
+        if 0 <= RB < 112.5:
+            result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
+        elif 112.5 <= RB < 180:
+            result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
+        elif 180 <= RB < 247.5:
+            result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
+        else:
+            result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
+        # result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
+        print(self.RB())
         return result
 
     def d2(self):
@@ -340,44 +341,44 @@ class CRI:
     # 타선을 원점으로 하는 4개의 점이 생성됨
     # 생성된 4개의 점을 순서쌍으로 만들고 자선과 두 점 사이의 각이 최대인 경우의 왼쪽 바운더리와 오른쪽 바운더리를 반환
     # 아웃풋은 왼쪽 바운더리와 오른쪽 바운더리
-    # def SD_dist_new(self):
-    #     Rf, Ra, Rs, Rp = self.Rf(), self.Ra(), self.Rs(), self.Rp()
+    def SD_dist_new(self):
+        Rf, Ra, Rs, Rp = self.Rf(), self.Ra(), self.Rs(), self.Rp()
 
-    #     param = 4
-    #     Xot = self.Xt-self.Xo
-    #     Yot = self.Yt-self.Yo
-    #     Rf_position = np.array([param*Rf*cos(deg2rad(self.Ct)),param*Rf*sin(deg2rad(self.Ct))]) + np.array([Xot,Yot])
-    #     Ra_position = np.array([param*Ra*cos(deg2rad(self.Ct)+pi),param*Ra*sin(deg2rad(self.Ct)+pi)]) + np.array([Xot,Yot])
-    #     Rs_position = np.array([param*Rs*cos(deg2rad(self.Ct)-pi/2),param*Rs*sin(deg2rad(self.Ct)-pi/2)]) + np.array([Xot,Yot])
-    #     Rp_position = np.array([param*Rp*cos(deg2rad(self.Ct)+pi/2),param*Rp*sin(deg2rad(self.Ct)+pi/2)]) + np.array([Xot,Yot])
+        param = 4
+        Xot = self.Xt-self.Xo
+        Yot = self.Yt-self.Yo
+        Rf_position = np.array([param*Rf*cos(deg2rad(self.Ct)),param*Rf*sin(deg2rad(self.Ct))]) + np.array([Xot,Yot])
+        Ra_position = np.array([param*Ra*cos(deg2rad(self.Ct)+pi),param*Ra*sin(deg2rad(self.Ct)+pi)]) + np.array([Xot,Yot])
+        Rs_position = np.array([param*Rs*cos(deg2rad(self.Ct)-pi/2),param*Rs*sin(deg2rad(self.Ct)-pi/2)]) + np.array([Xot,Yot])
+        Rp_position = np.array([param*Rp*cos(deg2rad(self.Ct)+pi/2),param*Rp*sin(deg2rad(self.Ct)+pi/2)]) + np.array([Xot,Yot])
 
-    #     Rf_rad = atan2(Rf_position[1],Rf_position[0])
-    #     Ra_rad = atan2(Ra_position[1],Ra_position[0])
-    #     Rs_rad = atan2(Rs_position[1],Rs_position[0])
-    #     Rp_rad = atan2(Rp_position[1],Rp_position[0])
+        Rf_rad = atan2(Rf_position[1],Rf_position[0])
+        Ra_rad = atan2(Ra_position[1],Ra_position[0])
+        Rs_rad = atan2(Rs_position[1],Rs_position[0])
+        Rp_rad = atan2(Rp_position[1],Rp_position[0])
 
-    #     R_rad_list = [Rf_rad,Ra_rad,Rs_rad,Rp_rad]
-    #     new_rad_list = []
+        R_rad_list = [Rf_rad,Ra_rad,Rs_rad,Rp_rad]
+        new_rad_list = []
 
-    #     max_angle = 0
+        max_angle = 0
 
-    #     for j in R_rad_list:
-    #         for k in R_rad_list:
-    #             if abs(j - k) > pi:
-    #                 angle = abs(abs(j-k) - 2*pi)
-    #             else:
-    #                 angle = abs(j-k)
+        for j in R_rad_list:
+            for k in R_rad_list:
+                if abs(j - k) > pi:
+                    angle = abs(abs(j-k) - 2*pi)
+                else:
+                    angle = abs(j-k)
 
-    #             if angle > max_angle:
-    #                 max_angle = angle
-    #                 new_rad_list = [j,k]
+                if angle > max_angle:
+                    max_angle = angle
+                    new_rad_list = [j,k]
 
-    #     if abs(new_rad_list[0]-new_rad_list[1]) > pi:
-    #         right_bound = max(new_rad_list)
-    #         left_bound = min(new_rad_list)
+        if abs(new_rad_list[0]-new_rad_list[1]) > pi:
+            right_bound = max(new_rad_list)
+            left_bound = min(new_rad_list)
 
-    #     else:
-    #         right_bound = min(new_rad_list)
-    #         left_bound = max(new_rad_list)
+        else:
+            right_bound = min(new_rad_list)
+            left_bound = max(new_rad_list)
 
-    #     return right_bound, left_bound
+        return right_bound, left_bound

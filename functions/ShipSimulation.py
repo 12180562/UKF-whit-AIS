@@ -25,14 +25,14 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         '''
         self.X_Earth  = initial_X
         self.Y_Earth  = initial_Y
-        
-        self.uBody = initial_velocity   # x방향으로 진행중이므로, vBody속도는 없다고 가정하고 initial값을 줌    # m/sec.
-        self.vBody = 0.0
 
         self.r_rad = deg2rad(0.0)    # rad./sec. 
         self.psi_rad = deg2rad(initial_Heading_deg) # rad.
         self.delta_rad = deg2rad(initial_delta_deg) # rad.
         
+        self.uBody = initial_u   # x방향으로 진행중이므로, vBody속도는 없다고 가정하고 initial값을 줌    # m/sec.
+        self.vBody = initial_v
+
         self.ship_scale = ship_scale
 
         self.rps = 5

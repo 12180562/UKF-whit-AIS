@@ -81,6 +81,8 @@ def main():
         shipState_all[shipName]["X"] = rospy.get_param(paramStr_initStartX)
         shipState_all[shipName]["Y"] = rospy.get_param(paramStr_initStartY)
         shipState_all[shipName]["U"] = rospy.get_param(paramStr_initStartU) * 0.5144 / sqrt(shipState_all[shipName]["scale"])
+        shipState_all[shipName]["u"] =shipState_all[shipName]["U"]
+        shipState_all[shipName]["v"] = 0
         shipState_all[shipName]["psi_deg"] = rospy.get_param(paramStr_initStartPsi)
         shipState_all[shipName]["delta_deg"] = 0.0
 
@@ -89,6 +91,8 @@ def main():
             shipState_all[shipName]["X"],
             shipState_all[shipName]["Y"],
             shipState_all[shipName]["U"],
+            shipState_all[shipName]["u"],
+            shipState_all[shipName]["v"],
             shipState_all[shipName]["psi_deg"],
             shipState_all[shipName]["delta_deg"],
             shipState_all[shipName]["scale"],

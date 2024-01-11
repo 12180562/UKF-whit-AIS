@@ -173,7 +173,7 @@ num_targetSpeedCandidates : 3
 
 min_targetHeading_deg_local : -45.0
 max_targetHeading_deg_local: 45.0
-num_targetHeadingCandidates: 19
+num_targetHeadingCandidates: 59
 
 Kp : 1.0
 Ki : 0.0
@@ -197,8 +197,8 @@ space_number : 20
 shipInfo_all: 
 
   ship1_info : {
-    ship_L : 50.0, ## 모형선의 길이 //향후 AIS data로 대체
-    ship_B : 13.65,
+    ship_L : 22.0, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 6.0,
     ship_scale : 1.0,
     ship_ID : 1000, ## 자선의 ship ID 정의
     ship_domain_radius : 44.0,  # original
@@ -211,8 +211,8 @@ shipInfo_all:
   }
 
   ship2_info : {
-    ship_L : 50.0, ## 모형선의 길이 //향후 AIS data로 대체
-    ship_B : 13.65,
+    ship_L : 22.0, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 6.0,
     ship_scale : 1.0,
     ship_ID : 2001, ## 자선의 ship ID 정의
     ship_domain_radius : 44.0,  # original
