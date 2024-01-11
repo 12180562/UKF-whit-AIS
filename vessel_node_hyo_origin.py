@@ -25,7 +25,7 @@ class data_inNout:
         # Subscriber = input
         rospy.Subscriber('/frm_info', frm_info, self.OP_callback) 
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
-        # rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
+        rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
         # rospy.Subscriber('/wpts_idx_os_kriso', wpt_idx_os, self.wp_idx_callback)
         # rospy.Subscriber('/ctrl_info_pknu', ctrl_output_pknu, self.wp_idx_callback)
 
@@ -45,6 +45,7 @@ class data_inNout:
         self.len_waypoint_info = 0
         self.waypoint_dict = dict()
         self.ts_spd_dict = dict()
+        self.r_deg = []
         # self.ship1_index = rospy.get_param('ship1_index')
         # self.index = rospy.get_param('index')
 
@@ -98,56 +99,60 @@ class data_inNout:
         self.Vel_U  = operation.m_fltVel_U
 
         self.delta_deg = operation.m_fltRudderAngleFeedSTBD # deg.
+        self.r_deg = operation.m_fltFOGang_yawz
 
         raw_psi = np.asanyarray(operation.m_fltHeading)
         self.Heading = raw_psi % 360
 
+    def static_OB_callback(self, static_OB):
+        self.static_obstacle_info = static_OB.data
+        self.static_point_info = static_OB.point
 
         ############################ for connect with KRISO format ##################################
 
-    def static_unavailable_callback(self, static_OB):
-        self.len_static_obstacle_info = len(static_OB.group_boundary_info)
-        static_ob_list_x = []
-        static_ob_list_y = []
-        for i in range(self.len_static_obstacle_info):
-            static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
-            static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
+    # def static_unavailable_callback(self, static_OB):
+    #     self.len_static_obstacle_info = len(static_OB.group_boundary_info)
+    #     static_ob_list_x = []
+    #     static_ob_list_y = []
+    #     for i in range(self.len_static_obstacle_info):
+    #         static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
+    #         static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
             
-        static_ob_info = []
+    #     static_ob_info = []
         
-        for k in range(len(static_ob_list_x)):
-            for l in range(len(static_ob_list_x[k])):
-                if l == 0:
-                    pass
-                else:
-                    static_ob_info.append(static_ob_list_x[k][l-1])
-                    static_ob_info.append(static_ob_list_y[k][l-1])
-                    static_ob_info.append(static_ob_list_x[k][l])
-                    static_ob_info.append(static_ob_list_y[k][l])
+    #     for k in range(len(static_ob_list_x)):
+    #         for l in range(len(static_ob_list_x[k])):
+    #             if l == 0:
+    #                 pass
+    #             else:
+    #                 static_ob_info.append(static_ob_list_x[k][l-1])
+    #                 static_ob_info.append(static_ob_list_y[k][l-1])
+    #                 static_ob_info.append(static_ob_list_x[k][l])
+    #                 static_ob_info.append(static_ob_list_y[k][l])
                     
-        self.static_unavailable_info = static_ob_info
+    #     self.static_unavailable_info = static_ob_info
         
-    def static_available_callback(self, static_OB):
-        self.len_static_obstacle_info = len(static_OB.group_boundary_info)
-        static_ob_list_x = []
-        static_ob_list_y = []
-        for i in range(self.len_static_obstacle_info):
-            static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
-            static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
+    # def static_available_callback(self, static_OB):
+    #     self.len_static_obstacle_info = len(static_OB.group_boundary_info)
+    #     static_ob_list_x = []
+    #     static_ob_list_y = []
+    #     for i in range(self.len_static_obstacle_info):
+    #         static_ob_list_x.append(list(static_OB.group_boundary_info[i].area_x))
+    #         static_ob_list_y.append(list(static_OB.group_boundary_info[i].area_y))
         
-        static_ob_info = []
+    #     static_ob_info = []
         
-        for k in range(len(static_ob_list_x)):
-            for l in range(len(static_ob_list_x[k])):
-                if l == 0:
-                    pass
-                else:
-                    static_ob_info.append(static_ob_list_x[k][l-1])
-                    static_ob_info.append(static_ob_list_y[k][l-1])
-                    static_ob_info.append(static_ob_list_x[k][l])
-                    static_ob_info.append(static_ob_list_y[k][l])
+    #     for k in range(len(static_ob_list_x)):
+    #         for l in range(len(static_ob_list_x[k])):
+    #             if l == 0:
+    #                 pass
+    #             else:
+    #                 static_ob_info.append(static_ob_list_x[k][l-1])
+    #                 static_ob_info.append(static_ob_list_y[k][l-1])
+    #                 static_ob_info.append(static_ob_list_x[k][l])
+    #                 static_ob_info.append(static_ob_list_y[k][l])
                     
-        self.static_available_info = static_ob_info
+    #     self.static_available_info = static_ob_info
 
         ############################ for connect with KRISO format ##################################
 
@@ -172,6 +177,7 @@ class data_inNout:
         inha.targetCourse = round(pub_list[11], 3)
         
         self.WP_pub.publish(inha)
+        # print(self.WP_pub.publish(inha))
 
 
     def vis_out(self, pub_list):
@@ -180,6 +186,7 @@ class data_inNout:
         vis.collision_cone = pub_list[1]
         vis.v_opt = pub_list[2]
         vis.local_goal = pub_list[3]
+        vis.vector_histogram = pub_list[4]
 
         self.Vis_pub.publish(vis)
 
@@ -216,15 +223,6 @@ def main():
 
     update_rate = rospy.get_param("update_rate")
     dt =  rospy.get_param("mmg_dt")
-
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    # path = "/home/phl/문서/" + timestr + ".csv"
-    path = "/home/phlyoo/Documents/" + timestr + ".csv"
-    header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
-    file = open(path, 'a', newline='')
-    writer = csv.writer(file)
-    writer.writerow(header)
-
     node_Name = "vessel_node1"
     rospy.init_node("{}".format(node_Name), anonymous=False)    
     rate = rospy.Rate(update_rate) # 10 Hz renew
@@ -245,12 +243,16 @@ def main():
     # # 참고 논문: https://www.koreascience.or.kr/article/JAKO201427542599696.pdf 
 
     data = data_inNout()
-    
+
+    data_save_path = "/home/hyogeun/STOB_avoidance_data/opposite_variable_delta_t.csv"
+
     t = 0
     waypointIndex = 0
     targetspdIndex = 0    
 
     while not rospy.is_shutdown():
+        f = open(data_save_path, 'a', newline='')
+        writer = csv.writer(f)
         Local_PP = VO_module()
         # Local_PP2 = VO_module2()
         # data.static_obstacle_info = data.static_unavailable_info + data.static_available_info
@@ -269,7 +271,6 @@ def main():
 
         startTime = time.time()
 
-
         inha = Inha_dataProcess(
             data.ship_ID,
             data.Pos_X, 
@@ -277,6 +278,7 @@ def main():
             data.Vel_U, 
             data.Heading, 
             data.waypoint_dict,
+            data.r_deg
             )                       # inha_module의 data 송신을 위해 필요한 함수들이 정의됨
 
 
@@ -381,8 +383,11 @@ def main():
             TS_ENC_temp.append(temp_enc)
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
+            
+            # if distance <= rospy.get_param('timeHorizon'):
+            #     print(ts_ID,":",temp_enc, distance)
 
-        # print(TS_list)
+        # print(TS_ENC_temp)
 
 
         # NOTE: `VO_update()` takes the majority of the computation time
@@ -395,21 +400,17 @@ def main():
 
         ############################ for connect with KRISO format ##################################
 
-        V_selected, pub_collision_cone = Local_PP.VO_update(
+        V_selected, pub_collision_cone,vector_histogram = Local_PP.VO_update(
             OS_list, 
             TS_list, 
             V_des, 
             data.static_obstacle_info,
             data.static_point_info
             )
-
-        # V_selected2 = Local_PP2.RVO_update(
-        #     OS_list,
-        #     TS_list,
-        #     V_des,
-        # )
-
-        # print(V_selected2)
+        
+        # print(vector_histogram)
+        
+        V_opt = V_selected
 
         # TODO: Reduce the computation time for this part (~timeChckpt4_vesselNode)
         desired_spd_list = []
@@ -485,7 +486,8 @@ def main():
             int(OS_ID), 
             pub_collision_cone,
             V_opt,
-            Local_goal
+            Local_goal,
+            vector_histogram
         ]
 
         cri_pub_list = [
@@ -509,23 +511,6 @@ def main():
             pub_collision_cone
         ]
 
-        ship_dic2list = list(OS_list.values())
-
-        savedata_list = [
-            int(OS_ID),
-            ship_dic2list[1],
-            ship_dic2list[2],
-            wp_x,
-            wp_y,
-            ship_dic2list[3],
-            OS_Vx,
-            OS_Vy,
-            ship_dic2list[4],
-            desired_heading,
-        ]
-
-        writer.writerow(savedata_list)
-
         data.path_out_publish(OS_pub_list)  
         data.vis_out(vis_pub_list)
         data.cri_out(cri_pub_list)
@@ -536,7 +521,6 @@ def main():
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             targetspdIndex = waypointIndex
-            # if waypointIndex == len(wpts_x_os) - 1:
             # data.waypoint_idx = (data.waypoint_idx + 1) % len(wpts_x_os)  # kriso 
             # data.waypoint_idx = (int(data.waypoint_idx) + 1) % len(wpts_x_os) # 부경대
 
@@ -544,14 +528,13 @@ def main():
             # waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             # targetspdIndex = waypointIndex
 
-                # rospy.signal_shutdown("종료")
         rate.sleep()
         
         print("Loop end time: ", time.time() - startTime)
         print("================ Node 1 loop end ================\n")
+        writer.writerow([OS_list["Pos_X"],OS_list["Pos_Y"]])
 
-    file.close()
-
+    f.close()
     rospy.spin()
 
 if __name__ == '__main__':

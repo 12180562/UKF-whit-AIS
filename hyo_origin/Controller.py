@@ -90,11 +90,16 @@ class Controller:
         Returns:
             n : 목표 속도를 내기위한 자항점
         """ 
+        # KASS_mmg = MMG(ship_scale)  # <- `KASS_MMG()`의 self 변수로 KASS 선형의 미계수 값들이 저장되어 있어 활용하기 위해 호출!
 
+        # ## target speed 에서의 nominal `n`
+        # _, _, _, n = KASS_mmg.resistance_test(target_spd)
+        # n = round(n, 2)
 
         ## target speed를 도달하기 위해 추가적으로 필요한 `n`
         error_rpm = target_rpm - n
         # print("error : ", error_speed)          
+        # print(error_speed,target_spd)
 
         if abs(error_rpm) > abs(0.01 * target_rpm) :
             # speed 오차가 target speed의 0.1배 이내에 들어오도록 조정
@@ -106,5 +111,6 @@ class Controller:
             self.n_plus = self.n_plus
 
         n = n + self.n_plus
+        # print(n)
         
         return n  

@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from math import pi, cos, sin, atan2, asin, sqrt, tan
+from math import pi, cos, sin, atan2, asin, sqrt, tan, acos
 import numpy as np
-import rospy
+import yaml
 
+    
 class VO_module:
     """
     This class contains the computations regarding RVO (Receiprocal Velocity Obstacle) to generate the best velocity vector for the ship to avoid the obstacles.
@@ -201,22 +200,27 @@ class VO_module:
         """
 
         # NOTE: It is not clear what min and max of speed could be.
-        self.min_targetSpeed = rospy.get_param('min_targetSpeed')
-        self.max_targetSpeed = rospy.get_param('max_targetSpeed')
-        self.num_targetSpeedCandidates = int(rospy.get_param('num_targetSpeedCandidates'))
+        self.min_targetSpeed = 1.0
+        self.max_targetSpeed = 1.2
+        self.num_targetSpeedCandidates = 3
 
         # NOTE: It is not clear what min and max of heading angle could be.
-        self.min_targetHeading_deg_local = rospy.get_param('min_targetHeading_deg_local')
-        self.max_targetHeading_deg_local = rospy.get_param('max_targetHeading_deg_local')
-        self.num_targetHeadingCandidates = int(rospy.get_param('num_targetHeadingCandidates'))
+        self.min_targetHeading_deg_local = -45
+        self.max_targetHeading_deg_local = 45
+        self.num_targetHeadingCandidates = 121
 
-        self.weight_alpha = rospy.get_param('weight_focusObs')  
-        self.weight_aggresiveness = rospy.get_param('weight_agressivness')
-        self.cri_param = rospy.get_param('cri_param')
-        self.time_horizon = rospy.get_param('timeHorizon')
-        self.rule = rospy.get_param('Portside_rule')     
+        self.weight_alpha = 1
+        self.weight_aggresiveness = 1
+        self.cri_param = 300
+        self.time_horizon = 50
 
-        
+        self.delta_t = 30
+        # vector that in middle has length that is double size of delta t
+
+        self.large_delta_t_param = 1
+        self.small_delta_t_param = 1
+        # the small delta_t parameter have to be bigger than 2
+        self.rule = True  
         
         
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
@@ -590,10 +594,10 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=self.time_horizon
+                    # timeHorizon=RVOdata['CRI']*self.cri_param,
+                    timeHorizon=self.time_horizon
                     ):
-                    # print("is within timehorizon",RVOdata['CRI']*self.cri_param)
+
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
                 
                 elif self.__is_in_collision_cone(
@@ -605,7 +609,7 @@ class VO_module:
                     timeHorizon=RVOdata['CRI']*self.cri_param,
                     # timeHorizon=self.time_horizon
                     ):
-                    # print('is in collision cone',RVOdata['CRI']*self.cri_param)
+                    
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
 
                 else:
@@ -723,14 +727,18 @@ class VO_module:
 
             `False`: If the given angle is NOT between the angles of the left and right boundary lines.
         """
-        if abs(theta_right - theta_left) <= pi:
+
+        if abs(theta_right -  theta_left) <= pi:
+
             if theta_left < 0 and theta_right < 0:
                 if theta_given > 0:
                     theta_given -= 2*pi
+
             elif theta_left > 0 and theta_right > 0:
                 if theta_given < 0:
                     theta_given += 2*pi
-            if theta_right <= theta_given <= theta_left:    
+
+            if theta_right <= theta_given <= theta_left:
                 return True
             else :
                 return False
@@ -738,7 +746,7 @@ class VO_module:
             if (theta_left < 0) and (theta_right > 0):
                 ## 각도 보정 
                 theta_left += 2*pi
-                if theta_given <0:
+                if theta_given < 0:
                     theta_given += 2*pi
 
                 if theta_right <= theta_given <= theta_left:
@@ -746,7 +754,7 @@ class VO_module:
                 else :
                     return False
             
-            if (theta_left > 0) and (theta_right <0):
+            if (theta_left > 0) and (theta_right < 0):
                 theta_right += 2*pi            
                 if theta_given < 0:
                     theta_given += 2*pi
@@ -755,10 +763,9 @@ class VO_module:
                     return True
                 else:
                     return False
-        # print(theta_left, theta_right, theta_given)
 
     def __is_in_left(
-        self, 
+        self,  
         velVecAngle_rad_global, 
         boundLineAngle_left_rad_global, 
         boundLineAngle_right_rad_global, 
@@ -964,11 +971,13 @@ class VO_module:
             boundLineAngle_left_rad_global,
             boundLineAngle_right_rad_global,
             ) and (velVecNorm > shortestRelativeDist / timeHorizon):
+            # print("collsiion cone annotated")
+            # print("vectorangle:",velVecAngle_rad_global)
             return True
         else:
             return False
 
-    def __generate_vel_candidates(self, targetSpeed_all, targetHeading_rad_global_all, OS, static_obstacle_info, static_point_info):
+    def __generate_vel_candidates(self, targetSpeed_all, targetHeading_rad_global_all, targetHeading_rad_local_all, OS, static_obstacle_info, static_point_info):
         """
         It generates the velocity candidates based on given speeds and heading angles.
 
@@ -985,8 +994,10 @@ class VO_module:
         """
         reachableVelX_global_all = np.zeros(self.num_targetSpeedCandidates * self.num_targetHeadingCandidates)
         reachableVelY_global_all = np.zeros(self.num_targetSpeedCandidates * self.num_targetHeadingCandidates)
+        reachableVelHeaing_local_all = np.zeros(self.num_targetSpeedCandidates * self.num_targetHeadingCandidates)
         
         idx = int(0)
+        idx_ = int(0)
         for targetHeading_rad_global in targetHeading_rad_global_all:
             for targetSpeed in targetSpeed_all:
 
@@ -995,13 +1006,27 @@ class VO_module:
 
                 idx += 1
 
+        for targetHeading_rad_local in targetHeading_rad_local_all:
+            for targetSpeed in targetSpeed_all:
+
+                reachableVelHeaing_local_all[idx_] = targetHeading_rad_local
+
+                idx_ += 1
+
         reachableVelX_global_all = np.reshape(reachableVelX_global_all, newshape=(-1, 1))
         reachableVelY_global_all = np.reshape(reachableVelY_global_all, newshape=(-1, 1))
+        reachableVelHeaing_local_all = np.reshape(reachableVelHeaing_local_all, newshape=(-1, 1))
 
         reachableVel_global_all = np.concatenate(
             (reachableVelX_global_all, reachableVelY_global_all),
              axis=-1,
              )
+        
+        reachableVel_global_all = np.concatenate(
+            (reachableVel_global_all,reachableVelHeaing_local_all),
+             axis=-1,
+             )
+        
         """
         reachableVel_global_all_after_obstacle : The candidate of reachable vector that dosen't cross static obstacle.
         
@@ -1009,10 +1034,11 @@ class VO_module:
 
         """
 
-        reachableVel_global_all_after_obstacle = self.__delete_vector_inside_obstacle(reachableVel_global_all, OS, static_obstacle_info,static_point_info)
+        reachableVel_global_all_after_obstacle,vector_histogram = self.__delete_vector_inside_obstacle(reachableVel_global_all, OS, static_obstacle_info,static_point_info)
+        reachableVel_global_all_after_obstacle = np.delete(reachableVel_global_all_after_obstacle,2,axis = 1)
         # print("number of vector:",len(reachableVel_global_all_after_obstacle))
 
-        return reachableVel_global_all_after_obstacle
+        return reachableVel_global_all_after_obstacle,vector_histogram
 
 
     # reachable velocity global all을 받아와서 detecting vector를 생성
@@ -1020,23 +1046,27 @@ class VO_module:
 
     def __delete_vector_inside_obstacle(self, reachableVel_global_all, OS, static_obstacle_info, static_point_info):
 
+################################# 초기값 선언 ###################################
         pA = np.array([OS['Pos_X'], OS['Pos_Y']])
-
+        delta_t = self.delta_t
+        vector_histogram = []
         reachableVel_global_all_copy = np.copy(reachableVel_global_all)
+        reachableVel_global_all_copy_copy = np.copy(reachableVel_global_all)
         static_OB_data = static_obstacle_info
         static_point_data = static_point_info
-        
         pA = np.array([OS['Pos_X'], OS['Pos_Y']])
-        delta_t = rospy.get_param("delta_t") # constant
-        detecting_radious = rospy.get_param("detecting_radious")
+        heading_deg = OS["Heading"]
 
-        #initial number for while
+        if heading_deg >= 180:
+            heading_deg = heading_deg-360
+        heading_rad = np.deg2rad(heading_deg)
+
         obstacle_number = 0
         point_number = 0
-
-        # obstacle_radious
         radious = 5
+################################# 초기값 선언 ###################################
 
+############################ 정적 장애물의 기울기 계산 ###########################
         while (obstacle_number) != len(static_OB_data):
             obstacle_point_x = [static_OB_data[obstacle_number],static_OB_data[obstacle_number+2]] 
             obstacle_point_y = [static_OB_data[obstacle_number+1],static_OB_data[obstacle_number+3]] 
@@ -1045,26 +1075,82 @@ class VO_module:
                 obstacle_point_x.reverse()
                 obstacle_point_y.reverse()
 
-            if (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and (obstacle_point_y[0]-obstacle_point_y[1]) > 0:
-                slope = 9999
+            if (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and obstacle_point_y[0] > obstacle_point_y[1]:
+                slope = -1e+8
 
-            elif (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and (obstacle_point_y[0]-obstacle_point_y[1]) < 0:
-                slope =-9999
-
-            else: 
+            elif (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and obstacle_point_y[0] < obstacle_point_y[1]:
+                slope= 1e+8
+            
+            else:
                 slope = (obstacle_point_y[1]-obstacle_point_y[0])/(obstacle_point_x[1]-obstacle_point_x[0])
-                
-            reachableVel_global_all_after_delta_t = reachableVel_global_all * delta_t 
+
+            reachableVel_global_all_copy_copy = np.copy(reachableVel_global_all)
+############################ 정적 장애물의 기울기 계산 ###########################
+
+################## 각속도에 따라 각 방향의 예측 길이 다르게 계산 ##################
+            # for i in range(len(reachableVel_global_all)):
+            #     if  -1.5 < OS['r_deg'] < 1.5:
+            #         delta_t_component = delta_t*(2-abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+            #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component   
+
+            #     elif reachableVel_global_all[i][2] <= 0 and OS['r_deg'] <= 0:
+            #         delta_t_component = delta_t*(2-abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+            #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component   
+
+            #     elif reachableVel_global_all[i][2] >= 0 and OS['r_deg'] <= 0:
+            #         delta_t_component = delta_t*(2+abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+            #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component   
+
+            #     elif reachableVel_global_all[i][2] <= 0 and OS['r_deg'] >= 0:
+            #         delta_t_component = delta_t*(2+abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+            #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component   
+
+            #     else:
+            #         delta_t_component = delta_t*(2-abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+            #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component 
+
+            reachableVel_global_all_after_delta_t = reachableVel_global_all*delta_t
+            # reachableVel_global_all_after_delta_t = reachableVel_global_all_copy_copy
+            # vector_histogram = []
+################## 각속도에 따라 각 방향의 예측 길이 다르게 계산 ##################
+
+############################ 벡터 필드 히스토그램 시각화 ###########################
+            if len(reachableVel_global_all_copy_copy) == 0:
+                pass
+
+            else:
+                for i in range(len(reachableVel_global_all_after_delta_t)):
+                    if i+self.num_targetSpeedCandidates >= len(reachableVel_global_all_after_delta_t):
+                        continue
+
+                    else:
+                        vector_histogram.append(pA[0]+reachableVel_global_all_after_delta_t[i][0])
+                        vector_histogram.append(pA[1]+reachableVel_global_all_after_delta_t[i][1])
+                        vector_histogram.append(pA[0])
+                        vector_histogram.append(pA[1])
+                        vector_histogram.append(pA[0]+reachableVel_global_all_after_delta_t[i+self.num_targetSpeedCandidates][0])
+                        vector_histogram.append(pA[1]+reachableVel_global_all_after_delta_t[i+self.num_targetSpeedCandidates][1])
+############################ 벡터 필드 히스토그램 시각화 ###########################
+
+############# 가용 속도 벡터 후보군의 기울기 계산, 장애물과 겹치면 제외 ##############
             result = []
 
             for i in range(len(reachableVel_global_all_after_delta_t)): 
                 after_delta_t_x = reachableVel_global_all_after_delta_t[i][0]+pA[0]
                 after_delta_t_y = reachableVel_global_all_after_delta_t[i][1]+pA[1]
-                if (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) < 0:
-                    vector_slope = 9999
+                vector_point_x = [pA[0], after_delta_t_x]
+                vector_point_y = [pA[1], after_delta_t_y]
 
-                elif (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) > 0:
-                    vector_slope = -9999
+                if vector_point_x[0] > vector_point_x[1]:
+                    vector_point_x.reverse()
+                    vector_point_y.reverse()
+
+                if (pA[0]-after_delta_t_x) == 0 and pA[1] >= after_delta_t_y:
+                    vector_slope = -1e+8
+                    
+                elif (pA[0]-after_delta_t_x) == 0 and pA[1] < after_delta_t_y:
+                    vector_slope = 1e-8
+
                 else:
                     vector_slope = (pA[1]-after_delta_t_y)/(pA[0]-after_delta_t_x)
 
@@ -1074,10 +1160,11 @@ class VO_module:
                         obstacle_point_y[0],
                         obstacle_point_x[1], 
                         obstacle_point_y[1],
-                        pA[0], 
-                        pA[1], 
-                        after_delta_t_x, 
-                        after_delta_t_y):
+                        vector_point_x[0], 
+                        vector_point_y[0], 
+                        vector_point_x[1], 
+                        vector_point_y[1],
+                        obstacle_number):
 
                     component = reachableVel_global_all[i]
                     component_list = component.tolist()
@@ -1088,7 +1175,9 @@ class VO_module:
             reachableVel_global_all = np.array(result)
 
             obstacle_number = obstacle_number+4
+############# 가용 속도 벡터 후보군의 기울기 계산, 장애물과 겹치면 제외 ##############
 
+############# 가용 속도 벡터 후보군의 기울기 계산, 점 장애물과 겹치면 제외 ###########
         while point_number != len(static_point_data):
         
             point_x = static_point_data[point_number]
@@ -1097,15 +1186,15 @@ class VO_module:
             reachableVel_global_all_after_delta_t = reachableVel_global_all * delta_t 
             result = []
 
-            for i in range(len(reachableVel_global_all_after_delta_t)-1): 
+            for i in range(len(reachableVel_global_all_after_delta_t)): 
                 after_delta_t_x = reachableVel_global_all_after_delta_t[i][0]+pA[0]
                 after_delta_t_y = reachableVel_global_all_after_delta_t[i][1]+pA[1]
 
-                if (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) < 0:
-                    vector_slope = 9999
+                if (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) <= 0:
+                    pA[0] = pA[0] + 1e-8
 
-                elif (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) > 0:
-                    vector_slope = -9999
+                elif (pA[0]-after_delta_t_x) == 0 and (pA[1]-after_delta_t_y) >= 0:
+                    pA[0] = pA[0] - 1e-8
                 else:
                     vector_slope = (pA[1]-after_delta_t_y)/(pA[0]-after_delta_t_x)
 
@@ -1133,90 +1222,59 @@ class VO_module:
             reachableVel_global_all = reachableVel_global_all = np.array([reachableVel_global_all_copy[-1,:]])
         else:
             pass
+############# 가용 속도 벡터 후보군의 기울기 계산, 점 장애물과 겹치면 제외 ###########
+        reachableVel_global_all_copy_copy = np.copy(reachableVel_global_all)
 
-        return reachableVel_global_all
+        # for i in range(len(reachableVel_global_all)):
+        #     if  -1.0 < OS['r_deg'] < 1.0:
+        #         delta_t_component = delta_t*(2-self.small_delta_t_param*abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+        #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component   
+
+        #     elif reachableVel_global_all[i][2] <= 0 and OS['r_deg'] <= 0:
+        #         delta_t_component = delta_t*(2-self.small_delta_t_param*abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+        #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component   
+
+        #     elif reachableVel_global_all[i][2] >= 0 and OS['r_deg'] <= 0:
+        #         delta_t_component = delta_t*(2+self.large_delta_t_param*abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+        #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component   
+
+        #     elif reachableVel_global_all[i][2] <= 0 and OS['r_deg'] >= 0:
+        #         delta_t_component = delta_t*(2+self.large_delta_t_param*abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+        #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component   
+
+        #     else:
+        #         delta_t_component = delta_t*(2-self.small_delta_t_param*abs(reachableVel_global_all[i][2]/np.deg2rad(self.min_targetHeading_deg_local)))
+        #         reachableVel_global_all_copy_copy[i] = reachableVel_global_all[i]*delta_t_component 
+
+
+        reachableVel_global_all_after_delta_t = reachableVel_global_all*delta_t
+        # reachableVel_global_all_after_delta_t = reachableVel_global_all_copy_copy
+        vector_histogram = []
+
+############################ 벡터 필드 히스토그램 시각화 ###########################
+        if len(reachableVel_global_all_copy_copy) == 0:
+            pass
+
+        else:
+            for i in range(len(reachableVel_global_all_after_delta_t)):
+                if i+self.num_targetSpeedCandidates >= len(reachableVel_global_all_after_delta_t):
+                    continue
+                else:
+                    vector_histogram.append(pA[0]+reachableVel_global_all_after_delta_t[i][0])
+                    vector_histogram.append(pA[1]+reachableVel_global_all_after_delta_t[i][1])
+                    vector_histogram.append(pA[0])
+                    vector_histogram.append(pA[1])
+                    vector_histogram.append(pA[0]+reachableVel_global_all_after_delta_t[i+self.num_targetSpeedCandidates][0])
+                    vector_histogram.append(pA[1]+reachableVel_global_all_after_delta_t[i+self.num_targetSpeedCandidates][1])
+############################ 벡터 필드 히스토그램 시각화 ###########################
+
+        return reachableVel_global_all,vector_histogram
     
-    def if_all_vector_collidable(self, OS, effective_static_OB, detecting_radious, reachableVel_global_all_copy):
-        space_number = rospy.get_param("space_number")
-        pA = [OS['Pos_X'], OS['Pos_Y']]
-        vector_radian_plus = 0
-        vector_radian_minus = 0
-        vector_space_radian = pi/space_number
-        detecting_vector_list = []
-        detecting_vector_list_in_right = []
-        detecting_vector_list_in_left = []
-        for i in range(space_number):
-            vector_radian_plus = vector_radian_plus + vector_space_radian * i
-            vector_radian_minus = vector_radian_minus - vector_space_radian * i
-            vector_point_plus = [(pA[0]+detecting_radious*cos(vector_radian_plus)),(pA[0]+detecting_radious*sin(vector_radian_plus))]
-            vector_point_minus = [(pA[0]+detecting_radious*cos(vector_radian_minus)),(pA[0]+detecting_radious*sin(vector_radian_minus))]
-            vector_slope_plus = tan(vector_radian_plus)
-            vector_slope_minus = tan(vector_radian_minus)
-            obstacle_number = 0
-
-            while (obstacle_number) != len(effective_static_OB):
-                obstacle_point_x = [effective_static_OB[obstacle_number],effective_static_OB[obstacle_number+2]] 
-                obstacle_point_y = [effective_static_OB[obstacle_number+1],effective_static_OB[obstacle_number+3]] 
-
-                if obstacle_point_x[0] > obstacle_point_x[1]:
-                    obstacle_point_x.reverse()
-                    obstacle_point_y.reverse()
-
-                if (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and (obstacle_point_y[0]-obstacle_point_y[1]) > 0:
-                    slope = 9999
-
-                elif (obstacle_point_x[0]-obstacle_point_x[1]) == 0 and (obstacle_point_y[0]-obstacle_point_y[1]) < 0:
-                    slope =-9999
-
-                else: 
-                    slope = (obstacle_point_y[1]-obstacle_point_y[0])/(obstacle_point_x[1]-obstacle_point_x[0])
-
-                if self.get_crosspt(slope, 
-                        vector_slope_plus,
-                        obstacle_point_x[0], 
-                        obstacle_point_y[0],
-                        obstacle_point_x[1], 
-                        obstacle_point_y[1],
-                        pA[0], 
-                        pA[1], 
-                        vector_point_plus[0], 
-                        vector_point_plus[1]):
-
-                    detecting_vector_list_in_right.append(vector_radian_plus)
-
-                elif self.get_crosspt(slope, 
-                        vector_slope_minus,
-                        obstacle_point_x[0], 
-                        obstacle_point_y[0],
-                        obstacle_point_x[1], 
-                        obstacle_point_y[1],
-                        pA[0], 
-                        pA[1], 
-                        vector_point_minus[0], 
-                        vector_point_minus[1]):
-
-                    detecting_vector_list_in_left.append(vector_radian_minus)
-                else:
-                    pass
-
-            if len(detecting_vector_list) == 0:
-                # print("all the vector is collidable")
-                reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
-
-            else:
-                if len(detecting_vector_list_in_right) >= len(detecting_vector_list_in_left):
-                    reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
-                    # select vector that is in right
-                else:
-                    reachableVel_global_all = np.array([reachableVel_global_all_copy[123,:]])
-                    # select vector that is in left
-
-            return reachableVel_global_all
-
-    def get_crosspt(self, slope, vector_slope, start_x, start_y,end_x, end_y, OS_pos_x, OS_pos_y, after_delta_t_x, after_delta_t_y):
-
-        x_point = [start_x, end_x]
+    def get_crosspt(self, slope, vector_slope, start_x, start_y,end_x, end_y,
+                    OS_pos_x, OS_pos_y, after_delta_t_x, after_delta_t_y,obstacle_number):
+        
         y_point = [start_y, end_y]
+        vector_y_point = [OS_pos_y, after_delta_t_y]
 
         if (slope) == (vector_slope): 
             return True
@@ -1224,46 +1282,15 @@ class VO_module:
         else:
             cross_x = (start_x * slope - start_y - OS_pos_x * vector_slope + OS_pos_y) / (slope - vector_slope)
             cross_y = slope * (cross_x - start_x) + start_y
+            
 
-            if OS_pos_x <= after_delta_t_x and OS_pos_y <= after_delta_t_y:
-                if (min(x_point)-5) <= cross_x <= (max(x_point)+5) and (min(y_point)-5) <= cross_y <= (max(y_point)+5):
-                    if OS_pos_x <= cross_x <= after_delta_t_x and OS_pos_y <= cross_y <= after_delta_t_y:
-
-                        return False
-                    else:
-                        return True
+            if start_x-5 <= cross_x <= end_x+5 and min(y_point)-5 <= cross_y <= max(y_point)+5:
+                if OS_pos_x-5 <= cross_x <= after_delta_t_x+5 and min(vector_y_point)-5 <= cross_y <= max(vector_y_point)+5:
+                    return False
                 else:
                     return True
-
-            elif OS_pos_x >= after_delta_t_x and OS_pos_y <= after_delta_t_y:
-                if (min(x_point)-5) <= cross_x <= (max(x_point)+5) and (min(y_point)-5) <= cross_y <= (max(y_point)+5):
-                    if after_delta_t_x <= cross_x <= OS_pos_x and OS_pos_y <= cross_y <= after_delta_t_y:
-
-                        return False
-                    else:
-                        return True
-                else:
-                    return True
-
-            elif OS_pos_x <= after_delta_t_x and OS_pos_y >= after_delta_t_y:
-                if (min(x_point)-5) <= cross_x <= (max(x_point)+5) and (min(y_point)-5) <= cross_y <= (max(y_point)+5):
-                    if OS_pos_x <= cross_x <= after_delta_t_x and  after_delta_t_y <= cross_y <= OS_pos_y:
-
-                        return False
-                    else:
-                        return True
-                else:
-                    return True
-
             else:
-                if (min(x_point)-5) <= cross_x <= (max(x_point)+5) and (min(y_point)-5) <= cross_y <= (max(y_point)+5):
-                    if after_delta_t_x <= cross_x <= OS_pos_x and after_delta_t_y <= cross_y <= OS_pos_y:
-
-                        return False
-                    else:
-                        return True
-                else:
-                    return True
+                return True
                 
     def get_crosspt_circle(self, vector_slope, point_x, point_y, radious, OS_pos_x, OS_pos_y, after_delta_t_x, after_delta_t_y ):
 
@@ -1388,92 +1415,97 @@ class VO_module:
         # Compute the minimum time to collision(tc) for every velocity candidates
         velCandidates_dict = dict()
 
-        # for reachableCollisionVel_global in reachableCollisionVel_global_all:
+        for reachableCollisionVel_global in reachableCollisionVel_global_all:
             
-        #     velCandidates_dict[tuple(reachableCollisionVel_global)] = dict()
-        #     tc_min = 99999.9 # initialize the time to collision to a large enough
+            velCandidates_dict[tuple(reachableCollisionVel_global)] = dict()
+            tc_min = 99999.9 # initialize the time to collision to a large enough
 
-        #     # Compute the minimum time to collision(tc) for a velocity candidate
-        #     for RVOdata in RVOdata_all:
-        #         '''
-        #         Data structure of the `RVO_data`:
-        #             {
-        #                 "TS_ID": 2001,
-        #                 "LOSdist": 16.29, 
-        #                 "mapped_radius": 16.0, 
-        #                 "vA": ndarray([0.85, 1.15]),
-        #                 "vB": ndarray([-0.12, 0.52]),
-        #                 "boundLineAngle_left_rad_global: 0.24", 
-        #                 "boundLineAngle_right_rad_global: 0.31", 
-        #                 "collisionConeShifted_local: ndarray([0.12, 0.32])",
-        #             }
-        #         '''
+            # Compute the minimum time to collision(tc) for a velocity candidate
+            for RVOdata in RVOdata_all:
+                '''
+                Data structure of the `RVO_data`:
+                    {
+                        "TS_ID": 2001,
+                        "LOSdist": 16.29, 
+                        "mapped_radius": 16.0, 
+                        "vA": ndarray([0.85, 1.15]),
+                        "vB": ndarray([-0.12, 0.52]),
+                        "boundLineAngle_left_rad_global: 0.24", 
+                        "boundLineAngle_right_rad_global: 0.31", 
+                        "collisionConeShifted_local: ndarray([0.12, 0.32])",
+                    }
+                '''
 
-        #         vA2B_RVO = reachableCollisionVel_global - RVOdata['collisionConeTranslated']
+                vA2B_RVO = reachableCollisionVel_global - RVOdata['collisionConeTranslated']
 
-        #         angle_vA2B_RVO_rad_global = atan2(
-        #             vA2B_RVO[1],
-        #             vA2B_RVO[0],
-        #             )
+                angle_vA2B_RVO_rad_global = atan2(
+                    vA2B_RVO[1],
+                    vA2B_RVO[0],
+                    )
 
-        #         # Consider only collidable agent.
-        #         # NOTE: tc will maintain a large initial value if no collision 
-        #         #       for the corresponding agent.
-        #         if self.__is_in_between(
-        #         RVOdata['boundLineAngle_right_rad_global'],
-        #         angle_vA2B_RVO_rad_global, 
-        #         RVOdata['boundLineAngle_left_rad_global'],
-        #         ):
+                # Consider only collidable agent.
+                # NOTE: tc will maintain a large initial value if no collision 
+                #       for the corresponding agent.
+                if self.__is_in_between(
+                RVOdata['boundLineAngle_right_rad_global'],
+                angle_vA2B_RVO_rad_global, 
+                RVOdata['boundLineAngle_left_rad_global'],
+                ):
 
-        #             # NOTE: The angle between
-        #             #       (1) vA2B (on RVO config. space) 
-        #             #       (2) LOS line and
-        #             angle_at_pA = abs(angle_vA2B_RVO_rad_global - 0.5 * (RVOdata['boundLineAngle_right_rad_global'] + RVOdata['boundLineAngle_left_rad_global']))   
-        #             angle_at_pA %= (2*pi)
-        #             if angle_at_pA > pi:
-        #                 angle_at_pA = abs(angle_at_pA - (2*pi))                
+                    # NOTE: The angle between
+                    #       (1) vA2B (on RVO config. space) 
+                    #       (2) LOS line and
+                    angle_at_pA = abs(angle_vA2B_RVO_rad_global - 0.5 * (RVOdata['boundLineAngle_right_rad_global'] + RVOdata['boundLineAngle_left_rad_global']))   
+                    angle_at_pA %= (2*pi)
+                    if angle_at_pA > pi:
+                        angle_at_pA = abs(angle_at_pA - (2*pi))                
                     
-        #             # NOTE: The angle between 
-        #             #       (1) vA2B(on RVO config. space) and 
-        #             #       (2) the line from the collision point on the B_hat surface 
-        #             #       to the center of B_hat
-        #             # TODO: Velocity vector here must be directed to the B_hat, 
-        #             #       but some are to out of the B_hat. Review it. 
-        #             #       Now force the length `abs(RVOdata['LOSdist'] * sin(angle_at_pA))`
-        #             #       to be less than `RVOdata['mapped_radius']` temporarily.
-        #             if (abs(RVOdata['LOSdist'] * sin(angle_at_pA)) > RVOdata['mapped_radius']):
-        #                 angle_at_collisionPoint = 0.0    
-        #             else:
-        #                 angle_at_collisionPoint = asin(
-        #                     abs(RVOdata['LOSdist'] * sin(angle_at_pA)) / RVOdata['mapped_radius']
-        #                     )
+                    # NOTE: The angle between 
+                    #       (1) vA2B(on RVO config. space) and 
+                    #       (2) the line from the collision point on the B_hat surface 
+                    #       to the center of B_hat
+                    # TODO: Velocity vector here must be directed to the B_hat, 
+                    #       but some are to out of the B_hat. Review it. 
+                    #       Now force the length `abs(RVOdata['LOSdist'] * sin(angle_at_pA))`
+                    #       to be less than `RVOdata['mapped_radius']` temporarily.
+                    if (abs(RVOdata['LOSdist'] * sin(angle_at_pA)) > RVOdata['mapped_radius']):
+                        angle_at_collisionPoint = 0.0    
+                    else:
+                        angle_at_collisionPoint = asin(
+                            abs(RVOdata['LOSdist'] * sin(angle_at_pA)) / RVOdata['mapped_radius']
+                            )
 
 
-        #             # NOTE: The distance between pA and the surface of B_hat on the
-        #             #       RVO config. space
-        #             dist_collision = abs(RVOdata['LOSdist'] * cos(angle_at_pA)) - abs(RVOdata['mapped_radius'] * cos(angle_at_collisionPoint))
+                    # NOTE: The distance between pA and the surface of B_hat on the
+                    #       RVO config. space
+                    dist_collision = abs(RVOdata['LOSdist'] * cos(angle_at_pA)) - abs(RVOdata['mapped_radius'] * cos(angle_at_collisionPoint))
 
-        #             # NOTE: If collision already occured, 
-        #             #       tc(time to collision) will be zero.
-        #             if dist_collision < 0: dist_collision = 0
-        #             tc = dist_collision / np.linalg.norm([vA2B_RVO])
+                    # NOTE: If collision already occured, 
+                    #       tc(time to collision) will be zero.
+                    if dist_collision < 0: dist_collision = 0
+                    tc = dist_collision / np.linalg.norm([vA2B_RVO])
                     
-        #             # NOTE: Avoid zero division for the penalty calculation
-        #             if tc < 0.00001: tc = 0.00001
+                    # NOTE: Avoid zero division for the penalty calculation
+                    if tc < 0.00001: tc = 0.00001
 
-        #             if tc < tc_min: tc_min = tc
+                    if tc < tc_min: tc_min = tc
 
             # Store the minimum time to collision for each velocity candidate
-            # velCandidates_dict[tuple(reachableCollisionVel_global)]['tc_min'] = tc_min
+            velCandidates_dict[tuple(reachableCollisionVel_global)]['tc_min'] = tc_min
 
             # Comput and store the penalty for each velocity candidate
-            # velCandidates_dict[tuple(reachableCollisionVel_global)]['penalty'] = self.weight_aggresiveness / tc_min + np.linalg.norm([V_des - reachableCollisionVel_global])
-           
+            velCandidates_dict[tuple(reachableCollisionVel_global)]['penalty'] = self.weight_aggresiveness / tc_min + np.linalg.norm([V_des - reachableCollisionVel_global])
+            '''
+            Data structure of the `velCandidates_dict`:
+                {
+                    (0.82, 1.21): {"tc":10.52, "penalty":20.21}, 
+                    (0.67, 0.89): {"tc":12.43, "penalty":12.41}, 
+                    ... ,
+                }     
+            '''
 
         # Take the velocity that has the minimum penalty
-        # vA_post = min(velCandidates_dict, key=lambda k : velCandidates_dict[k]['penalty'])
-        # print(reachableCollisionVel_global_all)
-        vA_post = reachableCollisionVel_global_all[-1]
+        vA_post = min(velCandidates_dict, key=lambda k : velCandidates_dict[k]['penalty'])
         return vA_post
 
     def __choose_velocity(self, V_des, RVOdata_all, OS, TS, static_obstacle_info, static_point_info): 
@@ -1566,6 +1598,12 @@ class VO_module:
         min_targetHeading_rad_global = heading_rad + min_targetHeading_rad_local
         max_targetHeading_rad_global = heading_rad + max_targetHeading_rad_local
 
+        targetHeading_rad_local_all = np.linspace(
+            start=min_targetHeading_rad_local, 
+            stop=max_targetHeading_rad_local, 
+            num=self.num_targetHeadingCandidates,
+            )
+
         targetHeading_rad_global_all = np.linspace(
             start=min_targetHeading_rad_global, 
             stop=max_targetHeading_rad_global, 
@@ -1573,9 +1611,10 @@ class VO_module:
             )
 
         # Generate target velocity vector candidates
-        reachableVel_global_all = self.__generate_vel_candidates(
+        reachableVel_global_all,vector_histogram = self.__generate_vel_candidates(
             targetSpeed_all, 
             targetHeading_rad_global_all,
+            targetHeading_rad_local_all,
             OS,
             static_obstacle_info,
             static_point_info
@@ -1635,10 +1674,9 @@ class VO_module:
             #       all the reachable velocities are inside the collision cones
             vA_post = self.__select_vel_inside_RVOs(
                 velCandidates, 
-                RVOdata_all,
+                RVOdata_all, 
                 V_des,
                 )
-
         # When no collision velocities
         elif isAllVelsAvoidable:
             velCandidates = self.__remove_annotation(reachableVel_all_annotated)
@@ -1666,12 +1704,7 @@ class VO_module:
                 vel_all_annotated=reachableVel_all_annotated,       # |
                 annotation=['inLeft'],                              # |
                 shipID_all=TS.keys(),                               # |
-                )
-            # avoidanceAllRightVel_all_annotated = self.__take_vels(  
-            #     vel_all_annotated=reachableVel_all_annotated,       
-            #     annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
-            #     shipID_all=TS.keys(),
-            #     )                                                   # |
+                )                                                   # |
             #=========================================================+
 
             if avoidanceAllRightVel_all_annotated:
@@ -1685,7 +1718,7 @@ class VO_module:
                 )
             
 
-        return vA_post 
+        return vA_post, vector_histogram
 
     def __extract_RVO_data(self, OS, TS):
         # TODO: `static_OB` is used in the future?
@@ -1773,6 +1806,8 @@ class VO_module:
 
             # NOTE: LOS: line of sight. The line between pA and pB = relative distance
             LOSdist = np.linalg.norm([pA - pB]) 
+            if LOSdist <=15:
+                LOSdist = 15
             # NOTE: atan2(y, x) = arctangent of y/x 
             LOSangle_rad = atan2(pB[1] - pA[1], pB[0] - pA[0])
             
@@ -1806,16 +1841,6 @@ class VO_module:
             #     boundLineAngle_right_rad_global = OS['Heading'] - pi
             #     RVOapexPos_global = pA
 
-            if self.rule == True:
-                if status == 'Safe' or status == 'Port crossing':
-                    boundLineAngle_left_rad_global = OS['Heading'] + pi
-                    boundLineAngle_right_rad_global = OS['Heading'] - pi
-                    RVOapexPos_global = pA
-                    LOSdist = 0
-
-                else: 
-                    pass
-
 
             RVOdata = {
                 "TS_ID": ts_ID,
@@ -1826,18 +1851,17 @@ class VO_module:
                 "boundLineAngle_left_rad_global" : boundLineAngle_left_rad_global,
                 "boundLineAngle_right_rad_global" : boundLineAngle_right_rad_global,
                 "collisionConeTranslated": collisionConeTranslated,
-                "CRI" : CRI,
-                "Status" : status,
+                "CRI": CRI,
                 }
             RVOdata_all.append(RVOdata)
             # To publish the collision cone data for visualization
             bound_left_view = [
-                cos(boundLineAngle_left_rad_global)* int(LOSdist)/2,
-                sin(boundLineAngle_left_rad_global)* int(LOSdist)/2,
+                cos(boundLineAngle_left_rad_global)* int(LOSdist),
+                sin(boundLineAngle_left_rad_global)* int(LOSdist),
                 ]  # cone visualization /3 하면 장애물까지 거리의 1/3만 생김
             bound_right_view = [
-                cos(boundLineAngle_right_rad_global)* int(LOSdist)/2,
-                sin(boundLineAngle_right_rad_global)* int(LOSdist)/2,
+                cos(boundLineAngle_right_rad_global)* int(LOSdist),
+                sin(boundLineAngle_right_rad_global)* int(LOSdist),
                 ]
 
             pub_collision_cone.append(RVOapexPos_global[0])
@@ -1905,9 +1929,10 @@ class VO_module:
             TS_original,
             )
 
-        V_opt = self.__choose_velocity(V_des, RVOdata_all, OS_original, TS_original,static_obstacle_info, static_point_info)
+        V_opt,vector_histogram = self.__choose_velocity(V_des, RVOdata_all, OS_original, TS_original,static_obstacle_info, static_point_info)
 
-        return V_opt, pub_collision_cone
+
+        return V_opt, pub_collision_cone, vector_histogram
 
     def vectorV_to_goal(self, OS, goal, V_max):
         """ 

@@ -4,7 +4,6 @@ from functions.CRI import CRI
 from numpy import deg2rad, rad2deg
 from math import sin, cos, pi, sqrt, atan2
 import numpy as np
-import rospy
     
     
 
@@ -18,6 +17,7 @@ class Inha_dataProcess:
         Vel_U, 
         Heading, 
         waypoint_dict, 
+        r_deg
         ):
 
         self.ship_ID = ship_ID
@@ -26,9 +26,10 @@ class Inha_dataProcess:
         self.Vel_U = Vel_U
         self.Heading = Heading
         self.waypoint_dict = waypoint_dict
+        self.r_deg = r_deg
 
         self.ship_dic= {}
-        self.SD_param = rospy.get_param('SD_param')
+        self.SD_param = 4   #rospy.get_param('SD_param')
 
     def ship_list_container(self, OS_ID):
         ''' 
@@ -47,6 +48,7 @@ class Inha_dataProcess:
                     'Pos_Y' : self.Pos_Y[i],
                     'Vel_U' : self.Vel_U[i],
                     'Heading' : self.Heading[i],
+                    'r_deg': self.r_deg[i]
                     }
 
             else:
@@ -56,6 +58,7 @@ class Inha_dataProcess:
                     'Pos_Y' : self.Pos_Y[i],
                     'Vel_U' : self.Vel_U[i],
                     'Heading' : self.Heading[i],
+                    'r_deg': self.r_deg[i]
                     }
         # print(self.ship_dic[index_ship])
         # print(self.ship_ID)
@@ -85,8 +88,10 @@ class Inha_dataProcess:
 
     def CRI_cal(self, OS, TS):
         cri = CRI(
-            rospy.get_param("shipInfo_all/ship1_info/ship_L"),
-            rospy.get_param("shipInfo_all/ship1_info/ship_B"),
+            2.0,
+            #rospy.get_param("shipInfo_all/ship1_info/ship_L"),
+            0.6,
+            #rospy.get_param("shipInfo_all/ship1_info/ship_B"),
             OS['Pos_X'],
             OS['Pos_Y'],
             TS['Pos_X'],
@@ -95,7 +100,6 @@ class Inha_dataProcess:
             deg2rad(TS['Heading']),
             OS['Vel_U'],
             TS['Vel_U'],
-            rospy.get_param("shipInfo_all/ship1_info/ship_scale"),
         )
 
         RD = cri.RD()
@@ -187,7 +191,6 @@ class Inha_dataProcess:
 
         return desired_spd, desired_heading
 
-
     def TS_info_supplement(self, OS_list, TS_list):   
         """ TS에 대한 추가적인 information 생성 
 
@@ -203,7 +206,7 @@ class Inha_dataProcess:
         for ts_ID in TS_ID:
             RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value,rb,lb = self.CRI_cal(OS_list, TS_list[ts_ID])
 
-            TS_list[ts_ID]['RD'] = RD 
+            TS_list[ts_ID]['RD'] = RD   
             TS_list[ts_ID]['TB'] = TB  
             TS_list[ts_ID]['RB'] = RB
 
