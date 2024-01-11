@@ -95,6 +95,7 @@ class Inha_dataProcess:
             deg2rad(TS['Heading']),
             OS['Vel_U'],
             TS['Vel_U'],
+            rospy.get_param("shipInfo_all/ship1_info/ship_scale"),
         )
 
         RD = cri.RD()

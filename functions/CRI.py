@@ -4,9 +4,10 @@ import numpy as np
 # import rospy
 
 class CRI:
-    def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt):
-        self.L = L      #타선의 길이 [m] from pram
-        self.B = B      #타선의 폭 [m]
+    def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt, ship_scale):
+        self.ship_scale = ship_scale
+        self.L = L / self.ship_scale    #타선의 길이 [m] from pram
+        self.B = B / self.ship_scale     #타선의 폭 [m]
         self.Xo = Xo    #자선 x좌표  [m]
         self.Yo = Yo    #자선 y좌표  [m] 
         self.Xt = Xt    #타선 x좌표  [m]
@@ -15,11 +16,13 @@ class CRI:
         self.Ct = Ct    #타선 Heading angle [rad]
         self.Vo = Vo    #자선 속도   [knots]
         self.Vt = Vt    #타선 속도   [knots]
-        self.ratio = 1852/11 #1852/110
+        self.ratio = 1852 / self.ship_scale #1852/110  #1 해리는 1852m
+        # self.ratio = (12*self.L) / self.ship_scale #1852/110  #1 해리는 1852m
 
     def RD(self):
         '''Relative Distance, 자선과 타선 사이의 상대 거리'''
         result = sqrt(((self.Xt - self.Xo) ** 2) + ((self.Yt - self.Yo) ** 2)) + 0.0001
+        print(result)
         return result
 
     def TB(self):
@@ -36,7 +39,7 @@ class CRI:
         else:
             result = self.TB() - self.Co + (2 * pi)
         return result
-
+    
     def HAD(self):
         '''Heading angle difference, rad'''
         result = self.Ct - self.Co
@@ -116,7 +119,7 @@ class CRI:
         elif self.d2() < abs(self.dcpa()):
             result = 0
         else:
-            result = 0.5 - 0.5 * sin(((pi/(self.d2() - self.d1())) * abs(self.dcpa())) - ((self.d1() + self.d2())/2))
+            result = 0.5 - 0.5 * sin((pi/(self.d2() - self.d1())) * (abs(self.dcpa()) - (self.d1() + self.d2())/2))
         return result
 
     def D1(self):
@@ -150,7 +153,9 @@ class CRI:
 
     def t2(self):
         '''Avoidance time'''
-        D2 = 12 * self.ratio
+        # D2 = 12 * self.ratio  # 원래 이렇게 되어 있었음
+        # D2 = 12 * 12  # 동훈 논문
+        D2 = self.D2()  # 다른 논문
         if abs(self.dcpa()) <= D2:
             result = sqrt(pow(D2, 2) - pow(self.dcpa(), 2)) / self.RV()
         else:
@@ -195,7 +200,8 @@ class CRI:
 
     def CRI(self):
         '''충돌위험도지수, UDCPA, UTCPA, UD, UB, UK 5개의 파라미터에 가중치를 곱하여 계산'''
-        result = 0.4 * self.UDCPA() + 0.367 * self.UTCPA() + 0.133 * self.UD() + 0.067 * self.UB() + 0.033 * self.UK()
+        result = 0.4 * self.UDCPA() + 0.367 * self.UTCPA() + 0.133 * self.UD() + 0.067 * self.UB() + 0.033 * self.UK() #원래 값
+        # result = 0.4457 * self.UDCPA() + 0.2258 * self.UTCPA() + 0.1408 * self.UD() + 0.1321 * self.UB() + 0.0556 * self.UK() #원준 수정 값
         return round(result, 3)
 
     def encounter_classification(self):
@@ -329,3 +335,49 @@ class CRI:
             result = sqrt(pow(Rf,2)/(pow(sin(RB),2) + pow(cos(RB),2) * (pow(Rf,2)/pow(Rp,2))))
 
         return result
+    
+    # 선박 안전 영역을 4가지 방향에 대해서 계산
+    # 타선을 원점으로 하는 4개의 점이 생성됨
+    # 생성된 4개의 점을 순서쌍으로 만들고 자선과 두 점 사이의 각이 최대인 경우의 왼쪽 바운더리와 오른쪽 바운더리를 반환
+    # 아웃풋은 왼쪽 바운더리와 오른쪽 바운더리
+    # def SD_dist_new(self):
+    #     Rf, Ra, Rs, Rp = self.Rf(), self.Ra(), self.Rs(), self.Rp()
+
+    #     param = 4
+    #     Xot = self.Xt-self.Xo
+    #     Yot = self.Yt-self.Yo
+    #     Rf_position = np.array([param*Rf*cos(deg2rad(self.Ct)),param*Rf*sin(deg2rad(self.Ct))]) + np.array([Xot,Yot])
+    #     Ra_position = np.array([param*Ra*cos(deg2rad(self.Ct)+pi),param*Ra*sin(deg2rad(self.Ct)+pi)]) + np.array([Xot,Yot])
+    #     Rs_position = np.array([param*Rs*cos(deg2rad(self.Ct)-pi/2),param*Rs*sin(deg2rad(self.Ct)-pi/2)]) + np.array([Xot,Yot])
+    #     Rp_position = np.array([param*Rp*cos(deg2rad(self.Ct)+pi/2),param*Rp*sin(deg2rad(self.Ct)+pi/2)]) + np.array([Xot,Yot])
+
+    #     Rf_rad = atan2(Rf_position[1],Rf_position[0])
+    #     Ra_rad = atan2(Ra_position[1],Ra_position[0])
+    #     Rs_rad = atan2(Rs_position[1],Rs_position[0])
+    #     Rp_rad = atan2(Rp_position[1],Rp_position[0])
+
+    #     R_rad_list = [Rf_rad,Ra_rad,Rs_rad,Rp_rad]
+    #     new_rad_list = []
+
+    #     max_angle = 0
+
+    #     for j in R_rad_list:
+    #         for k in R_rad_list:
+    #             if abs(j - k) > pi:
+    #                 angle = abs(abs(j-k) - 2*pi)
+    #             else:
+    #                 angle = abs(j-k)
+
+    #             if angle > max_angle:
+    #                 max_angle = angle
+    #                 new_rad_list = [j,k]
+
+    #     if abs(new_rad_list[0]-new_rad_list[1]) > pi:
+    #         right_bound = max(new_rad_list)
+    #         left_bound = min(new_rad_list)
+
+    #     else:
+    #         right_bound = min(new_rad_list)
+    #         left_bound = max(new_rad_list)
+
+    #     return right_bound, left_bound
