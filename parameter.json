@@ -27,9 +27,10 @@
         "ship_L":22.0,
         "ship_B":6.0,
         "ship_scale":1,
-        "target_speed":8.0
+        "target_speed":8.0,
 
-
+        "ukf_dt": 20.0,
+        "ukf_angle_dt": 1.0
 
     
     
