@@ -184,7 +184,12 @@ ship2_index : 3
 ship3_index : 10
 
 ############################################
+# kalman filter parameter
 
+ukf_dt: 20
+ukf_angle_dt: 1
+
+############################################
 # param for static_OB
 
 delta_t : 40
