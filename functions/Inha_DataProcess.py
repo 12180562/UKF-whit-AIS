@@ -8,6 +8,44 @@ import rospy
 from filterpy.kalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
     
 class UKF:
+
+    '''
+    혹시나 나중에 csv파일로 뽑아야 한다면 이걸로 하기
+    class UKFNode:
+        def __init__(self):
+            rospy.init_node('ukf_node')
+
+            # CSV 파일 초기화
+            current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            self.file_name = f"ukf_results_{current_time}.csv"
+            self.csv_file = open(self.file_name, mode='w', newline='')
+            self.csv_writer = csv.writer(self.csv_file)
+            self.csv_writer.writerow(['Time', 'Ship ID', 'Latitude', 'Longitude'])
+            
+            self.subscriber = rospy.Subscriber('AIS_data', String, self.sensor_callback)
+            self.ships = {}
+
+        def sensor_callback(self, data):
+            ship_id, lat, lon, speed, heading = data.data.split(',')
+            ship_id = ship_id
+            current_measurement = np.array([float(lat), float(lon), float(speed), float(heading)])
+
+            if ship_id not in self.ships:
+                self.ships[ship_id] = UKF()
+
+            predicted_state = self.ships[ship_id].update_ukf(current_measurement)
+
+            # 현재 시간, 선박 ID, 위도, 경도 추출 및 CSV 파일에 기록
+            time = rospy.get_time()
+            self.csv_writer.writerow([time, ship_id, predicted_state[0], predicted_state[1]])
+            self.csv_file.flush()
+        
+            rospy.on_shutdown(self.on_shutdown())
+
+        def on_shutdown(self):
+            self.csv_file.close()
+    '''
+
     def __init__(self):
         self.dt = rospy.get_param('ukf_dt')  # 샘플링 시간
         sigma_points = MerweScaledSigmaPoints(n=4, alpha=.1, beta=2., kappa=0.1)
@@ -64,41 +102,7 @@ class UKF:
             # rospy.loginfo("Measurement updated, state updated: %s", self.ukf.x)
             self.predicted_values = []
         return self.ukf.x
-
-# class UKFNode:
-#     def __init__(self):
-#         rospy.init_node('ukf_node')
-
-#         # CSV 파일 초기화
-#         current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-#         self.file_name = f"ukf_results_{current_time}.csv"
-#         self.csv_file = open(self.file_name, mode='w', newline='')
-#         self.csv_writer = csv.writer(self.csv_file)
-#         self.csv_writer.writerow(['Time', 'Ship ID', 'Latitude', 'Longitude'])
-        
-#         self.subscriber = rospy.Subscriber('AIS_data', String, self.sensor_callback)
-#         self.ships = {}
-
-#     def sensor_callback(self, data):
-#         ship_id, lat, lon, speed, heading = data.data.split(',')
-#         ship_id = ship_id
-#         current_measurement = np.array([float(lat), float(lon), float(speed), float(heading)])
-
-#         if ship_id not in self.ships:
-#             self.ships[ship_id] = UKF()
-
-#         predicted_state = self.ships[ship_id].update_ukf(current_measurement)
-
-#         # 현재 시간, 선박 ID, 위도, 경도 추출 및 CSV 파일에 기록
-#         time = rospy.get_time()
-#         self.csv_writer.writerow([time, ship_id, predicted_state[0], predicted_state[1]])
-#         self.csv_file.flush()
-    
-#         rospy.on_shutdown(self.on_shutdown())
-
-#     def on_shutdown(self):
-#         self.csv_file.close()
-
+ 
 class Inha_dataProcess:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
     def __init__(
@@ -155,7 +159,7 @@ class Inha_dataProcess:
                     'Pos_Y' : predicted_state[1],
                     }
 
-        print(self.ship_dic)
+        # print(self.ship_dic)
         # print(self.ship_ID)
         return self.ship_dic, self.ship_ID
 
