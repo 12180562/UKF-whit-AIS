@@ -3,6 +3,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.CRI import CRI
 from numpy import deg2rad, rad2deg
 from math import sin, cos, pi, sqrt, atan2
+
 import numpy as np
 import rospy
 from filterpy.kalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
@@ -45,62 +46,101 @@ class UKF:
         def on_shutdown(self):
             self.csv_file.close()
     '''
+#오리진 엑스와 프레딕트를 같이 저장하는 기능 만들어야함
+#갱신이 됐을때 이닛 다시 하기
+#한화 피피티 만들기
 
     def __init__(self):
         self.dt = rospy.get_param('ukf_dt')  # 샘플링 시간
-        sigma_points = MerweScaledSigmaPoints(n=4, alpha=.1, beta=2., kappa=0.1)
-        self.ukf = UnscentedKalmanFilter(dim_x=4, dim_z=4, dt=self.dt, fx=self.state_transition, hx=self.measurement_function, points=sigma_points)
-        self.ukf.x = np.array([0., 0., 0., 0.])  # 초기 상태 추정치
-        self.ukf.P *= 1.  # 초기 공분산 행렬
-        self.ukf.R = np.eye(4) * 0.5  # 측정 노이즈
-        self.ukf.Q = np.eye(4) * 0.5  # 프로세스 노이즈
 
         self.last_measurement = None
         self.last_heading = None
         self.ukf_initialized = False
 
+        self.initialize_ukf()
+
+    def initialize_ukf(self):
+
+        '''Alpha (α):
+        alpha는 시그마 포인트의 분포를 결정하는 스케일링 파라미터입니다. alpha는 0과 1 사이의 작은 양수로 설정되며, 일반적으로 매우 작은 값(예: 1e-3)을 사용합니다.
+        alpha가 작을수록 시그마 포인트들은 평균 근처에 더 가깝게 위치하며, alpha가 커지면 시그마 포인트들은 멀리 퍼지게 됩니다. 이는 곧 필터의 추정치가 측정치에 대해 얼마나 신뢰를 두는지에 영향을 미칩니다.
+        alpha를 너무 크게 설정하면 필터가 불안정해질 수 있으며, 너무 작게 설정하면 필터가 새로운 측정치에 너무 느리게 반응할 수 있습니다.
+
+        Beta (β):
+        beta는 사전 분포에 대한 지식을 통합하는 파라미터입니다. 특히, beta는 상태 변수의 분포가 가우시안 분포에서 벗어날 때 사용됩니다.
+        beta가 2일 경우 이는 시스템의 초기 분포가 정확히 가우시안(정규 분포)임을 의미합니다. 다른 값은 비가우시안 분포를 가정할 때 사용됩니다.
+        beta를 조정함으로써 필터의 성능을 비선형성이 강한 시스템에 맞출 수 있습니다. 일반적으로, beta는 0 또는 2 근처의 값을 사용하지만, 시스템의 특성에 따라 최적의 값을 찾기 위한 실험이 필요할 수 있습니다.
+        
+        Kappa (κ):
+        kappa는 보통 0 또는 3-n (여기서 n은 상태 변수의 차원)으로 설정됩니다. kappa는 시그마 포인트 생성시 중심 포인트의 가중치를 조정합니다.
+        kappa를 조정함으로써 필터의 안정성과 정확성을 향상시킬 수 있습니다. 특히, kappa를 사용하여 비선형 시스템의 특성을 더 잘 반영할 수 있습니다.'''
+
+        sigma_points = MerweScaledSigmaPoints(n=4, alpha=.1, beta=2., kappa=.1)
+        self.ukf = UnscentedKalmanFilter(dim_x=4, dim_z=4, dt=self.dt, fx=self.state_transition, hx=self.measurement_function, points=sigma_points)
+        self.ukf.x = np.array([0., 0., 0., 0.])  # 초기 상태 추정치
+        self.ukf.P = np.eye(4) * 10000.  # 초기 공분산 행렬
+        # self.ukf.P += np.eye(self.ukf.P.shape[0]) * 1e-6
+        self.ukf.R = np.eye(4) * .5  # 측정 노이즈
+        self.ukf.Q = np.eye(4) * .5  # 프로세스 노이즈
+
     def state_transition(self, x, dt):
         angle_dt = rospy.get_param('ukf_angle_dt')  # 각속도 조정 파라미터
         new_x = x.copy()
+        # print(new_x)
+        # print('gg')
         if self.last_heading is not None:
             heading_change = x[3] - self.last_heading
-            angular_velocity = heading_change / angle_dt
+            angular_velocity = heading_change / (angle_dt*9)
             new_x[3] += angular_velocity
         else:
             new_x[3] = x[3]
 
-        new_x[0] += dt * (((x[2]*1852) * np.cos(np.deg2rad(new_x[3])))/(60*60))
-        new_x[1] += dt * (((x[2]*1852) * np.sin(np.deg2rad(new_x[3])))/(60*60))
-        return new_x
+        new_x[0] += dt * (x[2] * np.cos(np.deg2rad(new_x[3])))/9
+        new_x[1] += dt * (x[2] * np.sin(np.deg2rad(new_x[3])))/9
 
+        print(new_x)
+        return new_x
+    
     def measurement_function(self, x):
         return x
 
     def update_ukf(self, lat, long, speed, heading):
+
         measurement = [lat, long, speed, heading]
 
         if not self.ukf_initialized:
             self.ukf.x = measurement  # 초기 상태 추정치 설정
             self.ukf_initialized = True  # UKF가 초기화되었음을 표시
             # rospy.loginfo("UKF initialized with first measurement: %s", self.ukf.x)
+            
         # 측정값이 변경되었는지 확인
         if self.last_measurement is not None and np.array_equal(measurement, self.last_measurement):
+
             self.last_heading = self.ukf.x[3]
+
             # 측정값이 변경되지 않았다면 predict만 수행
+            # self.ukf.predict()
             predict=self.ukf.predict()
             self.ukf.update(predict)
+            # print('predict')
             # rospy.loginfo("Measurement unchanged, prediction only: %s", self.ukf.x)
             self.predicted_values.append(self.ukf.x)
+
         else:
+            # self.initialize_ukf()
+
             # 측정값이 변경되었다면 예측 및 업데이트 수행
             if self.last_measurement is not None:
                 # 각도 변화량 계산 및 업데이트 로직 적용
                 self.last_heading = self.last_measurement[3]  # 이전 헤딩 값을 업데이트
             self.last_measurement = measurement
+
             self.ukf.predict()
             self.ukf.update(measurement)
+            # print('update')
             # rospy.loginfo("Measurement updated, state updated: %s", self.ukf.x)
             self.predicted_values = []
+
         return self.ukf.x
  
 class Inha_dataProcess:
@@ -133,10 +173,9 @@ class Inha_dataProcess:
                 ship_list_dic
                 ship_ID
         '''
+
         for i in range(len(self.ship_ID)):
             index_ship = self.ship_ID[i]
-            self.ship_dic[index_ship] = UKF()
-            predicted_state = self.ship_dic[index_ship].update_ukf(self.Pos_X[i], self.Pos_Y[i], self.Vel_U[i], self.Heading[i])
             if index_ship == OS_ID:
                 self.ship_dic[OS_ID]= {
                     'Ship_ID' : int(self.ship_ID[i]),
@@ -144,8 +183,8 @@ class Inha_dataProcess:
                     'Ori_Y' : self.Pos_Y[i],
                     'Vel_U' : self.Vel_U[i],
                     'Heading' : self.Heading[i],
-                    'Pos_X' : predicted_state[0],
-                    'Pos_Y' : predicted_state[1],
+                    'Pos_X' : 0,
+                    'Pos_Y' : 0,
                     }
 
             else:
@@ -155,12 +194,14 @@ class Inha_dataProcess:
                     'Ori_Y' : self.Pos_Y[i],
                     'Vel_U' : self.Vel_U[i],
                     'Heading' : self.Heading[i],
-                    'Pos_X' : predicted_state[0],
-                    'Pos_Y' : predicted_state[1],
+                    'Pos_X' : 0,
+                    'Pos_Y' : 0,
                     }
 
-        # print(self.ship_dic)
+        print(self.ship_dic)
         # print(self.ship_ID)
+        # print("원래 X: {}, Y: {}".format(self.ship_dic[OS_ID]['Pos_X'], self.ship_dic[OS_ID]['Pos_Y']))
+
         return self.ship_dic, self.ship_ID
 
     def classify_OS_TS(self, ship_dic, ship_ID, OS_ID):

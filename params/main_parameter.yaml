@@ -149,7 +149,7 @@ meta: |
   
   ---------------------------------------------------------------
 
-update_rate: 50  ## rospy.Rate(update_rate)
+update_rate: 10  ## rospy.Rate(update_rate)
 mmg_dt: 1
 ############################################
 
@@ -171,13 +171,13 @@ min_targetSpeed : 0.9
 max_targetSpeed : 1.0
 num_targetSpeedCandidates : 3
 
-min_targetHeading_deg_local : -45.0
-max_targetHeading_deg_local: 45.0
-num_targetHeadingCandidates: 59
+min_targetHeading_deg_local : -60.0
+max_targetHeading_deg_local: 60.0
+num_targetHeadingCandidates: 5
 
-Kp : 1.0
-Ki : 0.0
-Kd : 0.0
+Kp : 1.2
+Ki : 0.5
+Kd : 0.05
 
 ship1_index : 11
 ship2_index : 3
@@ -186,8 +186,9 @@ ship3_index : 10
 ############################################
 # kalman filter parameter
 
-ukf_dt: 20
-ukf_angle_dt: 1
+ukf_dt: 10
+ukf_angle_dt: 10
+ais_delay: 5
 
 ############################################
 # param for static_OB

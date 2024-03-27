@@ -9,6 +9,7 @@ from udp_col_msg.msg import path_output
 from udp_msgs.msg import frm_info
 import rospy
 from math import sqrt
+import random
 
 class KRISO:
     """22m급의 KASS MMG 운항 모델 반영"""
@@ -101,8 +102,26 @@ def main():
 
     start_time = rospy.Time.now()
 
+    last_publish_time = rospy.Time.now()  # 마지막으로 발행한 시간을 초기화
+    # publish_interval = rospy.Duration(random.uniform(1.0, 5.0))  # 발행 주기 랜덤
+    delay=rospy.get_param('ais_delay')
+    publish_interval = rospy.Duration(delay)  # 발행 주기를 5초로 설정
+    # print("발행 주기(초):", publish_interval.to_sec())
+    # publish_interval = rospy.Duration(random.uniform(1.0, 5.0))  # 발행 주기 랜덤
+
+    # 최신 상태 정보를 저장할 변수 초기화
+    latest_shipID_all = None
+    latest_Pos_X_all = None  #m
+    latest_Pos_Y_all = None  #m
+    latest_Vel_U_all = None  #m/s
+    latest_Heading_deg_all = None  #deg
+    latest_delta_deg_all = None
+
+    first_publish = True
+
     while not rospy.is_shutdown():  
-        
+        current_time = rospy.Time.now()  # 현재 시간을 계속 추적
+
         # Pack the state information to publish
         shipID_all = [shipState_all[shipName]['shipID'] for shipName in shipsInfo.shipName_all]
         Pos_X_all = [shipState_all[shipName]['X'] for shipName in shipsInfo.shipName_all]
@@ -111,17 +130,53 @@ def main():
         Heading_deg_all = [shipState_all[shipName]['psi_deg'] for shipName in shipsInfo.shipName_all]
         delta_deg_all = [shipState_all[shipName]['delta_deg'] for shipName in shipsInfo.shipName_all]
 
-        # Publish the information simulated
-        kriso.frm_info_publish(
-            shipID_all, 
-            Pos_X_all, 
-            Pos_Y_all, 
-            Vel_U_all, 
-            Heading_deg_all, 
-            delta_deg_all, 
-            start_time, 
-            )
+        # kriso.frm_info_publish(
+        #         shipID_all, 
+        #         Pos_X_all, 
+        #         Pos_Y_all, 
+        #         Vel_U_all, 
+        #         Heading_deg_all, 
+        #         delta_deg_all, 
+        #         start_time, 
+        #     )
 
+        # Publish the information simulated
+        # 현재 시간과 마지막으로 발행한 시간의 차이가 발행 주기보다 크거나 같으면 발행
+   
+        if current_time - last_publish_time >= publish_interval or first_publish:
+            # frm_info_publish 메소드를 호출하여 상태 정보를 발행
+            # 최신 상태 정보 업데이트
+            latest_shipID_all = shipID_all
+            latest_Pos_X_all = Pos_X_all
+            latest_Pos_Y_all = Pos_Y_all
+            latest_Vel_U_all = Vel_U_all
+            latest_Heading_deg_all = Heading_deg_all
+            latest_delta_deg_all = delta_deg_all
+
+            kriso.frm_info_publish(
+                latest_shipID_all, 
+                latest_Pos_X_all, 
+                latest_Pos_Y_all, 
+                latest_Vel_U_all, 
+                latest_Heading_deg_all, 
+                latest_delta_deg_all, 
+                start_time, 
+            )
+            last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
+            first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
+
+        else:
+            # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
+            kriso.frm_info_publish(
+                latest_shipID_all, 
+                latest_Pos_X_all, 
+                latest_Pos_Y_all, 
+                latest_Vel_U_all, 
+                latest_Heading_deg_all, 
+                latest_delta_deg_all, 
+                start_time, 
+            )
+            
         if kriso.len_path_out_inha == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
             print("========= Waiting for `/path_out_inha` topic subscription =========")

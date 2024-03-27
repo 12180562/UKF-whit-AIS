@@ -3,7 +3,7 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
-from functions.Inha_DataProcess import Inha_dataProcess
+from functions.Inha_DataProcess import Inha_dataProcess, UKF
 
 from udp_col_msg.msg import col, vis_info, cri_info, VO_info, static_OB_info
 from udp_msgs.msg import frm_info, group_wpts_info, wpt_idx_os, group_boundary_info
@@ -257,6 +257,9 @@ def main():
     waypointIndex = 0
     targetspdIndex = 0    
 
+    ukf_instances = {}
+    first_loop = True  # 첫 번째 루프 실행 여부를 추적하는 변수
+
     while not rospy.is_shutdown():
         Local_PP = VO_module()
         # data.static_obstacle_info = data.static_unavailable_info + data.static_available_info
@@ -292,6 +295,34 @@ def main():
         # Local_goal = [wpts_x_os[int(data.waypoint_idx)], wpts_y_os[int(data.waypoint_idx)]]          # 부경대
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
+
+        if first_loop:
+            for ship_id in data.ship_ID:
+                # 각 선박 ID에 대해 독립적인 UKF 인스턴스 생성 및 저장
+                ukf_instances[ship_id] = UKF()
+
+            first_loop = False  # 첫 번째 루프가 실행된 후에는 이 조건을 더 이상 만족시키지 않음
+
+        for ship_id, ship_info in ship_list.items():
+
+            # 해당 선박의 UKF 인스턴스를 사용하여 업데이트
+            predicted_state = ukf_instances[ship_id].update_ukf(ship_info['Ori_X'], ship_info['Ori_Y'], ship_info['Vel_U'], ship_info['Heading'])
+
+            if ship_id == OS_ID:
+                ship_list[OS_ID].update({
+                    'Pos_X' : predicted_state[0],
+                    'Pos_Y' : predicted_state[1],
+                    })
+
+            else:
+                ship_list[ship_id].update({
+                    'Pos_X' : predicted_state[0],
+                    'Pos_Y' : predicted_state[1],
+                    })
+
+        print(ship_list)
+        # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
+        
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
 
         TS_ID = ship_ID[:]  ## 리스트 복사
@@ -344,6 +375,7 @@ def main():
         TS_ENC_temp = []
 
         for ts_ID in TS_ID:
+
             temp_DCPA = TS_list[ts_ID]['DCPA']
             TS_DCPA_temp.append(temp_DCPA)
 
@@ -382,7 +414,7 @@ def main():
 
             temp_enc = TS_list[ts_ID]['status']
             TS_ENC_temp.append(temp_enc)
-            
+
             # if abs(temp_DCPA) <= rospy.get_param('timeHorizon'):
             #     print(ts_ID,":",temp_enc, temp_DCPA)
 
@@ -520,12 +552,12 @@ def main():
 
         writer.writerow(savedata_list)
 
-        data.path_out_publish(OS_pub_list)   
+        data.path_out_publish(OS_pub_list)
         data.vis_out(vis_pub_list)
         data.cri_out(cri_pub_list)
         data.vo_out(vo_pub_list)
 
-        if local_goal_EDA < 2 * ship_L :
+        if local_goal_EDA < 20 * ship_L :
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
