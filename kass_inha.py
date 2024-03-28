@@ -1458,6 +1458,9 @@ class kass_inha:
         self.eOfwaypoint = []
         self.nOfwaypoint = []
 
+        self.encounter = None
+        self.encounterMMSI = []
+
     def latlong_to_utm(self, latitude, longitude, northern_hemisphere=True):
         utm_zone = pyproj.Proj(proj='utm', zone=52, datum='WGS84')
         utm_east,utm_north  = utm_zone(longitude, latitude)
@@ -1684,6 +1687,12 @@ class kass_inha:
                     self.cogOfObject_copy.append(self.cogOfObject[i])
                     self.sogOfObject_copy.append(self.sogOfObject[i])
 
+                    self.encounter = True
+                    self.encounterMMSI.append(self.idOfObject[i])
+                else:
+                    self.encounter = False
+                    self.encounterMMSI = []
+                    
             self.idOfObject = self.idOfObject_copy
             self.latOfObject = self.latOfObject_copy
             self.longOfObject = self.longOfObject_copy
@@ -1875,7 +1884,9 @@ class kass_inha:
                 round(desired_spd,3),
                 round(desired_heading,3),
                 TS_CRI_temp,
-                V_selected
+                V_selected,
+                self.encounter,
+                self.encounterMMSI
                 ]
             
             path_out_inha = self.path_out_publish(OS_pub_list)
