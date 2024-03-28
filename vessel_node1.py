@@ -220,7 +220,7 @@ def main():
     timestr = time.strftime("%Y%m%d-%H%M%S")
     # path = "/home/phl/문서/" + timestr + ".csv"
     path = "/home/phlyoo/Documents/" + timestr + ".csv"
-    header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading']
+    header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading', 'encounter', 'encounterMMSI']
     file = open(path, 'a', newline='')
     writer = csv.writer(file)
     writer.writerow(header)
@@ -252,6 +252,9 @@ def main():
 
     ukf_instances = {}
     first_loop = True  # 첫 번째 루프 실행 여부를 추적하는 변수
+
+    encounter = None
+    encounterMMSI = []
 
     while not rospy.is_shutdown():
         Local_PP = VO_module()
@@ -316,7 +319,7 @@ def main():
                     'Pos_Y' : predicted_state[1],
                     })
 
-        print(ship_list)
+        # print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
         
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
@@ -370,6 +373,8 @@ def main():
         TS_Rp_temp = []
         TS_ENC_temp = []
 
+        encounterMMSI = []
+
         for ts_ID in TS_ID:
 
             temp_DCPA = TS_list[ts_ID]['DCPA']
@@ -413,8 +418,14 @@ def main():
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
 
+            if distance <= rospy.get_param("detecting_distance"):
+                encounter = True
+                encounterMMSI.append(ts_ID)
         # print(TS_list)
-
+        
+        if len(encounterMMSI) ==0 :
+            encounter = False
+            encounterMMSI = []
 
         # NOTE: `VO_update()` takes the majority of the computation time
         # TODO: Reduce the computation time of `VO_update()`
@@ -509,7 +520,7 @@ def main():
             False, 
             0, 
             desired_spd, 
-            desired_heading, 
+            desired_heading,
             ]
 
         vis_pub_list = [
@@ -553,7 +564,11 @@ def main():
             OS_Vy,
             ship_dic2list[4],
             desired_heading,
+            encounter,
+            encounterMMSI
         ]
+        print(f"encounter: ", encounter)
+        print(f"encounterMMSI: ",encounterMMSI)
 
         writer.writerow(savedata_list)
 

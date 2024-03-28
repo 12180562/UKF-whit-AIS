@@ -1689,10 +1689,11 @@ class kass_inha:
 
                     self.encounter = True
                     self.encounterMMSI.append(self.idOfObject[i])
-                else:
-                    self.encounter = False
-                    self.encounterMMSI = []
-                    
+
+            if len(self.idOfObject_copy) == 0:
+                self.encounter = False
+                self.encounterMMSI = []
+
             self.idOfObject = self.idOfObject_copy
             self.latOfObject = self.latOfObject_copy
             self.longOfObject = self.longOfObject_copy

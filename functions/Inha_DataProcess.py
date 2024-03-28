@@ -98,7 +98,7 @@ class UKF:
         new_x[0] += dt * (x[2] * np.cos(np.deg2rad(new_x[3])))/9
         new_x[1] += dt * (x[2] * np.sin(np.deg2rad(new_x[3])))/9
 
-        print(new_x)
+        # print(new_x)
         return new_x
     
     def measurement_function(self, x):

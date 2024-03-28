@@ -195,6 +195,7 @@ ais_delay: 5
 
 delta_t : 40
 detecting_radious : 100
+detecting_distance : 1000
 space_number : 20
 
 # ==========================================+
