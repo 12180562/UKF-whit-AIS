@@ -5,7 +5,7 @@ from numpy import rad2deg
 import numpy as np
 import pymap3d as pm
 import pyproj
-from filterpy.kalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
+
 
 
 class CRI:
@@ -43,29 +43,28 @@ class CRI:
         return result
 
     def HAD(self):
-
         result = self.Ct - self.Co
         if result < 0 :
             result += 2*pi
         return result
 
     def Vox(self):
-
+       
         result = self.Vo * cos(self.Co)
         return result
 
     def Voy(self):
-
+       
         result = self.Vo * sin(self.Co)
         return result
 
     def Vtx(self):
-
+       
         result = self.Vt * cos(self.Ct)
         return result
 
     def Vty(self):
-
+       
         result = self.Vt * sin(self.Ct)
         return result
 
@@ -78,12 +77,12 @@ class CRI:
         return result
 
     def RV(self):
-
+       
         result = sqrt(pow(self.Vrx(), 2) + pow(self.Vry(), 2)) + 0.001
         return result
 
     def RC(self):
-
+       
         result = atan2(self.Vry(), self.Vrx()) % (2*pi)
         return result
 
@@ -100,12 +99,12 @@ class CRI:
         return result
 
     def d2(self):
-
+       
         result = 2 * self.d1()
         return result
 
     def UDCPA(self):
-
+       
         if abs(self.dcpa()) <= self.d1():
             result = 1
         elif self.d2() < abs(self.dcpa()):
@@ -115,17 +114,17 @@ class CRI:
         return result
 
     def D1(self):
-
+       
         result = 12 * self.L
         return result
 
     def D2(self):
-
+       
         result = self.ratio * (1.7 * cos(self.RB() - np.deg2rad(19))) + sqrt(4.4 + 2.89 * pow(cos(self.RB() - np.deg2rad(19)), 2))
         return result
 
     def UD(self):
-
+       
         if self.RD() <= self.D1():
             result = 1
         elif self.D2() < self.RD():
@@ -135,7 +134,7 @@ class CRI:
         return result
 
     def t1(self):
-
+       
         D1 = self.D1()
         if abs(self.dcpa()) <= D1:
             result = sqrt(pow(D1, 2) - pow(self.dcpa(), 2)) / self.RV()
@@ -144,7 +143,7 @@ class CRI:
         return result
 
     def t2(self):
-
+       
         D2 = 12 * self.ratio
         if abs(self.dcpa()) <= D2:
             result = sqrt(pow(D2, 2) - pow(self.dcpa(), 2)) / self.RV()
@@ -153,7 +152,7 @@ class CRI:
         return result
 
     def UTCPA(self):
-
+       
         if self.tcpa() < 0:
             result = 0
         else:
@@ -288,6 +287,7 @@ class CRI:
         R_stbd = self.B + DT * (1 + t)
         R_port = self.B + (0.75 * DT * (1 + t))
 
+
         return R_fore, R_aft, R_stbd, R_port
 
     def Rf(self):
@@ -325,64 +325,7 @@ class CRI:
 
         return result
     
-class UKF:
-    def __init__(self, parameter):
-        self.dt = parameter['ukf_dt']  # 샘플링 시간
-        sigma_points = MerweScaledSigmaPoints(n=4, alpha=.1, beta=2., kappa=0.1)
-        self.ukf = UnscentedKalmanFilter(dim_x=4, dim_z=4, dt=self.dt, fx=self.state_transition, hx=self.measurement_function, points=sigma_points)
-        self.ukf.x = np.array([0., 0., 0., 0.])  # 초기 상태 추정치
-        self.ukf.P *= 1.  # 초기 공분산 행렬
-        self.ukf.R = np.eye(4) * 0.5  # 측정 노이즈
-        self.ukf.Q = np.eye(4) * 0.5  # 프로세스 노이즈
 
-        self.last_measurement = None
-        self.last_heading = None
-        self.ukf_initialized = False
-
-    def state_transition(self, x, dt, parameter):
-        angle_dt = parameter['ukf_angle_dt'] # 각속도 조정 파라미터
-        new_x = x.copy()
-        if self.last_heading is not None:
-            heading_change = x[3] - self.last_heading
-            angular_velocity = heading_change / angle_dt
-            new_x[3] += angular_velocity
-        else:
-            new_x[3] = x[3]
-
-        new_x[0] += dt * (((x[2]*1852) * np.cos(np.deg2rad(new_x[3])))/(60*60))
-        new_x[1] += dt * (((x[2]*1852) * np.sin(np.deg2rad(new_x[3])))/(60*60))
-        return new_x
-
-    def measurement_function(self, x):
-        return x
-
-    def update_ukf(self, lat, long, speed, heading):
-        measurement = [lat, long, speed, heading]
-
-        if not self.ukf_initialized:
-            self.ukf.x = measurement  # 초기 상태 추정치 설정
-            self.ukf_initialized = True  # UKF가 초기화되었음을 표시
-            # rospy.loginfo("UKF initialized with first measurement: %s", self.ukf.x)
-        # 측정값이 변경되었는지 확인
-        if self.last_measurement is not None and np.array_equal(measurement, self.last_measurement):
-            self.last_heading = self.ukf.x[3]
-            # 측정값이 변경되지 않았다면 predict만 수행
-            predict=self.ukf.predict()
-            self.ukf.update(predict)
-            # rospy.loginfo("Measurement unchanged, prediction only: %s", self.ukf.x)
-            self.predicted_values.append(self.ukf.x)
-        else:
-            # 측정값이 변경되었다면 예측 및 업데이트 수행
-            if self.last_measurement is not None:
-                # 각도 변화량 계산 및 업데이트 로직 적용
-                self.last_heading = self.last_measurement[3]  # 이전 헤딩 값을 업데이트
-            self.last_measurement = measurement
-            self.ukf.predict()
-            self.ukf.update(measurement)
-            # rospy.loginfo("Measurement updated, state updated: %s", self.ukf.x)
-            self.predicted_values = []
-        return self.ukf.x
-    
 class Inha_dataProcess:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
     def __init__(self, idOfObject, latitude, longitude, cog, sog, latOfObject, longOfObject, cogOfObject, sogOfObject, parameter):
@@ -430,17 +373,12 @@ class Inha_dataProcess:
 
         for i in range(len(self.idOfObject)):
             index_ship = self.idOfObject[i]
-            TS_list[index_ship] = UKF()
-            predicted_state = TS_list[index_ship].update_ukf(ts_latOfObject[i], ts_longOfObject[i], ts_sogOfObject[i], ts_cogOfObject[i])
-            
             TS_list[index_ship] ={
                 'ship_ID' : int(ts_idOfObject[i]),
-                'Ori_X' : ts_latOfObject[i],
-                'Ori_Y' : ts_longOfObject[i],
+                'Pos_X' : ts_latOfObject[i],
+                'Pos_Y' : ts_longOfObject[i],
                 'Vel_U' : ts_sogOfObject[i]*0.5144,
                 'Heading' : ts_cogOfObject[i],
-                'Pos_X' : predicted_state[0],
-                'Pos_Y' : predicted_state[1],
             }
         return TS_list
 
@@ -1591,6 +1529,9 @@ class kass_inha:
         path_out_inha['targetCourse'] = round(pub_list[10], 3)
         path_out_inha['cri'] = pub_list[11]
         path_out_inha['V_selected'] = pub_list[12]
+
+        path_out_inha['encounter'] = pub_list[13]
+        path_out_inha['encounterMMSI'] = pub_list[14]
         
         return path_out_inha
     
@@ -1638,7 +1579,7 @@ class kass_inha:
             self.sogOfObject = inha_input["sogOfObject"]
             self.latOfWayPoint = inha_input["latOfWayPoint"]
             self.longOfWayPoint = inha_input["longOfWayPoint"]
-            self.waypoint_idx = inha_input['nWptsID']    
+            self.waypoint_idx = inha_input['nWptsID'] % len(self.latOfWayPoint)
 
             self.latitude,self.longitude = self.latlong_to_utm(self.latitude,self.longitude)
             self.eOfobject = []
@@ -1894,6 +1835,3 @@ class kass_inha:
 
 
             return path_out_inha
-    
-
-
