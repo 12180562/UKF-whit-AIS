@@ -320,7 +320,7 @@ def main():
                     'Pos_Y' : predicted_state[1],
                     })
 
-        print(ship_list)
+        # print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
         
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
@@ -557,7 +557,7 @@ def main():
         data.cri_out(cri_pub_list)
         data.vo_out(vo_pub_list)
 
-        if local_goal_EDA < 20 * ship_L :
+        if local_goal_EDA < 2 * ship_L :
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
