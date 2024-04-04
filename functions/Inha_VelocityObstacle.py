@@ -1553,136 +1553,164 @@ class VO_module:
             stop=self.max_targetSpeed, 
             num=self.num_targetSpeedCandidates,
             )
-
-        TS_ID = TS.keys()
-        for ts_ID in TS_ID:
-            status = TS[ts_ID]['status']
-
-        # Generate target heading angle candidates
-        min_targetHeading_rad_local = np.deg2rad(self.min_targetHeading_deg_local)
-        max_targetHeading_rad_local = np.deg2rad(self.max_targetHeading_deg_local)
-        heading_rad = np.deg2rad(OS['Heading'])
-
-        min_targetHeading_rad_global = heading_rad + min_targetHeading_rad_local
-        max_targetHeading_rad_global = heading_rad + max_targetHeading_rad_local
-
-        targetHeading_rad_global_all = np.linspace(
-            start=min_targetHeading_rad_global, 
-            stop=max_targetHeading_rad_global, 
-            num=self.num_targetHeadingCandidates,
-            )
-
-        # Generate target velocity vector candidates
-        reachableVel_global_all = self.__generate_vel_candidates(
-            targetSpeed_all, 
-            targetHeading_rad_global_all,
-            OS,
-            static_obstacle_info,
-            static_point_info
-            )
         
-        # Annotate the velocities - 'in time horizon', 'in left', 'in right', 'in collision cone'
-        reachableVel_all_annotated = self.__annotate_vels(
-            reachableVel_global_all, 
-            RVOdata_all, 
-            TS,
-            )
+        if TS == None:
+            min_targetHeading_rad_local = np.deg2rad(self.min_targetHeading_deg_local)
+            max_targetHeading_rad_local = np.deg2rad(self.max_targetHeading_deg_local)
+            heading_rad = np.deg2rad(OS['Heading'])
 
-        '''
-        Data structure of `vels_annotated`:
-            [
-                {
-                    'vel': array([xx, xx]), 
-                    2001: 'inTimeHorizon', 
-                    2002: 'inLeft', 
-                    2003: 'inRight'
-                    ...
-                }
-                {
-                    'vel': array([xx, xx]), 
-                    2001: 'inCollision', 
-                    2002: 'inTimeHorizon', 
-                    2003: 'inRight'
-                    ...
-                }
-                ...
-            ]
-            where 2001, 2002, 2003, ... are the ship IDs
-        '''
+            min_targetHeading_rad_global = heading_rad + min_targetHeading_rad_local
+            max_targetHeading_rad_global = heading_rad + max_targetHeading_rad_local
 
-        # NOTE: Our annotation is based on VO config. space which is x-y coord.
-        #       Thus, in y-x coord for the visualization,
-        #       going left/right is opposite.
-        #       That is, going left in VO config. space is going right in simulation space
-        #       and vice versa.
-        #       If you want to going right (a.k.a. complying with COLREGs),
-        #       you have to design it to be going left in VO config. space
-
-        isAllVelsCollidable = self.__is_all_vels_collidable(
-            vel_all_annotated=reachableVel_all_annotated, 
-            shipID_all=TS.keys(),
-            )
-
-        isAllVelsAvoidable = self.__is_all_vels_avoidable(
-            vel_all_annotated=reachableVel_all_annotated, 
-            shipID_all=TS.keys(),
-            )
-
-        # When no avoidance velocities
-        if isAllVelsCollidable:
-            velCandidates = self.__remove_annotation(reachableVel_all_annotated)
-            # NOTE: `_select_vel_inside_RVOs()` returns a velocity where 
-            #       all the reachable velocities are inside the collision cones
-            vA_post = self.__select_vel_inside_RVOs(
-                velCandidates, 
-                RVOdata_all,
-                V_des,
+            targetHeading_rad_global_all = np.linspace(
+                start=min_targetHeading_rad_global, 
+                stop=max_targetHeading_rad_global, 
+                num=self.num_targetHeadingCandidates,
                 )
-
-        # When no collision velocities
-        elif isAllVelsAvoidable:
-            velCandidates = self.__remove_annotation(reachableVel_all_annotated)
-            vA_post = min(
-                velCandidates,
-                key= lambda v: np.linalg.norm(v - V_des),
-                )
-
-        # When partially have avoidance velocities
-        else:
-            # No strategy (only avoidance velocities)
-            avoidanceVel_all_annotated = self.__take_vels(
-                vel_all_annotated=reachableVel_all_annotated,
-                annotation=['inLeft', 'inRight', 'inTimeHorizon'],
-                shipID_all=TS.keys(),
+            # Generate target velocity vector candidates
+            reachableVel_global_all = self.__generate_vel_candidates(
+                targetSpeed_all, 
+                targetHeading_rad_global_all,
+                OS,
+                static_obstacle_info,
+                static_point_info
                 )
             
-            #=========================================================+
-            """ <<<<<<<< IMPORTANT! MUST READ IT CAREFULLY! >>>>>>>>>>|
-            - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
-            - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
-            - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
-            """                                                        # |:
-            avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
-                vel_all_annotated=reachableVel_all_annotated,       # |
-                annotation=['inLeft'],                              # |
-                shipID_all=TS.keys(),                               # |
-                )
-            # avoidanceAllRightVel_all_annotated = self.__take_vels(  
-            #     vel_all_annotated=reachableVel_all_annotated,       
-            #     annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
-            #     shipID_all=TS.keys(),
-            #     )                                                   # |
-            #=========================================================+
-
-            if avoidanceAllRightVel_all_annotated:
-                velCandidates = self.__remove_annotation(avoidanceAllRightVel_all_annotated)
-            else:
-                velCandidates = self.__remove_annotation(avoidanceVel_all_annotated)
-            # Take the closest velocity to V_des among the chosen velocities
             vA_post = min(
-                velCandidates,
-                key= lambda v: np.linalg.norm(v - V_des),
+                    reachableVel_global_all,
+                    key= lambda v: np.linalg.norm(v - V_des),
+                    )
+
+        else:
+            TS_ID = TS.keys()
+            for ts_ID in TS_ID:
+                status = TS[ts_ID]['status']
+
+            # Generate target heading angle candidates
+            min_targetHeading_rad_local = np.deg2rad(self.min_targetHeading_deg_local)
+            max_targetHeading_rad_local = np.deg2rad(self.max_targetHeading_deg_local)
+            heading_rad = np.deg2rad(OS['Heading'])
+
+            min_targetHeading_rad_global = heading_rad + min_targetHeading_rad_local
+            max_targetHeading_rad_global = heading_rad + max_targetHeading_rad_local
+
+            targetHeading_rad_global_all = np.linspace(
+                start=min_targetHeading_rad_global, 
+                stop=max_targetHeading_rad_global, 
+                num=self.num_targetHeadingCandidates,
                 )
+
+            # Generate target velocity vector candidates
+            reachableVel_global_all = self.__generate_vel_candidates(
+                targetSpeed_all, 
+                targetHeading_rad_global_all,
+                OS,
+                static_obstacle_info,
+                static_point_info
+                )
+            
+            # Annotate the velocities - 'in time horizon', 'in left', 'in right', 'in collision cone'
+            reachableVel_all_annotated = self.__annotate_vels(
+                reachableVel_global_all, 
+                RVOdata_all, 
+                TS,
+                )
+
+            '''
+            Data structure of `vels_annotated`:
+                [
+                    {
+                        'vel': array([xx, xx]), 
+                        2001: 'inTimeHorizon', 
+                        2002: 'inLeft', 
+                        2003: 'inRight'
+                        ...
+                    }
+                    {
+                        'vel': array([xx, xx]), 
+                        2001: 'inCollision', 
+                        2002: 'inTimeHorizon', 
+                        2003: 'inRight'
+                        ...
+                    }
+                    ...
+                ]
+                where 2001, 2002, 2003, ... are the ship IDs
+            '''
+
+            # NOTE: Our annotation is based on VO config. space which is x-y coord.
+            #       Thus, in y-x coord for the visualization,
+            #       going left/right is opposite.
+            #       That is, going left in VO config. space is going right in simulation space
+            #       and vice versa.
+            #       If you want to going right (a.k.a. complying with COLREGs),
+            #       you have to design it to be going left in VO config. space
+
+            isAllVelsCollidable = self.__is_all_vels_collidable(
+                vel_all_annotated=reachableVel_all_annotated, 
+                shipID_all=TS.keys(),
+                )
+
+            isAllVelsAvoidable = self.__is_all_vels_avoidable(
+                vel_all_annotated=reachableVel_all_annotated, 
+                shipID_all=TS.keys(),
+                )
+
+            # When no avoidance velocities
+            if isAllVelsCollidable:
+                velCandidates = self.__remove_annotation(reachableVel_all_annotated)
+                # NOTE: `_select_vel_inside_RVOs()` returns a velocity where 
+                #       all the reachable velocities are inside the collision cones
+                vA_post = self.__select_vel_inside_RVOs(
+                    velCandidates, 
+                    RVOdata_all,
+                    V_des,
+                    )
+
+            # When no collision velocities
+            elif isAllVelsAvoidable:
+                velCandidates = self.__remove_annotation(reachableVel_all_annotated)
+                vA_post = min(
+                    velCandidates,
+                    key= lambda v: np.linalg.norm(v - V_des),
+                    )
+
+            # When partially have avoidance velocities
+            else:
+                # No strategy (only avoidance velocities)
+                avoidanceVel_all_annotated = self.__take_vels(
+                    vel_all_annotated=reachableVel_all_annotated,
+                    annotation=['inLeft', 'inRight', 'inTimeHorizon'],
+                    shipID_all=TS.keys(),
+                    )
+                
+                #=========================================================+
+                """ <<<<<<<< IMPORTANT! MUST READ IT CAREFULLY! >>>>>>>>>>|
+                - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
+                - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
+                - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
+                """                                                        # |:
+                avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
+                    vel_all_annotated=reachableVel_all_annotated,       # |
+                    annotation=['inLeft'],                              # |
+                    shipID_all=TS.keys(),                               # |
+                    )
+                # avoidanceAllRightVel_all_annotated = self.__take_vels(  
+                #     vel_all_annotated=reachableVel_all_annotated,       
+                #     annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
+                #     shipID_all=TS.keys(),
+                #     )                                                   # |
+                #=========================================================+
+
+                if avoidanceAllRightVel_all_annotated:
+                    velCandidates = self.__remove_annotation(avoidanceAllRightVel_all_annotated)
+                else:
+                    velCandidates = self.__remove_annotation(avoidanceVel_all_annotated)
+                # Take the closest velocity to V_des among the chosen velocities
+                vA_post = min(
+                    velCandidates,
+                    key= lambda v: np.linalg.norm(v - V_des),
+                    )
             
 
         return vA_post 
@@ -1759,93 +1787,99 @@ class VO_module:
 
         RVOdata_all = []
         pub_collision_cone = []
-        TS_ID = TS.keys()
 
-        for ts_ID in TS_ID:
+        if TS == None:
+            RVOdata_all = None
+            pub_collision_cone = []
 
-            vB = np.array([TS[ts_ID]['V_x'], TS[ts_ID]['V_y']]) # velocity of the obstacle
-            pB = np.array([TS[ts_ID]['Pos_X'], TS[ts_ID]['Pos_Y']]) # position of of the obstacle
+        else:
+            TS_ID = TS.keys()
 
-            CRI = TS[ts_ID]['CRI']
-            status = TS[ts_ID]['status']
+            for ts_ID in TS_ID:
 
-            RVOapexPos_global = pA + (1 - self.weight_alpha) * vA + self.weight_alpha * vB
+                vB = np.array([TS[ts_ID]['V_x'], TS[ts_ID]['V_y']]) # velocity of the obstacle
+                pB = np.array([TS[ts_ID]['Pos_X'], TS[ts_ID]['Pos_Y']]) # position of of the obstacle
 
-            # NOTE: LOS: line of sight. The line between pA and pB = relative distance
-            LOSdist = np.linalg.norm([pA - pB]) 
-            # NOTE: atan2(y, x) = arctangent of y/x 
-            LOSangle_rad = atan2(pB[1] - pA[1], pB[0] - pA[0])
-            
-            # TODO: It represents the "collision" with the configured radius of objects. 
-            #       Forcing to change of LOSdist would distort some calculation afterwards.
-            #       Revisit and review it if there would be an calculation issue.
-            #       I highly expect there must be.
-            if TS[ts_ID]['mapped_radius'] > LOSdist:
-                LOSdist = TS[ts_ID]['mapped_radius']
-            
-            # boundLineAngle_left_rad_global = LOSangle_rad + atan2(30,LOSdist) #TS[ts_ID]['mapped_radius']/
-            boundLineAngle_left_rad_global = TS[ts_ID]['left_boundary'] 
-            # boundLineAngle_right_rad_global = LOSangle_rad - atan2(30,LOSdist) #TS[ts_ID]['mapped_radius']/
-            boundLineAngle_right_rad_global = TS[ts_ID]['right_boundary']
-            
-            collisionConeTranslated = (1 - self.weight_alpha) * vA + self.weight_alpha * vB
-            '''
-            collisionConeTranslated: 
-                - It's a collision cone's translated position from where the cone's apex is at the center of the agent A. 
-                - This translation is from RVO formulation. For more details, see section:
+                CRI = TS[ts_ID]['CRI']
+                status = TS[ts_ID]['status']
 
-                    - IV. RECIPROCAL VELOCITY OBSTACLES
-                        |
-                        + C.Generalized Reciprocal Velocity Obstacles"
+                RVOapexPos_global = pA + (1 - self.weight_alpha) * vA + self.weight_alpha * vB
 
-                in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
-            '''
+                # NOTE: LOS: line of sight. The line between pA and pB = relative distance
+                LOSdist = np.linalg.norm([pA - pB]) 
+                # NOTE: atan2(y, x) = arctangent of y/x 
+                LOSangle_rad = atan2(pB[1] - pA[1], pB[0] - pA[0])
+                
+                # TODO: It represents the "collision" with the configured radius of objects. 
+                #       Forcing to change of LOSdist would distort some calculation afterwards.
+                #       Revisit and review it if there would be an calculation issue.
+                #       I highly expect there must be.
+                if TS[ts_ID]['mapped_radius'] > LOSdist:
+                    LOSdist = TS[ts_ID]['mapped_radius']
+                
+                # boundLineAngle_left_rad_global = LOSangle_rad + atan2(30,LOSdist) #TS[ts_ID]['mapped_radius']/
+                boundLineAngle_left_rad_global = TS[ts_ID]['left_boundary'] 
+                # boundLineAngle_right_rad_global = LOSangle_rad - atan2(30,LOSdist) #TS[ts_ID]['mapped_radius']/
+                boundLineAngle_right_rad_global = TS[ts_ID]['right_boundary']
+                
+                collisionConeTranslated = (1 - self.weight_alpha) * vA + self.weight_alpha * vB
+                '''
+                collisionConeTranslated: 
+                    - It's a collision cone's translated position from where the cone's apex is at the center of the agent A. 
+                    - This translation is from RVO formulation. For more details, see section:
 
-            # if status == 'Safe':
-            #     boundLineAngle_left_rad_global = OS['Heading'] + pi
-            #     boundLineAngle_right_rad_global = OS['Heading'] - pi
-            #     RVOapexPos_global = pA
+                        - IV. RECIPROCAL VELOCITY OBSTACLES
+                            |
+                            + C.Generalized Reciprocal Velocity Obstacles"
 
-            if self.rule == True:
-                if status == 'Safe' or status == 'Port crossing':
-                    boundLineAngle_left_rad_global = OS['Heading'] + pi
-                    boundLineAngle_right_rad_global = OS['Heading'] - pi
-                    RVOapexPos_global = pA
-                    LOSdist = 0
+                    in the paper "Reciprocal Velocity Obstacle for Real-Time Multi-Agent Navigation".
+                '''
 
-                else: 
-                    pass
+                # if status == 'Safe':
+                #     boundLineAngle_left_rad_global = OS['Heading'] + pi
+                #     boundLineAngle_right_rad_global = OS['Heading'] - pi
+                #     RVOapexPos_global = pA
+
+                if self.rule == True:
+                    if status == 'Safe' or status == 'Port crossing':
+                        boundLineAngle_left_rad_global = OS['Heading'] + pi
+                        boundLineAngle_right_rad_global = OS['Heading'] - pi
+                        RVOapexPos_global = pA
+                        LOSdist = 0
+
+                    else: 
+                        pass
 
 
-            RVOdata = {
-                "TS_ID": ts_ID,
-                "LOSdist": LOSdist,
-                "mapped_radius": TS[ts_ID]['mapped_radius'],
-                "vA": vA,
-                "vB": vB,
-                "boundLineAngle_left_rad_global" : boundLineAngle_left_rad_global,
-                "boundLineAngle_right_rad_global" : boundLineAngle_right_rad_global,
-                "collisionConeTranslated": collisionConeTranslated,
-                "CRI" : CRI,
-                "Status" : status,
-                }
-            RVOdata_all.append(RVOdata)
-            # To publish the collision cone data for visualization
-            bound_left_view = [
-                cos(boundLineAngle_left_rad_global)* int(LOSdist)/2,
-                sin(boundLineAngle_left_rad_global)* int(LOSdist)/2,
-                ]  # cone visualization /3 하면 장애물까지 거리의 1/3만 생김
-            bound_right_view = [
-                cos(boundLineAngle_right_rad_global)* int(LOSdist)/2,
-                sin(boundLineAngle_right_rad_global)* int(LOSdist)/2,
-                ]
+                RVOdata = {
+                    "TS_ID": ts_ID,
+                    "LOSdist": LOSdist,
+                    "mapped_radius": TS[ts_ID]['mapped_radius'],
+                    "vA": vA,
+                    "vB": vB,
+                    "boundLineAngle_left_rad_global" : boundLineAngle_left_rad_global,
+                    "boundLineAngle_right_rad_global" : boundLineAngle_right_rad_global,
+                    "collisionConeTranslated": collisionConeTranslated,
+                    "CRI" : CRI,
+                    "Status" : status,
+                    }
+                RVOdata_all.append(RVOdata)
+                # To publish the collision cone data for visualization
+                bound_left_view = [
+                    cos(boundLineAngle_left_rad_global)* int(LOSdist)/2,
+                    sin(boundLineAngle_left_rad_global)* int(LOSdist)/2,
+                    ]  # cone visualization /3 하면 장애물까지 거리의 1/3만 생김
+                bound_right_view = [
+                    cos(boundLineAngle_right_rad_global)* int(LOSdist)/2,
+                    sin(boundLineAngle_right_rad_global)* int(LOSdist)/2,
+                    ]
 
-            pub_collision_cone.append(RVOapexPos_global[0])
-            pub_collision_cone.append(RVOapexPos_global[1])
-            pub_collision_cone.append(bound_left_view[0] + RVOapexPos_global[0])
-            pub_collision_cone.append(bound_left_view[1] + RVOapexPos_global[1])
-            pub_collision_cone.append(bound_right_view[0] + RVOapexPos_global[0])
-            pub_collision_cone.append(bound_right_view[1] + RVOapexPos_global[1])
+                pub_collision_cone.append(RVOapexPos_global[0])
+                pub_collision_cone.append(RVOapexPos_global[1])
+                pub_collision_cone.append(bound_left_view[0] + RVOapexPos_global[0])
+                pub_collision_cone.append(bound_left_view[1] + RVOapexPos_global[1])
+                pub_collision_cone.append(bound_right_view[0] + RVOapexPos_global[0])
+                pub_collision_cone.append(bound_right_view[1] + RVOapexPos_global[1])
 
         return RVOdata_all, pub_collision_cone
 
