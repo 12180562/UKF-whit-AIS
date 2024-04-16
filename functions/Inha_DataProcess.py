@@ -147,6 +147,8 @@ class Inha_dataProcess:
         Vel_U, 
         Heading, 
         waypoint_dict, 
+        Pre_X,
+        Pre_Y
         ):
 
         self.ship_ID = ship_ID
@@ -155,6 +157,8 @@ class Inha_dataProcess:
         self.Vel_U = Vel_U
         self.Heading = Heading
         self.waypoint_dict = waypoint_dict
+        self.Pre_X = Pre_X
+        self.Pre_Y = Pre_Y
 
         self.ship_dic= {}
         self.SD_param = rospy.get_param('SD_param')
@@ -177,8 +181,8 @@ class Inha_dataProcess:
                     'Ori_Y' : self.Pos_Y[i],
                     'Vel_U' : self.Vel_U[i],
                     'Heading' : self.Heading[i],
-                    'Pos_X' : 0,
-                    'Pos_Y' : 0,
+                    'Pos_X' : self.Pre_X,
+                    'Pos_Y' : self.Pre_Y,
                     }
 
             else:
@@ -188,8 +192,8 @@ class Inha_dataProcess:
                     'Ori_Y' : self.Pos_Y[i],
                     'Vel_U' : self.Vel_U[i],
                     'Heading' : self.Heading[i],
-                    'Pos_X' : 0,
-                    'Pos_Y' : 0,
+                    'Pos_X' : self.Pre_X,
+                    'Pos_Y' : self.Pre_Y,
                     }
 
         # print(self.ship_dic)

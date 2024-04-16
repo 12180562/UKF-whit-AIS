@@ -267,7 +267,10 @@ def main():
     delay=rospy.get_param('ais_delay')
     publish_interval = rospy.Duration(delay)  # 발행 주기를 5초로 설정
     first_publish = True
-    latest_ship_info=[]
+    latest_ship_info = []
+    predicted_state = [0,0]
+    Pre_X = 0
+    Pre_Y = 0
 
     while not rospy.is_shutdown():
         current_time = rospy.Time.now()  # 현재 시간을 계속 추적
@@ -296,6 +299,8 @@ def main():
             data.Vel_U, 
             data.Heading, 
             data.waypoint_dict,
+            Pre_X,
+            Pre_Y
             )                       # inha_module의 data 송신을 위해 필요한 함수들이 정의됨
 
         ## <======== 서울대학교 전역경로를 위한 waypoint 수신 및 Local path의 goal로 처리
@@ -319,29 +324,12 @@ def main():
             # 해당 선박의 UKF 인스턴스를 사용하여 업데이트
 
             if ship_id == OS_ID:
-                ship_list[OS_ID].update({
-                    'Pos_X' : ship_info['Ori_X'],
-                    'Pos_Y' : ship_info['Ori_Y'],
-                    })
-                
-            else:
                 if current_time - last_publish_time >= publish_interval or first_publish:
                     # frm_info_publish 메소드를 호출하여 상태 정보를 발행
                     # 최신 상태 정보 업데이트
                     latest_ship_info = ship_info
 
-                    last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
-                    first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
-                    # print(last_publish_time)
-                else:
-                    # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
-                    predicted_state = ukf_instances[ship_id].update_ukf(latest_ship_info['Ori_X'], latest_ship_info['Ori_Y'], latest_ship_info['Vel_U'], latest_ship_info['Heading'])
-                    # ship_list = latest_ship_info
-                    # ship_list[ship_id].update({
-                    #     'Pos_X' : predicted_state[0],
-                    #     'Pos_Y' : predicted_state[1],
-                    #     })
-
+                    # 딜레이 안함
                     ship_list[ship_id].update({
                         'Ship_ID' : latest_ship_info['Ship_ID'],
                         'Ori_X' : latest_ship_info['Ori_X'],
@@ -351,7 +339,43 @@ def main():
                         'Pos_X' : latest_ship_info['Ori_X'],
                         'Pos_Y' : latest_ship_info['Ori_Y'],
                         })
-                    # print(latest_ship_info)
+                    
+                    last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
+                    first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
+
+                else:
+                    # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
+                    predicted_state = ukf_instances[ship_id].update_ukf(latest_ship_info['Ori_X'], latest_ship_info['Ori_Y'], latest_ship_info['Vel_U'], latest_ship_info['Heading'])
+
+                    Pre_X = predicted_state[0]
+                    Pre_Y = predicted_state[1]
+
+                    # # 예측 진행
+                    # ship_list[ship_id].update({
+                    #     'Ship_ID' : latest_ship_info['Ship_ID'],
+                    #     'Ori_X' : latest_ship_info['Ori_X'],
+                    #     'Ori_Y' : latest_ship_info['Ori_Y'],
+                    #     'Vel_U' : latest_ship_info['Vel_U'],
+                    #     'Heading' : latest_ship_info['Heading'],
+                    #     'Pos_X' : Pre_X,
+                    #     'Pos_Y' : Pre_Y,
+                    #     })
+
+                    # 예측 안함
+                    ship_list[ship_id].update({
+                        'Ship_ID' : latest_ship_info['Ship_ID'],
+                        'Ori_X' : latest_ship_info['Ori_X'],
+                        'Ori_Y' : latest_ship_info['Ori_Y'],
+                        'Vel_U' : latest_ship_info['Vel_U'],
+                        'Heading' : latest_ship_info['Heading'],
+                        'Pos_X' : latest_ship_info['Ori_X'],
+                        'Pos_Y' : latest_ship_info['Ori_Y'],
+                        })
+            else:
+                ship_list[ship_id].update({
+                    'Pos_X' : ship_info['Ori_X'],
+                    'Pos_Y' : ship_info['Ori_Y'],
+                    })
         # print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
         
