@@ -130,52 +130,52 @@ def main():
         Heading_deg_all = [shipState_all[shipName]['psi_deg'] for shipName in shipsInfo.shipName_all]
         delta_deg_all = [shipState_all[shipName]['delta_deg'] for shipName in shipsInfo.shipName_all]
 
-        # kriso.frm_info_publish(
-        #         shipID_all, 
-        #         Pos_X_all, 
-        #         Pos_Y_all, 
-        #         Vel_U_all, 
-        #         Heading_deg_all, 
-        #         delta_deg_all, 
-        #         start_time, 
-        #     )
+        kriso.frm_info_publish(
+                shipID_all, 
+                Pos_X_all, 
+                Pos_Y_all, 
+                Vel_U_all, 
+                Heading_deg_all, 
+                delta_deg_all, 
+                start_time, 
+            )
 
         # Publish the information simulated
         # 현재 시간과 마지막으로 발행한 시간의 차이가 발행 주기보다 크거나 같으면 발행
    
-        if current_time - last_publish_time >= publish_interval or first_publish:
-            # frm_info_publish 메소드를 호출하여 상태 정보를 발행
-            # 최신 상태 정보 업데이트
-            latest_shipID_all = shipID_all
-            latest_Pos_X_all = Pos_X_all
-            latest_Pos_Y_all = Pos_Y_all
-            latest_Vel_U_all = Vel_U_all
-            latest_Heading_deg_all = Heading_deg_all
-            latest_delta_deg_all = delta_deg_all
+        # if current_time - last_publish_time >= publish_interval or first_publish:
+        #     # frm_info_publish 메소드를 호출하여 상태 정보를 발행
+        #     # 최신 상태 정보 업데이트
+        #     latest_shipID_all = shipID_all
+        #     latest_Pos_X_all = Pos_X_all
+        #     latest_Pos_Y_all = Pos_Y_all
+        #     latest_Vel_U_all = Vel_U_all
+        #     latest_Heading_deg_all = Heading_deg_all
+        #     latest_delta_deg_all = delta_deg_all
 
-            kriso.frm_info_publish(
-                latest_shipID_all, 
-                latest_Pos_X_all, 
-                latest_Pos_Y_all, 
-                latest_Vel_U_all, 
-                latest_Heading_deg_all, 
-                latest_delta_deg_all, 
-                start_time, 
-            )
-            last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
-            first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
+        #     kriso.frm_info_publish(
+        #         latest_shipID_all, 
+        #         latest_Pos_X_all, 
+        #         latest_Pos_Y_all, 
+        #         latest_Vel_U_all, 
+        #         latest_Heading_deg_all, 
+        #         latest_delta_deg_all, 
+        #         start_time, 
+        #     )
+        #     last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
+        #     first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
 
-        else:
-            # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
-            kriso.frm_info_publish(
-                latest_shipID_all, 
-                latest_Pos_X_all, 
-                latest_Pos_Y_all, 
-                latest_Vel_U_all, 
-                latest_Heading_deg_all, 
-                latest_delta_deg_all, 
-                start_time, 
-            )
+        # else:
+        #     # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
+        #     kriso.frm_info_publish(
+        #         latest_shipID_all, 
+        #         latest_Pos_X_all, 
+        #         latest_Pos_Y_all, 
+        #         latest_Vel_U_all, 
+        #         latest_Heading_deg_all, 
+        #         latest_delta_deg_all, 
+        #         start_time, 
+        #     )
             
         if kriso.len_path_out_inha == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
