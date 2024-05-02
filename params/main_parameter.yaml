@@ -203,7 +203,7 @@ space_number : 20
 shipInfo_all: 
 
   ship1_info : {
-    ship_L : 165.0, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
     ship_B : 28.0,
     ship_scale : 10,
     ship_ID : 1000, ## 자선의 ship ID 정의
