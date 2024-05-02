@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import math
 import rospy
 class MMG:
-    def __init__(self, u,v,r,heading):
+    def __init__(self, u,v,r,heading,L,scale):
 
         """notice: wake, thrust deduction, rudder and propeller force are calculated in scale that is setted in model test.
         if we want to scaling, we have to calculate in same scale in model test.
@@ -47,7 +47,7 @@ class MMG:
         # ship geometry information
         self.density = 1025.0
         self.x_p_ = 0.49 # we dont have information about propeller location. it is just astimated value
-        self.LBP = 163.55
+        self.LBP = L
         self.d = 9.75
         self.propeller_diameter = 6.60
         self.disp = 28607
@@ -64,7 +64,7 @@ class MMG:
         self.K_t0 = 0.5293
 
         # model information
-        self.scale = 31.65
+        self.scale = scale
         self.model_propeller_diameter = self.propeller_diameter/self.scale
         self.model_LBP = self.LBP/self.scale
         self.model_d = self.d/self.scale

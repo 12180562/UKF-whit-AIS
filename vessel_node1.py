@@ -219,11 +219,11 @@ def main():
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     # path = "/home/phl/문서/" + timestr + ".csv"
-    path = "/home/phlyoo/Documents/" + timestr + ".csv"
-    header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading', 'encounter', 'encounterMMSI']
-    file = open(path, 'a', newline='')
-    writer = csv.writer(file)
-    writer.writerow(header)
+    # path = "/home/phlyoo/Documents/" + timestr + ".csv"
+    # header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading', 'encounter', 'encounterMMSI']
+    # file = open(path, 'a', newline='')
+    # writer = csv.writer(file)
+    # writer.writerow(header)
 
     node_Name = "vessel_node1"
     rospy.init_node("{}".format(node_Name), anonymous=False)    
@@ -627,7 +627,7 @@ def main():
         # print(f"encounter: ", encounter)
         # print(f"encounterMMSI: ",encounterMMSI)
 
-        writer.writerow(savedata_list)
+        # writer.writerow(savedata_list)
 
         data.path_out_publish(OS_pub_list)
         data.vis_out(vis_pub_list)
@@ -653,7 +653,7 @@ def main():
         print("Loop end time: ", time.time() - startTime)
         print("================ Node 1 loop end ================\n")
 
-    file.close()
+    # file.close()
 
     rospy.spin()
 
