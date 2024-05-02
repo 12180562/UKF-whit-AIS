@@ -204,8 +204,8 @@ shipInfo_all:
 
   ship1_info : {
     ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
-    ship_B : 28.0,
-    ship_scale : 10,
+    ship_B : 27.4,
+    ship_scale : 70,
     ship_ID : 1000, ## 자선의 ship ID 정의
     ship_domain_radius : 11.0,  # original
     target_speed : 5.0,  #[knots]
@@ -217,9 +217,9 @@ shipInfo_all:
   }
 
   ship2_info : {
-    ship_L : 165.0, ## 모형선의 길이 //향후 AIS data로 대체
-    ship_B : 28.0,
-    ship_scale : 10,
+    ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 27.4,
+    ship_scale : 70,
     ship_ID : 2001, ## 자선의 ship ID 정의
     ship_domain_radius : 11.0,  # original
     target_speed : 5.0,  #[knots]
