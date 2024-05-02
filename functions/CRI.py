@@ -271,6 +271,8 @@ class CRI:
 
     def CoE(self):
         '''Coefficients of encounter situations'''
+        a = self.encounter_classification()
+        print(a)
         if self.encounter_classification() == "Head-on":
             s = abs(2 - (self.Vo - self.Vt)/self.Vo)
             t = 0.2

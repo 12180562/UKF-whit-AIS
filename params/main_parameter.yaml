@@ -154,7 +154,7 @@ mmg_dt: 1
 ############################################
 
 ########### 1852/110 ###########
-SD_param: 3
+SD_param: 5
 cri_param: 500
 Portside_rule : True
 
@@ -171,9 +171,9 @@ min_targetSpeed : 0.9
 max_targetSpeed : 1.0
 num_targetSpeedCandidates : 3
 
-min_targetHeading_deg_local : -20.0
-max_targetHeading_deg_local: 20.0
-num_targetHeadingCandidates: 10
+min_targetHeading_deg_local : -30.0
+max_targetHeading_deg_local: 30.0
+num_targetHeadingCandidates: 21
 
 Kp : 1.0
 Ki : 0.0
@@ -186,10 +186,9 @@ ship3_index : 10
 ############################################
 # kalman filter parameter
 
-ukf_dt: 10
+ukf_dt: 1
 ukf_angle_dt: 1.3
-ais_delay: 5
-
+ais_delay: 3
 ############################################
 # param for static_OB
 
@@ -204,30 +203,30 @@ space_number : 20
 shipInfo_all: 
 
   ship1_info : {
-    ship_L : 22.0, ## 모형선의 길이 //향후 AIS data로 대체
-    ship_B : 6.0,
-    ship_scale : 1.0,
+    ship_L : 165.0, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 28.0,
+    ship_scale : 10,
     ship_ID : 1000, ## 자선의 ship ID 정의
-    ship_domain_radius : 44.0,  # original
-    target_speed : 6.0,  #[knots]
+    ship_domain_radius : 11.0,  # original
+    target_speed : 5.0,  #[knots]
     initial_start_x : 0.0,    # [m]
     initial_start_y : 0.0,    # [m]
-    initial_start_U : 6.0,    # [knots] // 너무 작으면 발산함
+    initial_start_U : 5.0,    # [knots] // 너무 작으면 발산함
     initial_start_psi : 0,   # [deg]
     include_inha_modules : True  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
   ship2_info : {
-    ship_L : 22.0, ## 모형선의 길이 //향후 AIS data로 대체
-    ship_B : 6.0,
-    ship_scale : 1.0,
+    ship_L : 165.0, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 28.0,
+    ship_scale : 10,
     ship_ID : 2001, ## 자선의 ship ID 정의
-    ship_domain_radius : 44.0,  # original
-    target_speed : 6.0,  #[knots]
-    initial_start_x : 500.0,    # [m]
+    ship_domain_radius : 11.0,  # original
+    target_speed : 5.0,  #[knots]
+    initial_start_x : 300.0,    # [m]
     initial_start_y : 0.0,    # [m]
-    initial_start_U : 6.0 ,    # [knots] // 너무 작으면 발산함
-    initial_start_psi : 90,   # [deg]
+    initial_start_U : 5.0 ,    # [knots] // 너무 작으면 발산함
+    initial_start_psi : 45,   # [deg]
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
@@ -276,18 +275,22 @@ shipInfo_all:
 
 waypoint_List: {
   wpts_x_ship1: [
-    0.0, 1000.0,
+    0.0, 600.0,
   ],  
   wpts_y_ship1: [
     0.0, 0.0,
   ],
   wpts_x_ship2: [
-    # 760.0,  660.0,  560.0,  660.0,  560.0,  660.0,  760.0,  660.0
-    500.0, 500.0, 500.0, 500.0, 500.0, 500.0, 
+    # 300,300
+    400.0,  300.0,  200.0,  300.0,  200.0,  300.0,  400.0,  300.0
+    # 500.0, 500.0, 500.0, 500.0, 500.0, 500.0, 
+    # 500, 500
   ],
   wpts_y_ship2: [
-    # 100.0,  0,      100.0,  0,      -100.0, 0,      -100.0, 0
-    100.0, -100, 100.0, -100, 100.0, -100
+    # 100,-100
+    100.0,  0,      100.0,  0,      -100.0, 0,      -100.0, 0
+    # 100.0, -100, 100.0, -100, 100.0, -100
+    # 50, 0
   ],
   # wpts_x_ship3: [
   #   # 430.0,  330.0,  230.0,  330.0,  230.0,  330.0,  230.0,  330.0
@@ -321,8 +324,9 @@ target_spd_List: {
     ],
 
   target_speed_ship2: [
-    # 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
-    1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+    # 1.0, 1.0
+    1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+    # 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
     ],
 
   # target_speed_ship3: [

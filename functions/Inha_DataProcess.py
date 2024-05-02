@@ -53,6 +53,7 @@ class UKF:
         self.ukf_initialized = False
 
         self.initialize_ukf()
+        # print("durldurl")
 
     def initialize_ukf(self):
         '''Alpha (α):
@@ -68,32 +69,53 @@ class UKF:
         Kappa (κ):
         kappa는 보통 0 또는 3-n (여기서 n은 상태 변수의 차원)으로 설정됩니다. kappa는 시그마 포인트 생성시 중심 포인트의 가중치를 조정합니다.
         kappa를 조정함으로써 필터의 안정성과 정확성을 향상시킬 수 있습니다. 특히, kappa를 사용하여 비선형 시스템의 특성을 더 잘 반영할 수 있습니다.'''
-        sigma_points = MerweScaledSigmaPoints(n=4, alpha=.1, beta=2., kappa=.1)
+        sigma_points = MerweScaledSigmaPoints(n=4, alpha=0.1, beta=2., kappa=12)
         self.ukf = UnscentedKalmanFilter(dim_x=4, dim_z=4, dt=self.dt, fx=self.state_transition, hx=self.measurement_function, points=sigma_points)
         self.ukf.x = np.array([0., 0., 0., 0.])  # 초기 상태 추정치
         self.ukf.P = np.eye(4) * 10000.  # 초기 공분산 행렬
-        # self.ukf.P += np.eye(self.ukf.P.shape[0]) * 1e-6
-        self.ukf.R = np.eye(4) * .5  # 측정 노이즈
-        self.ukf.Q = np.eye(4) * .5  # 프로세스 노이즈
+        # self.ukf.P *= 10  # 초기 공분산 행렬
+
+        self.ukf.R = np.eye(4) * .1  # 측정 노이즈
+        self.ukf.Q = np.eye(4) * .1  # 프로세스 노이즈
 
     def state_transition(self, x, dt):
-        update_rate = rospy.get_param('update_rate') -1 
-        angle_dt = rospy.get_param('ukf_angle_dt')  # 각속도 조정 파라미터
-        new_x = x.copy()
-        # print(new_x)
-        # print('gg')
-        if self.last_heading is not None:
-            heading_change = x[3] - self.last_heading
-            angular_velocity = heading_change / ((angle_dt + 0.000001) * update_rate)
-            new_x[3] += angular_velocity
-        else:
-            new_x[3] = x[3]
+        # update_rate = rospy.get_param('update_rate') -1 
+        # angle_dt = rospy.get_param('ukf_angle_dt')  # 각속도 조정 파라미터
+        # new_x = x.copy()
+        # # print(new_x)
+        # # print('gg')
+        # if self.last_heading is not None:
+        #     heading_change = x[3] - self.last_heading
+        #     angular_velocity = heading_change / ((angle_dt + 0.000001) * update_rate)
+        #     new_x[3] += angular_velocity
+        # else:
+        #     new_x[3] = x[3]
 
-        new_x[0] += dt * (x[2] * np.cos(np.deg2rad(new_x[3])))/update_rate
-        new_x[1] += dt * (x[2] * np.sin(np.deg2rad(new_x[3])))/update_rate
+        # new_x[0] += dt * (x[2] * np.cos(np.deg2rad(new_x[3])))/update_rate
+        # new_x[1] += dt * (x[2] * np.sin(np.deg2rad(new_x[3])))/update_rate
 
         # print(new_x)
-        return new_x
+
+        # # 선박의 위치, 속도, 방향을 갱신
+        # if self.last_heading is not None:
+        #     heading_change = x[3] - self.last_heading
+        #     if heading_change > 180:
+        #         heading_change -= 360
+        #     elif heading_change < -180:
+        #         heading_change += 360
+        #     angle_velocity = heading_change / dt
+        #     a = self.last_heading
+        #     a += angle_velocity
+        # else:
+        #     a = x[3]
+
+        x_new = np.zeros_like(x)
+        x_new[0] = x[0] + x[2] * np.cos(np.deg2rad(x[3])) * dt  # x 위치 업데이트
+        x_new[1] = x[1] + x[2] * np.sin(np.deg2rad(x[3])) * dt  # y 위치 업데이트
+        x_new[2] = x[2]  # 속도는 변하지 않는다고 가정
+        x_new[3] = x[3]  # 방향은 변하지 않는다고 가정
+
+        return x_new
     
     def measurement_function(self, x):
         return x
@@ -114,15 +136,10 @@ class UKF:
 
             # 측정값이 변경되지 않았다면 predict만 수행
             self.ukf.predict()
-            # predict=self.ukf.predict()
-            # self.ukf.update(predict)
-            # print('predict')
-            # rospy.loginfo("Measurement unchanged, prediction only: %s", self.ukf.x)
+
             self.predicted_values.append(self.ukf.x)
 
         else:
-            self.initialize_ukf()
-
             # 측정값이 변경되었다면 예측 및 업데이트 수행
             if self.last_measurement is not None:
                 # 각도 변화량 계산 및 업데이트 로직 적용
@@ -131,11 +148,14 @@ class UKF:
 
             self.ukf.predict()
             self.ukf.update(measurement)
-            # print('update')
-            # rospy.loginfo("Measurement updated, state updated: %s", self.ukf.x)
+
             self.predicted_values = []
 
-        return self.ukf.x
+        # for i in range(4):
+        #     # for j in 4:
+        #     print(self.ukf.P[i][i])    
+        # print(self.ukf.P)
+        return self.ukf.x #, self.ukf.P
  
 class Inha_dataProcess:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
