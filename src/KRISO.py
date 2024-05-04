@@ -75,6 +75,7 @@ def main():
         paramStr_initStartY = "shipInfo_all/" + shipName + "_info/initial_start_y"
         paramStr_initStartU = "shipInfo_all/" + shipName + "_info/initial_start_U"
         paramStr_initStartPsi = "shipInfo_all/" + shipName + "_info/initial_start_psi"
+        paramStr_LBP = "shipInfo_all/" + shipName + "_info/ship_L"
 
         shipState_all[shipName] = dict()
         shipState_all[shipName]["shipID"] = rospy.get_param(paramStr_shipID)
@@ -86,6 +87,7 @@ def main():
         shipState_all[shipName]["v"] = 0
         shipState_all[shipName]["psi_deg"] = rospy.get_param(paramStr_initStartPsi)
         shipState_all[shipName]["delta_deg"] = 0.0
+        shipState_all[shipName]["LBP"] = rospy.get_param(paramStr_LBP)
 
         # Get the ships instances
         shipInstance_all[shipName] = ShipSimulation(
@@ -96,6 +98,7 @@ def main():
             shipState_all[shipName]["v"],
             shipState_all[shipName]["psi_deg"],
             shipState_all[shipName]["delta_deg"],
+            shipState_all[shipName]["LBP"],
             shipState_all[shipName]["scale"],
             dt,
             )

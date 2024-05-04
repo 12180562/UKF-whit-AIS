@@ -12,7 +12,7 @@ import rospy
 
 class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Heading 제어기를 포함하고 있어서 상속해줌
     """시뮬레이션을 위한 클래스"""
-    def __init__(self, initial_X, initial_Y, initial_velocity, initial_u,initial_v, initial_Heading_deg, initial_delta_deg, ship_scale, dt):
+    def __init__(self, initial_X, initial_Y, initial_velocity, initial_u,initial_v, initial_Heading_deg, initial_delta_deg, LBP ,ship_scale, dt):
         '''시뮬레이션을 위한 클래스
 
         Params
@@ -33,6 +33,7 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         self.uBody = initial_u   # x방향으로 진행중이므로, vBody속도는 없다고 가정하고 initial값을 줌    # m/sec.
         self.vBody = initial_v
 
+        self.LBP = LBP
         self.ship_scale = ship_scale
 
         self.rps = 5
@@ -69,7 +70,7 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
 
     def moving_ships(self, target_heading, target_spd):
         
-        KASS_mmg = MMG(self.uBody,self.vBody,self.r_rad,self.psi_rad)           # MMG 조종운동방정식을 활용하여, 자선/타선의 동역학적 특성을 반영함
+        KASS_mmg = MMG(self.uBody,self.vBody,self.r_rad,self.psi_rad,self.LBP,self.ship_scale)           # MMG 조종운동방정식을 활용하여, 자선/타선의 동역학적 특성을 반영함
         ########## ship scale에 맞게 모형선의 제원 값을 수정 #######
         Rudder_rate_rad = KASS_mmg.Model['Rudder_rate'] *sqrt(self.ship_scale) / sqrt(KASS_mmg.Model['scale'])  # rad./sec.
 
