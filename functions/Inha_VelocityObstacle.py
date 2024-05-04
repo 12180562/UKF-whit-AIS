@@ -590,8 +590,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=self.time_horizon
+                    # timeHorizon=RVOdata['CRI']*self.cri_param,
+                    timeHorizon=self.time_horizon
                     ):
                     # print("is within timehorizon",RVOdata['CRI']*self.cri_param)
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
@@ -602,8 +602,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=self.time_horizon
+                    # timeHorizon=RVOdata['CRI']*self.cri_param,
+                    timeHorizon=self.time_horizon
                     ):
                     # print('is in collision cone',RVOdata['CRI']*self.cri_param)
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
@@ -1002,6 +1002,7 @@ class VO_module:
             (reachableVelX_global_all, reachableVelY_global_all),
              axis=-1,
              )
+        
         """
         reachableVel_global_all_after_obstacle : The candidate of reachable vector that dosen't cross static obstacle.
         

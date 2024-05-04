@@ -718,7 +718,7 @@ class VO_module:
 
             `False`: If the given angle is NOT between the angles of the left and right boundary lines.
         """
-        if abs(theta_right -  theta_left) <= pi:
+        if abs(theta_right - theta_left) <= pi:
             if theta_right <= theta_given <= theta_left:
                 return True
             else :
@@ -744,9 +744,10 @@ class VO_module:
                     return True
                 else:
                     return False
+        
 
     def __is_in_left(
-        self,  
+        self, 
         velVecAngle_rad_global, 
         boundLineAngle_left_rad_global, 
         boundLineAngle_right_rad_global, 
@@ -1189,7 +1190,7 @@ class VO_module:
                     pass
 
             if len(detecting_vector_list) == 0:
-                print("all the vector is collidable")
+                # print("all the vector is collidable")
                 reachableVel_global_all = np.array([reachableVel_global_all_copy[182,:]])
 
             else:
@@ -1884,7 +1885,6 @@ class VO_module:
             )
 
         V_opt = self.__choose_velocity(V_des, RVOdata_all, OS_original, TS_original,static_obstacle_info, static_point_info)
-
 
         return V_opt, pub_collision_cone
 

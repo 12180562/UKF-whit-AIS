@@ -198,6 +198,7 @@ class data_inNout:
         cri.Rs = pub_list[10]
         cri.Rp = pub_list[11]
         cri.encounter_classification = pub_list[12]
+        print(cri.encounter_classification)
 
         self.cri_pub.publish(cri)
 
@@ -273,13 +274,13 @@ def main():
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
+            # print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
             rate.sleep()
             continue
 
         if data.len_waypoint_info == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
+            # print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
             rate.sleep()
             continue
 
@@ -634,7 +635,7 @@ def main():
         data.cri_out(cri_pub_list)
         data.vo_out(vo_pub_list)
 
-        if local_goal_EDA < 2 * (ship_L/OS_scale) :
+        if local_goal_EDA < 5 * (ship_L/OS_scale) :
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
@@ -650,8 +651,8 @@ def main():
                 # rospy.signal_shutdown("종료")
         rate.sleep()
         
-        print("Loop end time: ", time.time() - startTime)
-        print("================ Node 1 loop end ================\n")
+        # print("Loop end time: ", time.time() - startTime)
+        # print("================ Node 1 loop end ================\n")
 
     file.close()
 
