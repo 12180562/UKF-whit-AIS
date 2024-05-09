@@ -354,27 +354,27 @@ def main():
                     Pre_X = predicted_state[0]
                     Pre_Y = predicted_state[1]
 
-                    # # 예측 진행
-                    # ship_list[ship_id].update({
-                    #     'Ship_ID' : latest_ship_info['Ship_ID'],
-                    #     'Ori_X' : latest_ship_info['Ori_X'],
-                    #     'Ori_Y' : latest_ship_info['Ori_Y'],
-                    #     'Vel_U' : latest_ship_info['Vel_U'],
-                    #     'Heading' : latest_ship_info['Heading'],
-                    #     'Pos_X' : Pre_X,
-                    #     'Pos_Y' : Pre_Y,
-                    #     })
-
-                    # 예측 안함
+                    # 예측 진행
                     ship_list[ship_id].update({
                         'Ship_ID' : latest_ship_info['Ship_ID'],
                         'Ori_X' : latest_ship_info['Ori_X'],
                         'Ori_Y' : latest_ship_info['Ori_Y'],
                         'Vel_U' : latest_ship_info['Vel_U'],
                         'Heading' : latest_ship_info['Heading'],
-                        'Pos_X' : latest_ship_info['Ori_X'],
-                        'Pos_Y' : latest_ship_info['Ori_Y'],
+                        'Pos_X' : Pre_X,
+                        'Pos_Y' : Pre_Y,
                         })
+
+                    # # 예측 안함
+                    # ship_list[ship_id].update({
+                    #     'Ship_ID' : latest_ship_info['Ship_ID'],
+                    #     'Ori_X' : latest_ship_info['Ori_X'],
+                    #     'Ori_Y' : latest_ship_info['Ori_Y'],
+                    #     'Vel_U' : latest_ship_info['Vel_U'],
+                    #     'Heading' : latest_ship_info['Heading'],
+                    #     'Pos_X' : latest_ship_info['Ori_X'],
+                    #     'Pos_Y' : latest_ship_info['Ori_Y'],
+                    #     })
 
         # print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
