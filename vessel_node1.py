@@ -198,7 +198,7 @@ class data_inNout:
         cri.Rs = pub_list[10]
         cri.Rp = pub_list[11]
         cri.encounter_classification = pub_list[12]
-        print(cri.encounter_classification)
+        # print(cri.encounter_classification)
 
         self.cri_pub.publish(cri)
 
@@ -258,7 +258,7 @@ def main():
     encounterMMSI = []
 
     last_publish_time = rospy.Time.now()  # 마지막으로 발행한 시간을 초기화
-    delay=rospy.get_param('ais_delay')
+    delay = rospy.get_param('ais_delay')
     publish_interval = rospy.Duration(delay)  # 발행 주기를 5초로 설정
     first_publish = True
     latest_ship_info = []
@@ -346,37 +346,32 @@ def main():
                 else:
                     # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
                     predicted_state = ukf_instances[ship_id].update_ukf(latest_ship_info['Ori_X'], latest_ship_info['Ori_Y'], latest_ship_info['Vel_U'], latest_ship_info['Heading'])
-                    # ship_list = latest_ship_info
-                    # ship_list[ship_id].update({
-                    #     'Pos_X' : predicted_state[0],
-                    #     'Pos_Y' : predicted_state[1],
-                    #     })
                     Pre_X = predicted_state[0]
                     Pre_Y = predicted_state[1]
 
-                    # 예측 진행
-                    ship_list[ship_id].update({
-                        'Ship_ID' : latest_ship_info['Ship_ID'],
-                        'Ori_X' : latest_ship_info['Ori_X'],
-                        'Ori_Y' : latest_ship_info['Ori_Y'],
-                        'Vel_U' : latest_ship_info['Vel_U'],
-                        'Heading' : latest_ship_info['Heading'],
-                        'Pos_X' : Pre_X,
-                        'Pos_Y' : Pre_Y,
-                        })
-
-                    # # 예측 안함
+                    # # 예측 진행
                     # ship_list[ship_id].update({
                     #     'Ship_ID' : latest_ship_info['Ship_ID'],
                     #     'Ori_X' : latest_ship_info['Ori_X'],
                     #     'Ori_Y' : latest_ship_info['Ori_Y'],
                     #     'Vel_U' : latest_ship_info['Vel_U'],
                     #     'Heading' : latest_ship_info['Heading'],
-                    #     'Pos_X' : latest_ship_info['Ori_X'],
-                    #     'Pos_Y' : latest_ship_info['Ori_Y'],
+                    #     'Pos_X' : Pre_X,
+                    #     'Pos_Y' : Pre_Y,
                     #     })
 
-        # print(ship_list)
+                    # 예측 안함
+                    ship_list[ship_id].update({
+                        'Ship_ID' : latest_ship_info['Ship_ID'],
+                        'Ori_X' : latest_ship_info['Ori_X'],
+                        'Ori_Y' : latest_ship_info['Ori_Y'],
+                        'Vel_U' : latest_ship_info['Vel_U'],
+                        'Heading' : latest_ship_info['Heading'],
+                        'Pos_X' : latest_ship_info['Ori_X'],
+                        'Pos_Y' : latest_ship_info['Ori_Y'],
+                        })
+
+        print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
 
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
