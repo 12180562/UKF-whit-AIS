@@ -280,13 +280,13 @@ def main():
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            # print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
+            print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
             rate.sleep()
             continue
 
         if data.len_waypoint_info == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            # print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
+            print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
             rate.sleep()
             continue
 
@@ -645,8 +645,8 @@ def main():
 
         rate.sleep()
         
-        # print("Loop end time: ", time.time() - startTime)
-        # print("================ Node 1 loop end ================\n")
+        print("Loop end time: ", time.time() - startTime)
+        print("================ Node 1 loop end ================\n")
 
     # file.close()
 

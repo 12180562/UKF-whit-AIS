@@ -284,11 +284,12 @@ class Inha_dataProcess:
         Rs = cri.Rs()
         Rp = cri.Rp()
         SD_dist = cri.SD_dist()
-        rb, lb = cri.SD_dist_new()
+        # rb, lb = cri.SD_dist_new()
 
         cri_value = cri.CRI()
 
-        return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value, rb,lb
+        # return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value, rb,lb
+        return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
     def U_to_vector_V(self, U, deg):
         ''' Heading angle을 지구좌표계 기준의 속도벡터로 변환
@@ -365,7 +366,8 @@ class Inha_dataProcess:
         else:
             TS_ID = TS_list.keys()
             for ts_ID in TS_ID:
-                RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value,rb,lb = self.CRI_cal(OS_list, TS_list[ts_ID])
+                # RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value,rb,lb = self.CRI_cal(OS_list, TS_list[ts_ID])
+                RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value = self.CRI_cal(OS_list, TS_list[ts_ID])
 
                 TS_list[ts_ID]['RD'] = RD 
                 TS_list[ts_ID]['TB'] = TB  
@@ -390,8 +392,8 @@ class Inha_dataProcess:
                 TS_list[ts_ID]['Rs'] = Rs
                 TS_list[ts_ID]['Rp'] = Rp
                 TS_list[ts_ID]['mapped_radius'] = SD_dist * self.SD_param
-                TS_list[ts_ID]["right_boundary"] = rb
-                TS_list[ts_ID]["left_boundary"] = lb
+                # TS_list[ts_ID]["right_boundary"] = rb
+                # TS_list[ts_ID]["left_boundary"] = lb
 
                 TS_list[ts_ID]['CRI'] = cri_value
 

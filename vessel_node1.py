@@ -274,13 +274,13 @@ def main():
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            # print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
+            print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
             rate.sleep()
             continue
 
         if data.len_waypoint_info == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            # print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
+            print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
             rate.sleep()
             continue
 
@@ -342,7 +342,7 @@ def main():
                     
                     last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
                     first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
-                    print("update")
+                    # print("update")
                 else:
                     # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
                     predicted_state = ukf_instances[ship_id].update_ukf(latest_ship_info[ship_id]['Ori_X'], latest_ship_info[ship_id]['Ori_Y'], latest_ship_info[ship_id]['Vel_U'], latest_ship_info[ship_id]['Heading'])
@@ -371,7 +371,7 @@ def main():
                         'Pos_Y' : latest_ship_info[ship_id]['Ori_Y'],
                         })
 
-        print(ship_list)
+        # print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
 
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
@@ -473,7 +473,8 @@ def main():
             if distance <= rospy.get_param("detecting_distance"):
                 encounter = True
                 encounterMMSI.append(ts_ID)
-        # print(distance)
+        print("distance: ", distance)
+        print("DCPA: ", temp_DCPA)
         # print(TS_list)
         
         if len(encounterMMSI) ==0 :
@@ -646,8 +647,8 @@ def main():
                 # rospy.signal_shutdown("종료")
         rate.sleep()
         
-        # print("Loop end time: ", time.time() - startTime)
-        # print("================ Node 1 loop end ================\n")
+        print("Loop end time: ", time.time() - startTime)
+        print("================ Node 1 loop end ================\n")
 
     # file.close()
 

@@ -1596,24 +1596,24 @@ class VO_module:
             max_targetHeading_rad_global = heading_rad + max_targetHeading_rad_local
 
             targetHeading_rad_global_all = np.linspace(
-                start=min_targetHeading_rad_global, 
-                stop=max_targetHeading_rad_global, 
+                start=min_targetHeading_rad_global,
+                stop=max_targetHeading_rad_global,
                 num=self.num_targetHeadingCandidates,
                 )
 
             # Generate target velocity vector candidates
             reachableVel_global_all = self.__generate_vel_candidates(
-                targetSpeed_all, 
+                targetSpeed_all,
                 targetHeading_rad_global_all,
                 OS,
                 static_obstacle_info,
                 static_point_info
                 )
-            
+
             # Annotate the velocities - 'in time horizon', 'in left', 'in right', 'in collision cone'
             reachableVel_all_annotated = self.__annotate_vels(
-                reachableVel_global_all, 
-                RVOdata_all, 
+                reachableVel_global_all,
+                RVOdata_all,
                 TS,
                 )
 
@@ -1818,10 +1818,10 @@ class VO_module:
                 if TS[ts_ID]['mapped_radius'] > LOSdist:
                     LOSdist = TS[ts_ID]['mapped_radius']
                 
-                # boundLineAngle_left_rad_global = LOSangle_rad + atan2(30,LOSdist) #TS[ts_ID]['mapped_radius']/
-                boundLineAngle_left_rad_global = TS[ts_ID]['left_boundary'] 
-                # boundLineAngle_right_rad_global = LOSangle_rad - atan2(30,LOSdist) #TS[ts_ID]['mapped_radius']/
-                boundLineAngle_right_rad_global = TS[ts_ID]['right_boundary']
+                boundLineAngle_left_rad_global = LOSangle_rad + atan2(TS[ts_ID]['mapped_radius'],LOSdist) #TS[ts_ID]['mapped_radius']/
+                # boundLineAngle_left_rad_global = TS[ts_ID]['left_boundary'] 
+                boundLineAngle_right_rad_global = LOSangle_rad - atan2(TS[ts_ID]['mapped_radius'],LOSdist) #TS[ts_ID]['mapped_radius']/
+                # boundLineAngle_right_rad_global = TS[ts_ID]['right_boundary']
                 
                 collisionConeTranslated = (1 - self.weight_alpha) * vA + self.weight_alpha * vB
                 '''
