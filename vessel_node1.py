@@ -220,11 +220,13 @@ def main():
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     # path = "/home/phl/문서/" + timestr + ".csv"
-    # path = "/home/phlyoo/Documents/" + timestr + ".csv"
+    path = "/home/phlyoo/Documents/" + timestr + ".csv"
     # header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading', 'encounter', 'encounterMMSI']
-    # file = open(path, 'a', newline='')
-    # writer = csv.writer(file)
-    # writer.writerow(header)
+    header = ['RD','RC', 'K', 'DCPA','TCPA', 'UDCPA', 'UTCPA', 'UD', 'UB', 'UK', 'CRI', 'Rf', 'Ra', 'Rs', 'Rp', 'ENC', 'V_opt', 'pub_collision_cone']
+
+    file = open(path, 'a', newline='')
+    writer = csv.writer(file)
+    writer.writerow(header)
 
     node_Name = "vessel_node1"
     rospy.init_node("{}".format(node_Name), anonymous=False)    
@@ -376,8 +378,10 @@ def main():
 
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
 
-        TS_ID = ship_ID[:]  ## 리스트 복사
-        TS_ID.remove(OS_ID)
+        # TS_ID = ship_ID[:]  ## 리스트 복사
+        # TS_ID.remove(OS_ID)
+
+        TS_ID = TS_list.keys()
         # TODO : why do this?
 
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
@@ -411,6 +415,9 @@ def main():
             TS_list,
             )
         
+        TS_RD_temp = []
+        TS_RC_temp = []
+        TS_K_temp = []
         TS_DCPA_temp = []
         TS_TCPA_temp = []
         TS_UDCPA_temp = []
@@ -426,8 +433,18 @@ def main():
         TS_ENC_temp = []
 
         encounterMMSI = []
+        TS_list_copy = {}
+        TS_ID_copy = []
 
         for ts_ID in TS_ID:
+            temp_RD = TS_list[ts_ID]['RD']
+            TS_RD_temp.append(temp_RD)
+            
+            temp_RC = TS_list[ts_ID]['RC']
+            TS_RC_temp.append(temp_RC)
+
+            temp_K = TS_list[ts_ID]['K']
+            TS_K_temp.append(temp_K)
 
             temp_DCPA = TS_list[ts_ID]['DCPA']
             TS_DCPA_temp.append(temp_DCPA)
@@ -471,10 +488,16 @@ def main():
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
 
             if distance <= rospy.get_param("detecting_distance"):
+                TS_list_copy[ts_ID] = TS_list[ts_ID]
+                TS_ID_copy.append(ts_ID)
                 encounter = True
                 encounterMMSI.append(ts_ID)
-        print("distance: ", distance)
-        print("DCPA: ", temp_DCPA)
+        TS_ID = TS_ID_copy
+        TS_list = TS_list_copy
+
+        print(TS_ID)
+
+        # print("DCPA: ", temp_DCPA)
         # print(TS_list)
         
         if len(encounterMMSI) ==0 :
@@ -608,23 +631,44 @@ def main():
         ship_dic2list = list(OS_list.values())
 
         savedata_list = [
-            int(OS_ID),
-            ship_dic2list[1],
-            ship_dic2list[2],
-            wp_x,
-            wp_y,
-            ship_dic2list[3],
-            OS_Vx,
-            OS_Vy,
-            ship_dic2list[4],
-            desired_heading,
-            encounter,
-            encounterMMSI
+            TS_RD_temp,
+            TS_RC_temp,
+            TS_K_temp,
+            TS_DCPA_temp,
+            TS_TCPA_temp,
+            TS_UDCPA_temp,
+            TS_UTCPA_temp,
+            TS_UD_temp,
+            TS_UB_temp,
+            TS_UK_temp,
+            TS_CRI_temp,
+            TS_Rf_temp,
+            TS_Ra_temp,
+            TS_Rs_temp,
+            TS_Rp_temp,
+            TS_ENC_temp,
+            V_selected,
+            pub_collision_cone,
         ]
+
+        # savedata_list = [
+        #     int(OS_ID),
+        #     ship_dic2list[1],
+        #     ship_dic2list[2],
+        #     wp_x,
+        #     wp_y,
+        #     ship_dic2list[3],
+        #     OS_Vx,
+        #     OS_Vy,
+        #     ship_dic2list[4],
+        #     desired_heading,
+        #     encounter,
+        #     encounterMMSI
+        # ]
         # print(f"encounter: ", encounter)
         # print(f"encounterMMSI: ",encounterMMSI)
 
-        # writer.writerow(savedata_list)
+        writer.writerow(savedata_list)
 
         data.path_out_publish(OS_pub_list)
         data.vis_out(vis_pub_list)
@@ -650,7 +694,7 @@ def main():
         print("Loop end time: ", time.time() - startTime)
         print("================ Node 1 loop end ================\n")
 
-    # file.close()
+    file.close()
 
     rospy.spin()
 

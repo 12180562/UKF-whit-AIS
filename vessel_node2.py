@@ -387,8 +387,10 @@ def main():
         
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
 
-        TS_ID = ship_ID[:]  ## 리스트 복사
-        TS_ID.remove(OS_ID)
+        # TS_ID = ship_ID[:]  ## 리스트 복사
+        # TS_ID.remove(OS_ID)
+
+        TS_ID = TS_list.keys()
         # TODO : why do this?
 
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
@@ -422,6 +424,9 @@ def main():
             TS_list,
             )
         
+        TS_RD_temp = []
+        TS_RC_temp = []
+        TS_K_temp = []
         TS_DCPA_temp = []
         TS_TCPA_temp = []
         TS_UDCPA_temp = []
@@ -437,8 +442,18 @@ def main():
         TS_ENC_temp = []
 
         encounterMMSI = []
+        TS_list_copy = {}
+        TS_ID_copy = []
 
         for ts_ID in TS_ID:
+            temp_RD = TS_list[ts_ID]['RD']
+            TS_RD_temp.append(temp_RD)
+            
+            temp_RC = TS_list[ts_ID]['RC']
+            TS_RC_temp.append(temp_RC)
+
+            temp_K = TS_list[ts_ID]['K']
+            TS_K_temp.append(temp_K)
 
             temp_DCPA = TS_list[ts_ID]['DCPA']
             TS_DCPA_temp.append(temp_DCPA)
@@ -482,8 +497,8 @@ def main():
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
 
             if distance <= rospy.get_param("detecting_distance"):
-                encounter = True
-                encounterMMSI.append(ts_ID)
+                TS_list_copy[ts_ID] = TS_list[ts_ID]
+                TS_ID_copy.append(ts_ID)
         # print(distance)
         # print(TS_list)
         

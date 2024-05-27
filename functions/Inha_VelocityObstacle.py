@@ -1678,81 +1678,46 @@ class VO_module:
                     key= lambda v: np.linalg.norm(v - V_des),
                     )
                 
-            # When partially have avoidance velocities
-            elif status == "Port crossing":
-                # if TS[ts_ID]['DCPA']:
-                # No strategy (only avoidance velocities)
-                avoidanceVel_all_annotated = self.__take_vels(
-                    vel_all_annotated=reachableVel_all_annotated,
-                    annotation=['inLeft', 'inRight', 'inTimeHorizon'],
-                    shipID_all=TS.keys(),
-                    )
+            # # When partially have avoidance velocities
+            # elif status == "Port crossing":
+            #     # if TS[ts_ID]['DCPA']:
+            #     # No strategy (only avoidance velocities)
+            #     avoidanceVel_all_annotated = self.__take_vels(
+            #         vel_all_annotated=reachableVel_all_annotated,
+            #         annotation=['inLeft', 'inRight', 'inTimeHorizon'],
+            #         shipID_all=TS.keys(),
+            #         )
                 
-                #=========================================================+
-                """ <<<<<<<< IMPORTANT! MUST READ IT CAREFULLY! >>>>>>>>>>|
-                - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
-                - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
-                - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
-                """                                                        # |:
-                avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
-                    vel_all_annotated=reachableVel_all_annotated,       # |
-                    annotation=['inRight'],                              # |
-                    shipID_all=TS.keys(),                               # |
-                    )
-                # avoidanceAllRightVel_all_annotated = self.__take_vels(  
-                #     vel_all_annotated=reachableVel_all_annotated,       
-                #     annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
-                #     shipID_all=TS.keys(),
-                #     )                                                   # |
-                #=========================================================+
+            #     #=========================================================+
+            #     """ <<<<<<<< IMPORTANT! MUST READ IT CAREFULLY! >>>>>>>>>>|
+            #     - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
+            #     - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
+            #     - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
+            #     """                                                        # |:
+            #     avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
+            #         vel_all_annotated=reachableVel_all_annotated,       # |
+            #         annotation=['inRight'],                              # |
+            #         shipID_all=TS.keys(),                               # |
+            #         )
+            #     # avoidanceAllRightVel_all_annotated = self.__take_vels(  
+            #     #     vel_all_annotated=reachableVel_all_annotated,       
+            #     #     annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
+            #     #     shipID_all=TS.keys(),
+            #     #     )                                                   # |
+            #     #=========================================================+
 
-                if avoidanceAllRightVel_all_annotated:
-                    velCandidates = self.__remove_annotation(avoidanceAllRightVel_all_annotated)
-                else:
-                    velCandidates = self.__remove_annotation(avoidanceVel_all_annotated)
-                # Take the closest velocity to V_des among the chosen velocities
-                vA_post = min(
-                    velCandidates,
-                    key= lambda v: np.linalg.norm(v - V_des),
-                    )
+            #     if avoidanceAllRightVel_all_annotated:
+            #         velCandidates = self.__remove_annotation(avoidanceAllRightVel_all_annotated)
+            #     else:
+            #         velCandidates = self.__remove_annotation(avoidanceVel_all_annotated)
+            #     # Take the closest velocity to V_des among the chosen velocities
+            #     vA_post = min(
+            #         velCandidates,
+            #         key= lambda v: np.linalg.norm(v - V_des),
+            #         )
                 
             # When partially have avoidance velocities
-            elif status == "Starboard crossing":
-                # No strategy (only avoidance velocities)
-                avoidanceVel_all_annotated = self.__take_vels(
-                    vel_all_annotated=reachableVel_all_annotated,
-                    annotation=['inLeft', 'inRight', 'inTimeHorizon'],
-                    shipID_all=TS.keys(),
-                    )
-                
-                #=========================================================+
-                """ <<<<<<<< IMPORTANT! MUST READ IT CAREFULLY! >>>>>>>>>>|
-                - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
-                - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
-                - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
-                """                                                        # |:
-                avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
-                    vel_all_annotated=reachableVel_all_annotated,       # |
-                    annotation=['inLeft'],                              # |
-                    shipID_all=TS.keys(),                               # |
-                    )
-                # avoidanceAllRightVel_all_annotated = self.__take_vels(  
-                #     vel_all_annotated=reachableVel_all_annotated,       
-                #     annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
-                #     shipID_all=TS.keys(),
-                #     )                                                   # |
-                #=========================================================+
-
-                if avoidanceAllRightVel_all_annotated:
-                    velCandidates = self.__remove_annotation(avoidanceAllRightVel_all_annotated)
-                else:
-                    velCandidates = self.__remove_annotation(avoidanceVel_all_annotated)
-                # Take the closest velocity to V_des among the chosen velocities
-                vA_post = min(
-                    velCandidates,
-                    key= lambda v: np.linalg.norm(v - V_des),
-                    )
-            # else:
+            # elif status == "Starboard crossing":
             #     # No strategy (only avoidance velocities)
             #     avoidanceVel_all_annotated = self.__take_vels(
             #         vel_all_annotated=reachableVel_all_annotated,
@@ -1787,6 +1752,41 @@ class VO_module:
             #         velCandidates,
             #         key= lambda v: np.linalg.norm(v - V_des),
             #         )
+            else:
+                # No strategy (only avoidance velocities)
+                avoidanceVel_all_annotated = self.__take_vels(
+                    vel_all_annotated=reachableVel_all_annotated,
+                    annotation=['inLeft', 'inRight', 'inTimeHorizon'],
+                    shipID_all=TS.keys(),
+                    )
+                
+                #=========================================================+
+                """ <<<<<<<< IMPORTANT! MUST READ IT CAREFULLY! >>>>>>>>>>|
+                - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
+                - If you are simulating on y-x coord., it will be opposite from what you want. Thus, consider the 'left' and 'right' carefully. 
+                - For example, if you want to take the 'left velocities' in y-x coord., it will be the 'right velocities in x-y coord, so you have to take 'inRight' annotations.                                    
+                """                                                        # |:
+                avoidanceAllRightVel_all_annotated = self.__take_vels(  # |   
+                    vel_all_annotated=reachableVel_all_annotated,       # |
+                    annotation=['inLeft'],                              # |
+                    shipID_all=TS.keys(),                               # |
+                    )
+                # avoidanceAllRightVel_all_annotated = self.__take_vels(  
+                #     vel_all_annotated=reachableVel_all_annotated,       
+                #     annotation=['inLeft', 'inRight', 'inTimeHorizon'],                              
+                #     shipID_all=TS.keys(),
+                #     )                                                   # |
+                #=========================================================+
+
+                if avoidanceAllRightVel_all_annotated:
+                    velCandidates = self.__remove_annotation(avoidanceAllRightVel_all_annotated)
+                else:
+                    velCandidates = self.__remove_annotation(avoidanceVel_all_annotated)
+                # Take the closest velocity to V_des among the chosen velocities
+                vA_post = min(
+                    velCandidates,
+                    key= lambda v: np.linalg.norm(v - V_des),
+                    )
 
         return vA_post 
 
@@ -1915,15 +1915,15 @@ class VO_module:
                 #     boundLineAngle_right_rad_global = OS['Heading'] - pi
                 #     RVOapexPos_global = pA
 
-                # if self.rule == True:
-                #     if status == 'Safe' or status == 'Port crossing':
-                #         boundLineAngle_left_rad_global = OS['Heading'] + pi
-                #         boundLineAngle_right_rad_global = OS['Heading'] - pi
-                #         RVOapexPos_global = pA
-                #         LOSdist = 0
+                if self.rule == True:
+                    if status == 'Safe' or status == 'Port crossing':
+                        boundLineAngle_left_rad_global = OS['Heading'] + pi
+                        boundLineAngle_right_rad_global = OS['Heading'] - pi
+                        RVOapexPos_global = pA
+                        LOSdist = 0
 
-                #     else: 
-                #         pass
+                    else: 
+                        pass
 
 
                 RVOdata = {

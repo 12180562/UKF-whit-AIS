@@ -223,6 +223,7 @@ class Inha_dataProcess:
         return self.ship_dic, self.ship_ID
 
     def classify_OS_TS(self, ship_dic, ship_ID, OS_ID):
+        # detecting_distance = rospy.get_param("detecting_distance")
         ''' 자선과 타선의 운항정보 분리
         
         Return :
@@ -241,6 +242,7 @@ class Inha_dataProcess:
             TS_list = ship_dic.copy()
             # FIXME: `OS_ID` does not exist in `TS_list` when processing TSs? The `OS_ID` is not the "OS"????
             del(TS_list[OS_ID])
+            
         # print(TS_list)
         return OS_list, TS_list
 
@@ -260,6 +262,7 @@ class Inha_dataProcess:
         )
 
         RD = cri.RD()
+        RC = cri.RC()
         TB = rad2deg(cri.TB())
         RB = rad2deg(cri.RB())
 
@@ -270,6 +273,8 @@ class Inha_dataProcess:
 
         DCPA = cri.dcpa()
         TCPA = cri.tcpa()
+
+        K = cri.K()
 
         UDCPA = cri.UDCPA()
         UTCPA = cri.UTCPA()
@@ -289,7 +294,7 @@ class Inha_dataProcess:
         cri_value = cri.CRI()
 
         # return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value, rb,lb
-        return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
+        return RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
     def U_to_vector_V(self, U, deg):
         ''' Heading angle을 지구좌표계 기준의 속도벡터로 변환
@@ -367,11 +372,13 @@ class Inha_dataProcess:
             TS_ID = TS_list.keys()
             for ts_ID in TS_ID:
                 # RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value,rb,lb = self.CRI_cal(OS_list, TS_list[ts_ID])
-                RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value = self.CRI_cal(OS_list, TS_list[ts_ID])
+                RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value = self.CRI_cal(OS_list, TS_list[ts_ID])
 
                 TS_list[ts_ID]['RD'] = RD 
+                TS_list[ts_ID]['RC'] = RC
                 TS_list[ts_ID]['TB'] = TB  
                 TS_list[ts_ID]['RB'] = RB
+                TS_list[ts_ID]['K'] = K
 
                 TS_list[ts_ID]['V_x'] = Vtx
                 TS_list[ts_ID]['V_y'] = Vty

@@ -194,7 +194,7 @@ ais_delay: 0.0005
 
 delta_t : 40
 detecting_radious : 100
-detecting_distance : 1000
+detecting_distance : 20
 space_number : 20
 
 # ==========================================+
@@ -230,19 +230,19 @@ shipInfo_all:
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
-  # ship3_info : {
-  #   ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
-  #   ship_B : 27.4,
-  #   ship_scale : 70,
-  #   ship_ID : 2002, ## 자선의 ship ID 정의
-  #   ship_domain_radius : 44.0,  # original
-  #   target_speed : 6.0,       #[knots]
-  #   initial_start_x : 200.0,    # [m]
-  #   initial_start_y : 200.0,    # [m]
-  #   initial_start_U : 6.0,    # [knots]  // 너무 작으면 발산함
-  #   initial_start_psi : 270,   # [deg]
-  #   include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
-  # }
+  ship3_info : {
+    ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 27.4,
+    ship_scale : 70,
+    ship_ID : 2002, ## 자선의 ship ID 정의
+    ship_domain_radius : 44.0,  # original
+    target_speed : 6.0,       #[knots]
+    initial_start_x : 200.0,    # [m]
+    initial_start_y : 200.0,    # [m]
+    initial_start_U : 6.0,    # [knots]  // 너무 작으면 발산함
+    initial_start_psi : 270,   # [deg]
+    include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+  }
 
   # ship4_info : {
   #   ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
@@ -292,16 +292,16 @@ waypoint_List: {
     # 100.0, -100, 100.0, -100, 100.0, -100
     # 50, 0
   ],
-  # wpts_x_ship3: [
-  #   # 430.0,  330.0,  230.0,  330.0,  230.0,  330.0,  230.0,  330.0
-  #   # 330.0, 330.0, 330.0, 330.0, 330.0, 330.0, 
-  #   200, 200
-  # ],
-  # wpts_y_ship3: [
-  #   # -100.0, 0,      100.0,  0,      -100.0, 0,      100.0, 0
-  #   # 100.0, -100,100.0, -100,100.0, -100,
-  #   200, -200
-  # ],
+  wpts_x_ship3: [
+    # 430.0,  330.0,  230.0,  330.0,  230.0,  330.0,  230.0,  330.0
+    # 330.0, 330.0, 330.0, 330.0, 330.0, 330.0, 
+    200, 200
+  ],
+  wpts_y_ship3: [
+    # -100.0, 0,      100.0,  0,      -100.0, 0,      100.0, 0
+    # 100.0, -100,100.0, -100,100.0, -100,
+    200, -200
+  ],
 
   
 
@@ -331,11 +331,11 @@ target_spd_List: {
     # 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
     ],
 
-  # target_speed_ship3: [
-  #   # 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
-  #   # 1.0, 1.0,1.0, 1.0,1.0, 1.0,
-  #   1.0, 1.0
-  #   ],
+  target_speed_ship3: [
+    # 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+    # 1.0, 1.0,1.0, 1.0,1.0, 1.0,
+    1.0, 1.0
+    ],
 
   # target_speed_ship4: [
   #   1.0, 1.0
