@@ -264,10 +264,10 @@ def main():
     encounterMMSI = []
 
     last_publish_time = rospy.Time.now()  # 마지막으로 발행한 시간을 초기화
-    delay=rospy.get_param('ais_delay')
+    delay = rospy.get_param('ais_delay')
     publish_interval = rospy.Duration(delay)  # 발행 주기를 5초로 설정
     first_publish = True
-    latest_ship_info = []
+    latest_ship_info = {}
     predicted_state = [0,0]
     Pre_X = 0
     Pre_Y = 0
@@ -280,13 +280,13 @@ def main():
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            # print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
+            print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
             rate.sleep()
             continue
 
         if data.len_waypoint_info == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            # print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
+            print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
             rate.sleep()
             continue
 
@@ -306,7 +306,8 @@ def main():
         ## <======== 서울대학교 전역경로를 위한 waypoint 수신 및 Local path의 goal로 처리
         wpts_x_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_x)
         wpts_y_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_y)
-        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]   
+        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]
+
         # Local_goal = [wpts_x_os[data.waypoint_idx], wpts_y_os[data.waypoint_idx]]          # kriso
         # Local_goal = [wpts_x_os[int(data.waypoint_idx)], wpts_y_os[int(data.waypoint_idx)]]          # 부경대
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
@@ -324,20 +325,20 @@ def main():
             # 해당 선박의 UKF 인스턴스를 사용하여 업데이트
 
             if ship_id == OS_ID:
-                if current_time - last_publish_time >= publish_interval or first_publish:
+                if current_time - last_publish_time >= publish_interval or first_publish or (ship_info == None):
                     # frm_info_publish 메소드를 호출하여 상태 정보를 발행
                     # 최신 상태 정보 업데이트
-                    latest_ship_info = ship_info
+                    latest_ship_info = ship_list
 
                     # 딜레이 안함
                     ship_list[ship_id].update({
-                        'Ship_ID' : latest_ship_info['Ship_ID'],
-                        'Ori_X' : latest_ship_info['Ori_X'],
-                        'Ori_Y' : latest_ship_info['Ori_Y'],
-                        'Vel_U' : latest_ship_info['Vel_U'],
-                        'Heading' : latest_ship_info['Heading'],
-                        'Pos_X' : latest_ship_info['Ori_X'],
-                        'Pos_Y' : latest_ship_info['Ori_Y'],
+                        'Ship_ID' : latest_ship_info[ship_id]['Ship_ID'],
+                        'Ori_X' : latest_ship_info[ship_id]['Ori_X'],
+                        'Ori_Y' : latest_ship_info[ship_id]['Ori_Y'],
+                        'Vel_U' : latest_ship_info[ship_id]['Vel_U'],
+                        'Heading' : latest_ship_info[ship_id]['Heading'],
+                        'Pos_X' : latest_ship_info[ship_id]['Ori_X'],
+                        'Pos_Y' : latest_ship_info[ship_id]['Ori_Y'],
                         })
                     
                     last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
@@ -345,49 +346,52 @@ def main():
 
                 else:
                     # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
-                    predicted_state = ukf_instances[ship_id].update_ukf(latest_ship_info['Ori_X'], latest_ship_info['Ori_Y'], latest_ship_info['Vel_U'], latest_ship_info['Heading'])
-
+                    predicted_state = ukf_instances[ship_id].update_ukf(latest_ship_info[ship_id]['Ori_X'], latest_ship_info[ship_id]['Ori_Y'], latest_ship_info[ship_id]['Vel_U'], latest_ship_info[ship_id]['Heading'])
                     Pre_X = predicted_state[0]
                     Pre_Y = predicted_state[1]
 
-                    # # 예측 진행
-                    # ship_list[ship_id].update({
-                    #     'Ship_ID' : latest_ship_info['Ship_ID'],
-                    #     'Ori_X' : latest_ship_info['Ori_X'],
-                    #     'Ori_Y' : latest_ship_info['Ori_Y'],
-                    #     'Vel_U' : latest_ship_info['Vel_U'],
-                    #     'Heading' : latest_ship_info['Heading'],
-                    #     'Pos_X' : Pre_X,
-                    #     'Pos_Y' : Pre_Y,
-                    #     })
-
-                    # 예측 안함
+                    # 예측 진행
                     ship_list[ship_id].update({
-                        'Ship_ID' : latest_ship_info['Ship_ID'],
-                        'Ori_X' : latest_ship_info['Ori_X'],
-                        'Ori_Y' : latest_ship_info['Ori_Y'],
-                        'Vel_U' : latest_ship_info['Vel_U'],
-                        'Heading' : latest_ship_info['Heading'],
-                        'Pos_X' : latest_ship_info['Ori_X'],
-                        'Pos_Y' : latest_ship_info['Ori_Y'],
+                        'Ship_ID' : latest_ship_info[ship_id]['Ship_ID'],
+                        'Ori_X' : latest_ship_info[ship_id]['Ori_X'],
+                        'Ori_Y' : latest_ship_info[ship_id]['Ori_Y'],
+                        'Vel_U' : latest_ship_info[ship_id]['Vel_U'],
+                        'Heading' : latest_ship_info[ship_id]['Heading'],
+                        'Pos_X' : Pre_X,
+                        'Pos_Y' : Pre_Y,
                         })
+
+                    # # 예측 안함
+                    # ship_list[ship_id].update({
+                    #     'Ship_ID' : latest_ship_info[ship_id]['Ship_ID'],
+                    #     'Ori_X' : latest_ship_info[ship_id]['Ori_X'],
+                    #     'Ori_Y' : latest_ship_info[ship_id]['Ori_Y'],
+                    #     'Vel_U' : latest_ship_info[ship_id]['Vel_U'],
+                    #     'Heading' : latest_ship_info[ship_id]['Heading'],
+                    #     'Pos_X' : latest_ship_info[ship_id]['Ori_X'],
+                    #     'Pos_Y' : latest_ship_info[ship_id]['Ori_Y'],
+                    #     })
             elif ship_id == 1000:
                 ship_list[ship_id].update({
                     'Pos_X' : ship_info['Ori_X'],
                     'Pos_Y' : ship_info['Ori_Y'],
                     })
             else:
-                ship_list[ship_id].update({
-                    'Pos_X' : ship_info['Ori_X'],
-                    'Pos_Y' : ship_info['Ori_Y'],
-                    })
+                # ship_list[ship_id].update({
+                #     'Pos_X' : ship_info['Ori_X'],
+                #     'Pos_Y' : ship_info['Ori_Y'],
+                #     })
+                pass
+
         # print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
-        
+
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
 
-        TS_ID = ship_ID[:]  ## 리스트 복사
-        TS_ID.remove(OS_ID)
+        # TS_ID = ship_ID[:]  ## 리스트 복사
+        # TS_ID.remove(OS_ID)
+
+        TS_ID = TS_list.keys()
         # TODO : why do this?
 
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
@@ -421,6 +425,9 @@ def main():
             TS_list,
             )
         
+        TS_RD_temp = []
+        TS_RC_temp = []
+        TS_K_temp = []
         TS_DCPA_temp = []
         TS_TCPA_temp = []
         TS_UDCPA_temp = []
@@ -436,8 +443,18 @@ def main():
         TS_ENC_temp = []
 
         encounterMMSI = []
+        TS_list_copy = {}
+        TS_ID_copy = []
 
         for ts_ID in TS_ID:
+            temp_RD = TS_list[ts_ID]['RD']
+            TS_RD_temp.append(temp_RD)
+            
+            temp_RC = TS_list[ts_ID]['RC']
+            TS_RC_temp.append(temp_RC)
+
+            temp_K = TS_list[ts_ID]['K']
+            TS_K_temp.append(temp_K)
 
             temp_DCPA = TS_list[ts_ID]['DCPA']
             TS_DCPA_temp.append(temp_DCPA)
@@ -481,8 +498,8 @@ def main():
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
 
             if distance <= rospy.get_param("detecting_distance"):
-                encounter = True
-                encounterMMSI.append(ts_ID)
+                TS_list_copy[ts_ID] = TS_list[ts_ID]
+                TS_ID_copy.append(ts_ID)
         # print(distance)
         # print(TS_list)
         
@@ -630,7 +647,7 @@ def main():
         data.cri_out(cri_pub_list)
         data.vo_out(vo_pub_list)
 
-        if local_goal_EDA < 5 * (ship_L/OS_scale)  :
+        if local_goal_EDA < 5 * (ship_L/OS_scale) :
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
@@ -644,8 +661,8 @@ def main():
 
         rate.sleep()
         
-        # print("Loop end time: ", time.time() - startTime)
-        # print("================ Node 1 loop end ================\n")
+        print("Loop end time: ", time.time() - startTime)
+        print("================ Node 1 loop end ================\n")
 
     # file.close()
 

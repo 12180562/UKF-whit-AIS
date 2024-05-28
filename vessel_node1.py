@@ -220,13 +220,13 @@ def main():
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     # path = "/home/phl/문서/" + timestr + ".csv"
-    path = "/home/phlyoo/Documents/" + timestr + ".csv"
+    # path = "/home/phlyoo/Documents/" + timestr + ".csv"
     # header = ['ShipID', 'Pos_X', 'Pos_Y', 'wp_x', 'wp_y', 'Vel_U', 'Vx', 'Vy', 'Heading', 'desired_heading', 'encounter', 'encounterMMSI']
-    header = ['RD','RC', 'K', 'DCPA','TCPA', 'UDCPA', 'UTCPA', 'UD', 'UB', 'UK', 'CRI', 'Rf', 'Ra', 'Rs', 'Rp', 'ENC', 'V_opt', 'pub_collision_cone']
+    # header = ['RD','RC', 'K', 'DCPA','TCPA', 'UDCPA', 'UTCPA', 'UD', 'UB', 'UK', 'CRI', 'Rf', 'Ra', 'Rs', 'Rp', 'ENC', 'V_opt', 'pub_collision_cone', 'VO_operate']
 
-    file = open(path, 'a', newline='')
-    writer = csv.writer(file)
-    writer.writerow(header)
+    # file = open(path, 'a', newline='')
+    # writer = csv.writer(file)
+    # writer.writerow(header)
 
     node_Name = "vessel_node1"
     rospy.init_node("{}".format(node_Name), anonymous=False)    
@@ -302,7 +302,8 @@ def main():
         ## <======== 서울대학교 전역경로를 위한 waypoint 수신 및 Local path의 goal로 처리
         wpts_x_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_x)
         wpts_y_os = list(data.waypoint_dict['{}'.format(OS_ID)].wpts_y)
-        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]   
+        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]
+
         # Local_goal = [wpts_x_os[data.waypoint_idx], wpts_y_os[data.waypoint_idx]]          # kriso
         # Local_goal = [wpts_x_os[int(data.waypoint_idx)], wpts_y_os[int(data.waypoint_idx)]]          # 부경대
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
@@ -326,7 +327,7 @@ def main():
                     })
                 
             else:
-                if current_time - last_publish_time >= publish_interval or first_publish:
+                if (current_time - last_publish_time >= publish_interval) or first_publish or (ship_info == None):
                     # frm_info_publish 메소드를 호출하여 상태 정보를 발행
                     # 최신 상태 정보 업데이트
                     latest_ship_info = ship_list
@@ -351,29 +352,29 @@ def main():
                     Pre_X = predicted_state[0]
                     Pre_Y = predicted_state[1]
 
-                    # # 예측 진행
-                    # ship_list[ship_id].update({
-                    #     'Ship_ID' : latest_ship_info['Ship_ID'],
-                    #     'Ori_X' : latest_ship_info['Ori_X'],
-                    #     'Ori_Y' : latest_ship_info['Ori_Y'],
-                    #     'Vel_U' : latest_ship_info['Vel_U'],
-                    #     'Heading' : latest_ship_info['Heading'],
-                    #     'Pos_X' : Pre_X,
-                    #     'Pos_Y' : Pre_Y,
-                    #     })
-
-                    # 예측 안함
+                    # 예측 진행
                     ship_list[ship_id].update({
                         'Ship_ID' : latest_ship_info[ship_id]['Ship_ID'],
                         'Ori_X' : latest_ship_info[ship_id]['Ori_X'],
                         'Ori_Y' : latest_ship_info[ship_id]['Ori_Y'],
                         'Vel_U' : latest_ship_info[ship_id]['Vel_U'],
                         'Heading' : latest_ship_info[ship_id]['Heading'],
-                        'Pos_X' : latest_ship_info[ship_id]['Ori_X'],
-                        'Pos_Y' : latest_ship_info[ship_id]['Ori_Y'],
+                        'Pos_X' : Pre_X,
+                        'Pos_Y' : Pre_Y,
                         })
 
-        # print(ship_list)
+                    # # 예측 안함
+                    # ship_list[ship_id].update({
+                    #     'Ship_ID' : latest_ship_info[ship_id]['Ship_ID'],
+                    #     'Ori_X' : latest_ship_info[ship_id]['Ori_X'],
+                    #     'Ori_Y' : latest_ship_info[ship_id]['Ori_Y'],
+                    #     'Vel_U' : latest_ship_info[ship_id]['Vel_U'],
+                    #     'Heading' : latest_ship_info[ship_id]['Heading'],
+                    #     'Pos_X' : latest_ship_info[ship_id]['Ori_X'],
+                    #     'Pos_Y' : latest_ship_info[ship_id]['Ori_Y'],
+                    #     })
+
+        print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
 
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
@@ -495,14 +496,38 @@ def main():
         TS_ID = TS_ID_copy
         TS_list = TS_list_copy
 
-        print(TS_ID)
 
+        # print("distance : ", distance)
         # print("DCPA: ", temp_DCPA)
         # print(TS_list)
         
         if len(encounterMMSI) ==0 :
             encounter = False
             encounterMMSI = []
+
+        VO_operate = False
+                
+        for rd, enc, ub, dcpa, rc, cri in zip(TS_RD_temp, TS_ENC_temp, TS_UB_temp, TS_DCPA_temp, TS_RC_temp, TS_CRI_temp):
+            VO_operate_list = []
+            if cri > 0.579:
+                VO_operate = True
+                VO_operate_list.append(VO_operate)
+                print(VO_operate_list)
+             
+            # if rd < 48.8:   
+            if rd < 34.5:
+                VO_operate = True
+                VO_operate_list.append(VO_operate)
+                print(VO_operate_list)
+                print("RD 규칙 적용")
+                
+            # if dcpa < 140:    
+            if dcpa <= 60.31:
+                VO_operate = True
+                print(VO_operate)
+            if enc== "safe":
+                VO_operate = False
+                print("ENC 규칙 적용")
 
         # NOTE: `VO_update()` takes the majority of the computation time
         # TODO: Reduce the computation time of `VO_update()`
@@ -521,6 +546,7 @@ def main():
             data.static_obstacle_info,
             data.static_point_info
             )
+        
 
         # V_selected2 = Local_PP2.RVO_update(
         #     OS_list,
@@ -649,6 +675,7 @@ def main():
             TS_ENC_temp,
             V_selected,
             pub_collision_cone,
+            VO_operate
         ]
 
         # savedata_list = [
@@ -668,7 +695,7 @@ def main():
         # print(f"encounter: ", encounter)
         # print(f"encounterMMSI: ",encounterMMSI)
 
-        writer.writerow(savedata_list)
+        # writer.writerow(savedata_list)
 
         data.path_out_publish(OS_pub_list)
         data.vis_out(vis_pub_list)
@@ -694,7 +721,7 @@ def main():
         print("Loop end time: ", time.time() - startTime)
         print("================ Node 1 loop end ================\n")
 
-    file.close()
+    # file.close()
 
     rospy.spin()
 

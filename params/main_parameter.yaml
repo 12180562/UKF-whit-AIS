@@ -155,8 +155,8 @@ mmg_dt: 1
 
 ########### 1852/110 ###########
 SD_param: 3
-cri_param: 500
-Portside_rule: False
+cri_param: 1000
+Portside_rule: True
 
 ############################################
 
@@ -186,15 +186,15 @@ ship3_index : 10
 ############################################
 # kalman filter parameter
 
-ukf_dt: 1
+ukf_dt: 2
 ukf_angle_dt: 1.3
-ais_delay: 0.0005
+ais_delay: 0.5
 ############################################
 # param for static_OB
 
 delta_t : 40
 detecting_radious : 100
-detecting_distance : 20
+detecting_distance : 100000
 space_number : 20
 
 # ==========================================+
@@ -223,10 +223,10 @@ shipInfo_all:
     ship_ID : 2001, ## 자선의 ship ID 정의
     ship_domain_radius : 44.0,  # original
     target_speed : 7.0,  #[knots]
-    initial_start_x : 100.0,    # [m]
-    initial_start_y : -100.0,    # [m]
+    initial_start_x : 300.0,    # [m]
+    initial_start_y : 0.0,    # [m]
     initial_start_U : 7.0,    # [knots] // 너무 작으면 발산함
-    initial_start_psi : 90,   # [deg]
+    initial_start_psi : 180,   # [deg]
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
@@ -244,34 +244,34 @@ shipInfo_all:
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
-  # ship4_info : {
-  #   ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
-  #   ship_B : 0.6,
-  #   ship_scale : 11.0,
-  #   ship_ID : 2003, ## 자선의 ship ID 정의
-  #   ship_domain_radius : 4.0,  # original
-  #   target_speed : 6.0,       #[knots]
-  #   initial_start_x : 35.0,     # [m]
-  #   initial_start_y : -20.0,    # [m]
-  #   initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
-  #   initial_start_psi : -45,   # [deg]
-  #   include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
-  # }
+  ship4_info : {
+    ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 27.4,
+    ship_scale : 70,
+    ship_ID : 2003, ## 자선의 ship ID 정의
+    ship_domain_radius : 44.0,  # original
+    target_speed : 6.0,       #[knots]
+    initial_start_x : 35.0,     # [m]
+    initial_start_y : -20.0,    # [m]
+    initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
+    initial_start_psi : -45,   # [deg]
+    include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+  }
 
-  # ship5_info : {
-  #   ship_L : 2.0, ## 모형선의 길이 //향후 AIS data로 대체
-  #   ship_B : 0.6,
-  #   ship_scale : 11.0,
-  #   ship_ID : 2004, ## 자선의 ship ID 정의
-  #   ship_domain_radius : 4.0, # original
-  #   ship_domain_radius : 6.0,
-  #   target_speed : 4.0,       #[knots]
-  #   initial_start_x : 300,    # [m]
-  #   initial_start_y : 250,    # [m]
-  #   initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
-  #   initial_start_psi : 90,   # [deg]
-  #   include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
-  # }
+  ship5_info : {
+    ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 27.4,
+    ship_scale : 70,
+    ship_ID : 2004, ## 자선의 ship ID 정의
+    ship_domain_radius : 44.0, # original
+    ship_domain_radius : 6.0,
+    target_speed : 4.0,       #[knots]
+    initial_start_x : 300,    # [m]
+    initial_start_y : 250,    # [m]
+    initial_start_U : 1.0,    # [knots]  // 너무 작으면 발산함
+    initial_start_psi : 90,   # [deg]
+    include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+  }
 
 waypoint_List: {
   wpts_x_ship1: [
@@ -281,16 +281,16 @@ waypoint_List: {
     0.0, 0.0,
   ],
   wpts_x_ship2: [
-    100, 100
+    # 150, 150
     # 300.0,  400.0,  300.0,  300.0,  300.0,  200.0,  300.0,  300.0
     # 500.0, 500.0, 500.0, 500.0, 500.0, 500.0, 
-    # 500, 500
+    300, 0
   ],
   wpts_y_ship2: [
-    -100, 200
+    # 150, -150
     # 0.0,    0,      0.0,    -100,   0.0,    0,      0.0,  100
     # 100.0, -100, 100.0, -100, 100.0, -100
-    # 50, 0
+    0, 0
   ],
   wpts_x_ship3: [
     # 430.0,  330.0,  230.0,  330.0,  230.0,  330.0,  230.0,  330.0
@@ -305,19 +305,19 @@ waypoint_List: {
 
   
 
-  # wpts_x_ship4: [
-  #   50.0, 70.0, 50.0, 35.0,
-  # ],
-  # wpts_y_ship4: [
-  #   -50, -20.0, -10.0, -20.0,
-  # ],
+  wpts_x_ship4: [
+    50.0, 70.0, 50.0, 35.0,
+  ],
+  wpts_y_ship4: [
+    -50, -20.0, -10.0, -20.0,
+  ],
 
-  # wpts_x_ship5: [
-  #   200, 300
-  # ],
-  # wpts_y_ship5: [
-  #   250, 250
-  # ],
+  wpts_x_ship5: [
+    200, 300
+  ],
+  wpts_y_ship5: [
+    250, 250
+  ],
 }
 
 target_spd_List: {
@@ -337,11 +337,11 @@ target_spd_List: {
     1.0, 1.0
     ],
 
-  # target_speed_ship4: [
-  #   1.0, 1.0
-  #   ],
+  target_speed_ship4: [
+    1.0, 1.0
+    ],
 
-  # target_speed_ship5: [
-  #   1.0, 1.0
-  #   ],
+  target_speed_ship5: [
+    1.0, 1.0
+    ],
 }   
