@@ -60,9 +60,6 @@ class UKF:
 
         self.initialize_ukf()
         # print("durldurl")
-        self.waypoint_idx = 0
-        self.len_waypoint_info = 0
-        self.waypoint_dict = dict()
 
     def OP_callback(self, operation):
         ''' subscribe `/frm_info` 
@@ -84,27 +81,6 @@ class UKF:
         raw_psi = np.asanyarray(operation.m_fltHeading)
         self.Heading = raw_psi % 360
 
-    def wp_callback(self, wp):
-        ''' subscribe `/waypoint_info`
-
-        Example:
-            OS_wpts_x = self.waypoint_dict['2000'].wpts_x
-        '''
-        self.len_waypoint_info = len(wp.group_wpts_info)
-        wp_dic = dict()
-        for i in range(self.len_waypoint_info):
-            shipID = wp.group_wpts_info[i].shipID
-            wp_dic['{}'.format(shipID)] = wp.group_wpts_info[i]
-            ## 위 처럼 표현할 경우, dictionary 안의 message 변수명을 알고 있어야 호출이 가능함!
-            ## 따라서, 새로운 임의의 key Value로 바꾸서 저장하고 싶다면 아래와 같이 새로운 dictionary를 만들어도 됨. (이중 dictionary 구조)
-            # wp_dic2 = dict()
-            # wp_dic2['waypoint_x'] = wp.group_wpts_info[i].wpts_x
-            # wp_dic2['waypoint_y'] = wp.group_wpts_info[i].wpts_y
-            
-            # wp_dic[f'{shipID}'] = wp_dic2
-
-        self.waypoint_dict = wp_dic
-        
     def frm_info_publish(self, ship_ID, Pos_X, Pos_Y, vel, psi_deg, delta_deg, start_time):
         """ 전체 `/frm_info`중 인하대 node에서 필요한 위치 및 속도 정보 생성 """
         kriso = frm_info()
@@ -203,8 +179,8 @@ def main():
     
     OS_ID = rospy.get_param("shipInfo_all/ship1_info/ship_ID")
     first_loop = True  # 첫 번째 루프 실행 여부를 추적하는 변수
-    
-    waypointIndex = 0
+
+    start_time = rospy.Time.now()
 
     while not rospy.is_shutdown():
         inha = Inha_dataProcess(
@@ -213,14 +189,10 @@ def main():
             ukf.Pos_Y, 
             ukf.Vel_U, 
             ukf.Heading,
-            ukf.waypoint_dict,
             Pre_X,
             Pre_Y
             )
-           
-        wpts_x_os = list(ukf.waypoint_dict['{}'.format(OS_ID)].wpts_x)
-        wpts_y_os = list(ukf.waypoint_dict['{}'.format(OS_ID)].wpts_y)
-        Local_goal = [wpts_x_os[waypointIndex], wpts_y_os[waypointIndex]]        
+
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
 
         if first_loop:
@@ -260,6 +232,26 @@ def main():
         # print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
         print("plz")
+
+        # Pack the state information to publish
+        shipID_all = [ship_list[ship_id]['shipID'] for ship_id in shipsInfo.shipName_all]
+        Pos_X_all = [shipState_all[shipName]['X'] for shipName in shipsInfo.shipName_all]
+        Pos_Y_all = [shipState_all[shipName]['Y'] for shipName in shipsInfo.shipName_all]
+        Vel_U_all = [shipState_all[shipName]['U'] for shipName in shipsInfo.shipName_all]
+        Heading_deg_all = [shipState_all[shipName]['psi_deg'] for shipName in shipsInfo.shipName_all]
+        delta_deg_all = [shipState_all[shipName]['delta_deg'] for shipName in shipsInfo.shipName_all]
+
+        ukf.frm_info_publish(
+                shipID_all, 
+                Pos_X_all, 
+                Pos_Y_all, 
+                Vel_U_all, 
+                Heading_deg_all, 
+                delta_deg_all, 
+                start_time, 
+            )
+        
+
         rate.sleep()
         
     rospy.spin()
