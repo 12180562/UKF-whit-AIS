@@ -216,9 +216,6 @@ class VO_module:
         self.time_horizon = rospy.get_param('timeHorizon')
         self.rule = rospy.get_param('Portside_rule')     
 
-        
-        
-        
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
         """
         If all the velocity candiates are in collision cone it returns `True`. Otherwise, it returns `False`.

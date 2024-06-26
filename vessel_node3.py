@@ -3,7 +3,7 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
-from functions.Inha_DataProcess import Inha_dataProcess, UKF
+from functions.Inha_DataProcess import Inha_dataProcess
 
 from udp_col_msg.msg import col, vis_info, cri_info, VO_info, static_OB_info
 from udp_msgs.msg import frm_info, group_wpts_info, wpt_idx_os, group_boundary_info
@@ -80,7 +80,6 @@ class data_inNout:
 
         self.waypoint_dict = wp_dic
         
-
     def OP_callback(self, operation):
         ''' subscribe `/frm_info` 
         
@@ -232,7 +231,7 @@ def main():
     # writer = csv.writer(file)
     # writer.writerow(header)
 
-    node_Name = "vessel_node1"
+    node_Name = "vessel_node3"
     rospy.init_node("{}".format(node_Name), anonymous=False)    
     rate = rospy.Rate(update_rate) # 10 Hz renew
 
@@ -257,20 +256,8 @@ def main():
     waypointIndex = 0
     targetspdIndex = 0    
 
-    ukf_instances = {}
-    first_loop = True  # 첫 번째 루프 실행 여부를 추적하는 변수
-
     encounter = None
     encounterMMSI = []
-
-    last_publish_time = rospy.Time.now()  # 마지막으로 발행한 시간을 초기화
-    delay = rospy.get_param('ais_delay')
-    publish_interval = rospy.Duration(delay)  # 발행 주기를 5초로 설정
-    first_publish = True
-    latest_ship_info = {}
-    predicted_state = [0,0]
-    Pre_X = 0
-    Pre_Y = 0
 
     while not rospy.is_shutdown():
         current_time = rospy.Time.now()  # 현재 시간을 계속 추적
@@ -298,9 +285,7 @@ def main():
             data.Pos_Y, 
             data.Vel_U, 
             data.Heading, 
-            data.waypoint_dict,
-            Pre_X,
-            Pre_Y
+            data.waypoint_dict
             )                       # inha_module의 data 송신을 위해 필요한 함수들이 정의됨
 
         ## <======== 서울대학교 전역경로를 위한 waypoint 수신 및 Local path의 goal로 처리
@@ -312,80 +297,6 @@ def main():
         # Local_goal = [wpts_x_os[int(data.waypoint_idx)], wpts_y_os[int(data.waypoint_idx)]]          # 부경대
         ## <========= `/frm_info`를 통해 들어온 자선 타선의 데이터 전처리
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
-
-        if first_loop:
-            for ship_id in data.ship_ID:
-                # 각 선박 ID에 대해 독립적인 UKF 인스턴스 생성 및 저장
-                ukf_instances[ship_id] = UKF()
-
-            first_loop = False  # 첫 번째 루프가 실행된 후에는 이 조건을 더 이상 만족시키지 않음
-
-        for ship_id, ship_info in ship_list.items():
-
-            # 해당 선박의 UKF 인스턴스를 사용하여 업데이트
-
-            if ship_id == OS_ID:
-                if current_time - last_publish_time >= publish_interval or first_publish or (ship_info == None):
-                    # frm_info_publish 메소드를 호출하여 상태 정보를 발행
-                    # 최신 상태 정보 업데이트
-                    latest_ship_info = ship_list
-
-                    # 딜레이 안함
-                    ship_list[ship_id].update({
-                        'Ship_ID' : latest_ship_info[ship_id]['Ship_ID'],
-                        'Ori_X' : latest_ship_info[ship_id]['Ori_X'],
-                        'Ori_Y' : latest_ship_info[ship_id]['Ori_Y'],
-                        'Vel_U' : latest_ship_info[ship_id]['Vel_U'],
-                        'Heading' : latest_ship_info[ship_id]['Heading'],
-                        'Pos_X' : latest_ship_info[ship_id]['Ori_X'],
-                        'Pos_Y' : latest_ship_info[ship_id]['Ori_Y'],
-                        })
-                    
-                    last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
-                    first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
-
-                else:
-                    # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
-                    predicted_state = ukf_instances[ship_id].update_ukf(latest_ship_info[ship_id]['Ori_X'], latest_ship_info[ship_id]['Ori_Y'], latest_ship_info[ship_id]['Vel_U'], latest_ship_info[ship_id]['Heading'])
-                    Pre_X = predicted_state[0]
-                    Pre_Y = predicted_state[1]
-
-                    # 예측 진행
-                    ship_list[ship_id].update({
-                        'Ship_ID' : latest_ship_info[ship_id]['Ship_ID'],
-                        'Ori_X' : latest_ship_info[ship_id]['Ori_X'],
-                        'Ori_Y' : latest_ship_info[ship_id]['Ori_Y'],
-                        'Vel_U' : latest_ship_info[ship_id]['Vel_U'],
-                        'Heading' : latest_ship_info[ship_id]['Heading'],
-                        'Pos_X' : Pre_X,
-                        'Pos_Y' : Pre_Y,
-                        })
-
-                    # # 예측 안함
-                    # ship_list[ship_id].update({
-                    #     'Ship_ID' : latest_ship_info[ship_id]['Ship_ID'],
-                    #     'Ori_X' : latest_ship_info[ship_id]['Ori_X'],
-                    #     'Ori_Y' : latest_ship_info[ship_id]['Ori_Y'],
-                    #     'Vel_U' : latest_ship_info[ship_id]['Vel_U'],
-                    #     'Heading' : latest_ship_info[ship_id]['Heading'],
-                    #     'Pos_X' : latest_ship_info[ship_id]['Ori_X'],
-                    #     'Pos_Y' : latest_ship_info[ship_id]['Ori_Y'],
-                    #     })
-            elif ship_id == 1000:
-                ship_list[ship_id].update({
-                    'Pos_X' : ship_info['Ori_X'],
-                    'Pos_Y' : ship_info['Ori_Y'],
-                    })
-            else:
-                # ship_list[ship_id].update({
-                #     'Pos_X' : ship_info['Ori_X'],
-                #     'Pos_Y' : ship_info['Ori_Y'],
-                #     })
-                pass
-
-        # print(ship_list)
-        # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
-
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
 
         # TS_ID = ship_ID[:]  ## 리스트 복사

@@ -172,8 +172,6 @@ def main():
                     latest_desired_Heading = desired_Heading
                     latest_desired_spd = desired_spd
                     latest_shipState_all[shipName] = shipState_all[shipName]
-                    print(shipName)
-                    print("타선 업데이트")
 
                     if current_index == total_ships:
                         last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
@@ -183,7 +181,6 @@ def main():
                     desired_Heading = latest_desired_Heading
                     desired_spd = latest_desired_spd
                     shipState_all[shipName] = latest_shipState_all[shipName]
-                    # print(shipName)
 
         first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
         

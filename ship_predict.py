@@ -58,8 +58,9 @@ class UKF:
         self.last_heading = None
         self.ukf_initialized = False
 
+        self.ship_ID = []
+
         self.initialize_ukf()
-        # print("durldurl")
 
     def OP_callback(self, operation):
         ''' subscribe `/frm_info` 
@@ -179,18 +180,27 @@ def main():
     
     OS_ID = rospy.get_param("shipInfo_all/ship1_info/ship_ID")
     first_loop = True  # 첫 번째 루프 실행 여부를 추적하는 변수
+    predicted_state = [0,0]
+    Pre_X = 0
+    Pre_Y = 0
 
     start_time = rospy.Time.now()
 
     while not rospy.is_shutdown():
+
+        if len(ukf.ship_ID) == 0:
+            ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
+            # print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
+            rate.sleep()
+            continue
+
         inha = Inha_dataProcess(
             ukf.ship_ID,
             ukf.Pos_X, 
             ukf.Pos_Y, 
             ukf.Vel_U, 
             ukf.Heading,
-            Pre_X,
-            Pre_Y
+            0
             )
 
         ship_list, ship_ID = inha.ship_list_container(OS_ID)
@@ -204,42 +214,30 @@ def main():
 
         for ship_id, ship_info in ship_list.items():
 
-            # 해당 선박의 UKF 인스턴스를 사용하여 업데이트
+            predicted_state = ukf_instances[ship_id].update_ukf(ship_list[ship_id]['Pos_X'], ship_list[ship_id]['Pos_Y'], ship_list[ship_id]['Vel_U'], ship_list[ship_id]['Heading'])
+            Pre_X = predicted_state[0]
+            Pre_Y = predicted_state[1]
 
-            if ship_id == OS_ID:
-                ship_list[OS_ID].update({
-                    'Pos_X' : ship_info['Ori_X'],
-                    'Pos_Y' : ship_info['Ori_Y'],
-                    })
-                
-            else:
-                # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
-                predicted_state = ukf_instances[ship_id].update_ukf(ship_list[ship_id]['Ori_X'], ship_list[ship_id]['Ori_Y'], ship_list[ship_id]['Vel_U'], ship_list[ship_id]['Heading'])
-                Pre_X = predicted_state[0]
-                Pre_Y = predicted_state[1]
-
-                # 예측 진행
-                ship_list[ship_id].update({
-                    'Ship_ID' : ship_list[ship_id]['Ship_ID'],
-                    'Ori_X' : ship_list[ship_id]['Ori_X'],
-                    'Ori_Y' : ship_list[ship_id]['Ori_Y'],
-                    'Vel_U' : ship_list[ship_id]['Vel_U'],
-                    'Heading' : ship_list[ship_id]['Heading'],
-                    'Pos_X' : Pre_X,
-                    'Pos_Y' : Pre_Y,
-                    })
+            # 예측 진행
+            ship_list[ship_id].update({
+                'Ship_ID' : ship_list[ship_id]['Ship_ID'],
+                'Pos_X' : Pre_X,
+                'Pos_Y' : Pre_Y,
+                'Vel_U' : ship_list[ship_id]['Vel_U'],
+                'Heading' : ship_list[ship_id]['Heading']
+                })
 
         # print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
-        print("plz")
+        print("plzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
 
         # Pack the state information to publish
-        shipID_all = [ship_list[ship_id]['shipID'] for ship_id in shipsInfo.shipName_all]
-        Pos_X_all = [shipState_all[shipName]['X'] for shipName in shipsInfo.shipName_all]
-        Pos_Y_all = [shipState_all[shipName]['Y'] for shipName in shipsInfo.shipName_all]
-        Vel_U_all = [shipState_all[shipName]['U'] for shipName in shipsInfo.shipName_all]
-        Heading_deg_all = [shipState_all[shipName]['psi_deg'] for shipName in shipsInfo.shipName_all]
-        delta_deg_all = [shipState_all[shipName]['delta_deg'] for shipName in shipsInfo.shipName_all]
+        shipID_all = [ship_list[ship_id]['Ship_ID'] for ship_id in ship_list.keys()]
+        Pos_X_all = [ship_list[ship_id]['Pos_X'] for ship_id in ship_list.keys()]
+        Pos_Y_all = [ship_list[ship_id]['Pos_Y'] for ship_id in ship_list.keys()]
+        Vel_U_all = [ship_list[ship_id]['Vel_U'] for ship_id in ship_list.keys()]
+        Heading_deg_all = [ship_list[ship_id]['Heading'] for ship_id in ship_list.keys()]
+        delta_deg_all = [0 for ship_id in ship_list.keys()]
 
         ukf.frm_info_publish(
                 shipID_all, 
