@@ -276,13 +276,13 @@ def main():
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
+            # print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
             rate.sleep()
             continue
 
         if data.len_waypoint_info == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
+            # print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
             rate.sleep()
             continue
 
@@ -374,7 +374,7 @@ def main():
                     #     'Pos_Y' : latest_ship_info[ship_id]['Ori_Y'],
                     #     })
 
-        print(ship_list)
+        # print(ship_list)
         # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
 
         OS_list, TS_list = inha.classify_OS_TS(ship_list, ship_ID, OS_ID)
@@ -512,22 +512,22 @@ def main():
             if cri > 0.579:
                 VO_operate = True
                 VO_operate_list.append(VO_operate)
-                print(VO_operate_list)
+                # print(VO_operate_list)
              
             # if rd < 48.8:   
             if rd < 34.5:
                 VO_operate = True
                 VO_operate_list.append(VO_operate)
-                print(VO_operate_list)
-                print("RD 규칙 적용")
+                # print(VO_operate_list)
+                # print("RD 규칙 적용")
                 
             # if dcpa < 140:    
             if dcpa <= 60.31:
                 VO_operate = True
-                print(VO_operate)
+                # print(VO_operate)
             if enc== "safe":
                 VO_operate = False
-                print("ENC 규칙 적용")
+                # print("ENC 규칙 적용")
 
         # NOTE: `VO_update()` takes the majority of the computation time
         # TODO: Reduce the computation time of `VO_update()`
@@ -718,8 +718,8 @@ def main():
                 # rospy.signal_shutdown("종료")
         rate.sleep()
         
-        print("Loop end time: ", time.time() - startTime)
-        print("================ Node 1 loop end ================\n")
+        # print("Loop end time: ", time.time() - startTime)
+        # print("================ Node 1 loop end ================\n")
 
     # file.close()
 

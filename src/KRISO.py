@@ -15,7 +15,7 @@ class KRISO:
     """22m급의 KASS MMG 운항 모델 반영"""
     def __init__(self):
         rospy.Subscriber('/path_out_inha2', path_output, self.inha_callback)
-        self.OS_pub = rospy.Publisher('/frm_info', frm_info, queue_size=10)
+        self.OS_pub = rospy.Publisher('/AIS_data', frm_info, queue_size=10)
 
         self.len_path_out_inha = 0
         self.path_out_inha_dic = dict()
@@ -65,6 +65,7 @@ def main():
     # Initialize the ship instances to simulate
     shipState_all = dict()
     shipInstance_all = dict()
+    latest_shipState_all = dict()
 
     for shipName in shipsInfo.shipName_all:
 
@@ -106,21 +107,18 @@ def main():
     start_time = rospy.Time.now()
 
     last_publish_time = rospy.Time.now()  # 마지막으로 발행한 시간을 초기화
-    # publish_interval = rospy.Duration(random.uniform(1.0, 5.0))  # 발행 주기 랜덤
     delay=rospy.get_param('ais_delay')
     publish_interval = rospy.Duration(delay)  # 발행 주기를 5초로 설정
+    # publish_interval = rospy.Duration(random.uniform(1.0, 5.0))  # 발행 주기 랜덤
     # print("발행 주기(초):", publish_interval.to_sec())
     # publish_interval = rospy.Duration(random.uniform(1.0, 5.0))  # 발행 주기 랜덤
 
-    # 최신 상태 정보를 저장할 변수 초기화
-    latest_shipID_all = None
-    latest_Pos_X_all = None  #m
-    latest_Pos_Y_all = None  #m
-    latest_Vel_U_all = None  #m/s
-    latest_Heading_deg_all = None  #deg
-    latest_delta_deg_all = None
-
+    latest_desired_Heading = None
+    latest_desired_spd = None
+    latest_shipState_all[shipName] = []
     first_publish = True
+
+    OS_ID = rospy.get_param("shipInfo_all/ship1_info/ship_ID")
 
     while not rospy.is_shutdown():  
         current_time = rospy.Time.now()  # 현재 시간을 계속 추적
@@ -142,43 +140,6 @@ def main():
                 delta_deg_all, 
                 start_time, 
             )
-
-        # Publish the information simulated
-        # 현재 시간과 마지막으로 발행한 시간의 차이가 발행 주기보다 크거나 같으면 발행
-   
-        # if current_time - last_publish_time >= publish_interval or first_publish:
-        #     # frm_info_publish 메소드를 호출하여 상태 정보를 발행
-        #     # 최신 상태 정보 업데이트
-        #     latest_shipID_all = shipID_all
-        #     latest_Pos_X_all = Pos_X_all
-        #     latest_Pos_Y_all = Pos_Y_all
-        #     latest_Vel_U_all = Vel_U_all
-        #     latest_Heading_deg_all = Heading_deg_all
-        #     latest_delta_deg_all = delta_deg_all
-
-        #     kriso.frm_info_publish(
-        #         latest_shipID_all, 
-        #         latest_Pos_X_all, 
-        #         latest_Pos_Y_all, 
-        #         latest_Vel_U_all, 
-        #         latest_Heading_deg_all, 
-        #         latest_delta_deg_all, 
-        #         start_time, 
-        #     )
-        #     last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
-        #     first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
-
-        # else:
-        #     # 발행 주기 사이에는 마지막으로 업데이트된 상태 정보를 유지하며 발행
-        #     kriso.frm_info_publish(
-        #         latest_shipID_all, 
-        #         latest_Pos_X_all, 
-        #         latest_Pos_Y_all, 
-        #         latest_Vel_U_all, 
-        #         latest_Heading_deg_all, 
-        #         latest_delta_deg_all, 
-        #         start_time, 
-        #     )
             
         if kriso.len_path_out_inha == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
@@ -186,12 +147,45 @@ def main():
             rate.sleep()
             continue
 
+        # shipsInfo.shipName_all의 총 길이
+        total_ships = len(shipsInfo.shipName_all)
+
+        # 현재 인덱스를 추적하기 위한 변수
+        current_index = 0
+
         # Update the ship state
         for shipName in shipsInfo.shipName_all:
-            shipID = shipState_all[shipName]['shipID']
-            desired_Heading = kriso.path_out_inha_dic[f'{shipID}'].targetCourse
-            desired_spd = kriso.path_out_inha_dic[f'{shipID}'].targetSpeed
-            shipState_all[shipName] = {**{'shipID': shipID} , **shipInstance_all[shipName].moving_ships(desired_Heading, desired_spd)}
+            current_index += 1  # 인덱스 증가
+
+            if shipName == "ship1":
+                shipID = shipState_all[shipName]['shipID']
+                desired_Heading = kriso.path_out_inha_dic[f'{shipID}'].targetCourse
+                desired_spd = kriso.path_out_inha_dic[f'{shipID}'].targetSpeed
+                shipState_all[shipName] = {**{'shipID': shipID} , **shipInstance_all[shipName].moving_ships(desired_Heading, desired_spd)}
+            else:
+                shipID = shipState_all[shipName]['shipID']
+                desired_Heading = kriso.path_out_inha_dic[f'{shipID}'].targetCourse
+                desired_spd = kriso.path_out_inha_dic[f'{shipID}'].targetSpeed
+                shipState_all[shipName] = {**{'shipID': shipID} , **shipInstance_all[shipName].moving_ships(desired_Heading, desired_spd)}
+
+                if (current_time - last_publish_time >= publish_interval) or first_publish:
+                    latest_desired_Heading = desired_Heading
+                    latest_desired_spd = desired_spd
+                    latest_shipState_all[shipName] = shipState_all[shipName]
+                    print(shipName)
+                    print("타선 업데이트")
+
+                    if current_index == total_ships:
+                        last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
+
+                else:
+                    shipID = shipState_all[shipName]['shipID']
+                    desired_Heading = latest_desired_Heading
+                    desired_spd = latest_desired_spd
+                    shipState_all[shipName] = latest_shipState_all[shipName]
+                    # print(shipName)
+
+        first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
         
         rate.sleep()
         
