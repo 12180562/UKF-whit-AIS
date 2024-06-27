@@ -3,7 +3,6 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from functions.Inha_DataProcess import Inha_dataProcess
 from functions.ShipSimulation import ShipSimulation
 from functions.InfoLoader import InfoLoader
 
@@ -59,6 +58,12 @@ class UKF:
         self.last_measurement = None
         self.last_heading = None
         self.ukf_initialized = False
+
+        self.Pos_X  = 0.00001
+        self.Pos_Y  = 0.00001
+        self.Vel_U  = 0.00001
+        self.delta_deg = 0.00001
+        self.Heading = 0.00001
 
         self.ship_ID = []
 
@@ -123,24 +128,25 @@ class UKF:
         self.ukf.Q = np.eye(4) * .1  # 프로세스 노이즈
 
     def state_transition(self, x, dt):
-        if self.last_heading is not None:
-            heading_change = x[3] - self.last_heading
-            if heading_change > 180:
-                heading_change -= 360
-            elif heading_change < -180:
-                heading_change += 360
-            angle_velocity = heading_change / dt
-            a = self.last_heading
-            a += angle_velocity
-        else:
-            a = x[3]
+        # angle_dt = rospy.get_param('ukf_angle_dt')  # 각속도 조정 파라미터
+
+        # if self.last_heading is not None:
+        #     heading_change = x[3] - self.last_heading
+        #     if heading_change > 180:
+        #         heading_change -= 360
+        #     elif heading_change < -180:
+        #         heading_change += 360
+        #     angle_velocity = heading_change / angle_dt
+        #     a = self.last_heading
+        #     a += angle_velocity
+        # else:
+        #     a = x[3]
 
         x_new = np.zeros_like(x)
-        x_new[0] = x[0]
-        x_new[1] = x[1]
+        x_new[0] = x[0] + x[2] * np.cos(np.deg2rad(x[3])) * dt  # x 위치 업데이트
+        x_new[1] = x[1] + x[2] * np.sin(np.deg2rad(x[3])) * dt  # y 위치 업데이트
         x_new[2] = x[2]  # 속도는 변하지 않는다고 가정
         x_new[3] = x[3]  # 방향은 변하지 않는다고 가정
-
         return x_new
     
     def measurement_function(self, x):
@@ -153,7 +159,7 @@ class UKF:
         if not self.ukf_initialized:
             self.ukf.x = measurement  # 초기 상태 추정치 설정
             self.ukf_initialized = True  # UKF가 초기화되었음을 표시
-            # rospy.loginfo("UKF initialized with first measurement: %s", self.ukf.x)
+            rospy.loginfo("UKF initialized with first measurement: %s", self.ukf.x)
             
         # 측정값이 변경되었는지 확인
         if self.last_measurement is not None and np.array_equal(measurement, self.last_measurement):
@@ -189,61 +195,69 @@ def main():
     rate = rospy.Rate(update_rate) # 10 Hz renew
     
     ukf = UKF()
-    ukf_instances = {}
-    
-    OS_ID = rospy.get_param("shipInfo_all/ship1_info/ship_ID")
+    uncertain_ships = {}
 
     dt = rospy.get_param("mmg_dt")    
     shipsInfo = InfoLoader(rospy.get_param("shipInfo_all"))
     shipState_all = dict()
     shipInstance_all = dict()
 
-    for shipName in shipsInfo.shipName_all:
-
-        # Get the initial states
-        paramStr_shipID = "shipInfo_all/" + shipName + "_info/ship_ID"
-        paramStr_shipScale = "shipInfo_all/" + shipName + "_info/ship_scale"
-        paramStr_LBP = "shipInfo_all/" + shipName + "_info/ship_L"
-
-        shipState_all[shipName] = dict()
-        shipState_all[shipName]["shipID"] = rospy.get_param(paramStr_shipID)
-        shipState_all[shipName]["delta_deg"] = 0.0
-        shipState_all[shipName]["LBP"] = rospy.get_param(paramStr_LBP)
-        shipState_all[shipName]["scale"] = rospy.get_param(paramStr_shipScale)
-
-        # Get the ships instances
-        shipInstance_all[shipName] = ShipSimulation(
-            ukf.Pos_X,
-            ukf.Pos_Y,
-            ukf.Vel_U,
-            ukf.Vel_U,
-            0,
-            ukf.Heading,
-            shipState_all[shipName]["delta_deg"],
-            shipState_all[shipName]["LBP"],
-            shipState_all[shipName]["scale"],
-            dt,
-            )
-
     first_loop = True  # 첫 번째 루프 실행 여부를 추적하는 변수
-    predicted_state = [0,0]
+    predicted_state = []
     Pre_heading = 0
     Pre_speed = 0
 
     start_time = rospy.Time.now()
 
     while not rospy.is_shutdown():
+        for shipName in shipsInfo.shipName_all:
+
+            # Get the initial states
+            paramStr_shipID = "shipInfo_all/" + shipName + "_info/ship_ID"
+            paramStr_LBP = "shipInfo_all/" + shipName + "_info/ship_L"
+            paramStr_shipScale = "shipInfo_all/" + shipName + "_info/ship_scale"
+
+            shipState_all[shipName] = dict()
+            shipState_all[shipName]["shipID"] = rospy.get_param(paramStr_shipID)
+            shipState_all[shipName]["X"] = ukf.Pos_X
+            shipState_all[shipName]["Y"] = ukf.Pos_Y
+            shipState_all[shipName]["U"] = ukf.Vel_U
+            shipState_all[shipName]["u"] = shipState_all[shipName]["U"]
+            shipState_all[shipName]["v"] = 0
+            shipState_all[shipName]["psi_deg"] = ukf.Heading
+            shipState_all[shipName]["delta_deg"] = 0.0
+            shipState_all[shipName]["LBP"] = rospy.get_param(paramStr_LBP)
+            shipState_all[shipName]["scale"] = rospy.get_param(paramStr_shipScale)
+
+            # Get the ships instances
+            shipInstance_all[shipName] = ShipSimulation(
+                shipState_all[shipName]["X"],
+                shipState_all[shipName]["Y"],
+                shipState_all[shipName]["U"],
+                shipState_all[shipName]["u"],
+                shipState_all[shipName]["v"],
+                shipState_all[shipName]["psi_deg"],
+                shipState_all[shipName]["delta_deg"],
+                shipState_all[shipName]["LBP"],
+                shipState_all[shipName]["scale"],
+                dt,
+                )
+
         if first_loop:
             for shipName in shipsInfo.shipName_all:
+                shipID = shipState_all[shipName]['shipID']
                 # 각 선박 ID에 대해 독립적인 UKF 인스턴스 생성 및 저장
-                shipInstance_all[shipName] = UKF()
+                uncertain_ships[shipID] = UKF()
 
             first_loop = False  # 첫 번째 루프가 실행된 후에는 이 조건을 더 이상 만족시키지 않음
 
         for shipName in shipsInfo.shipName_all:
             shipID = shipState_all[shipName]['shipID']
 
-            predicted_state = ukf_instances[shipName].update_ukf(ukf.Pos_X, ukf.Pos_Y, ukf.Vel_U, ukf.Heading)
+            predicted_state = uncertain_ships[shipID].update_ukf(shipState_all[shipName]['X'],
+                                                                  shipState_all[shipName]['Y'], 
+                                                                  shipState_all[shipName]['U'], 
+                                                                  shipState_all[shipName]['psi_deg'])
             Pre_heading = predicted_state[2]
             Pre_speed = predicted_state[3]
 

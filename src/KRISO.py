@@ -103,7 +103,7 @@ def main():
             shipState_all[shipName]["scale"],
             dt,
             )
-
+        print(shipInstance_all)
     start_time = rospy.Time.now()
 
     last_publish_time = rospy.Time.now()  # 마지막으로 발행한 시간을 초기화
