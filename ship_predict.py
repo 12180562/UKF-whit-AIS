@@ -4,6 +4,8 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 from functions.Inha_DataProcess import Inha_dataProcess
+from functions.ShipSimulation import ShipSimulation
+from functions.InfoLoader import InfoLoader
 
 from udp_msgs.msg import frm_info
 
@@ -121,10 +123,21 @@ class UKF:
         self.ukf.Q = np.eye(4) * .1  # 프로세스 노이즈
 
     def state_transition(self, x, dt):
-        # 여기에 mmg가 들어가야함 movingship
+        if self.last_heading is not None:
+            heading_change = x[3] - self.last_heading
+            if heading_change > 180:
+                heading_change -= 360
+            elif heading_change < -180:
+                heading_change += 360
+            angle_velocity = heading_change / dt
+            a = self.last_heading
+            a += angle_velocity
+        else:
+            a = x[3]
+
         x_new = np.zeros_like(x)
-        x_new[0] = x[0] + x[2] * np.cos(np.deg2rad(x[3])) * dt  # x 위치 업데이트
-        x_new[1] = x[1] + x[2] * np.sin(np.deg2rad(x[3])) * dt  # y 위치 업데이트
+        x_new[0] = x[0]
+        x_new[1] = x[1]
         x_new[2] = x[2]  # 속도는 변하지 않는다고 가정
         x_new[3] = x[3]  # 방향은 변하지 않는다고 가정
 
@@ -179,65 +192,71 @@ def main():
     ukf_instances = {}
     
     OS_ID = rospy.get_param("shipInfo_all/ship1_info/ship_ID")
+
+    dt = rospy.get_param("mmg_dt")    
+    shipsInfo = InfoLoader(rospy.get_param("shipInfo_all"))
+    shipState_all = dict()
+    shipInstance_all = dict()
+
+    for shipName in shipsInfo.shipName_all:
+
+        # Get the initial states
+        paramStr_shipID = "shipInfo_all/" + shipName + "_info/ship_ID"
+        paramStr_shipScale = "shipInfo_all/" + shipName + "_info/ship_scale"
+        paramStr_LBP = "shipInfo_all/" + shipName + "_info/ship_L"
+
+        shipState_all[shipName] = dict()
+        shipState_all[shipName]["shipID"] = rospy.get_param(paramStr_shipID)
+        shipState_all[shipName]["delta_deg"] = 0.0
+        shipState_all[shipName]["LBP"] = rospy.get_param(paramStr_LBP)
+        shipState_all[shipName]["scale"] = rospy.get_param(paramStr_shipScale)
+
+        # Get the ships instances
+        shipInstance_all[shipName] = ShipSimulation(
+            ukf.Pos_X,
+            ukf.Pos_Y,
+            ukf.Vel_U,
+            ukf.Vel_U,
+            0,
+            ukf.Heading,
+            shipState_all[shipName]["delta_deg"],
+            shipState_all[shipName]["LBP"],
+            shipState_all[shipName]["scale"],
+            dt,
+            )
+
     first_loop = True  # 첫 번째 루프 실행 여부를 추적하는 변수
     predicted_state = [0,0]
-    Pre_X = 0
-    Pre_Y = 0
+    Pre_heading = 0
+    Pre_speed = 0
 
     start_time = rospy.Time.now()
 
     while not rospy.is_shutdown():
-
-        if len(ukf.ship_ID) == 0:
-            ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            # print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
-            rate.sleep()
-            continue
-
-        inha = Inha_dataProcess(
-            ukf.ship_ID,
-            ukf.Pos_X, 
-            ukf.Pos_Y, 
-            ukf.Vel_U, 
-            ukf.Heading,
-            0
-            )
-
-        ship_list, ship_ID = inha.ship_list_container(OS_ID)
-
         if first_loop:
-            for ship_id in ukf.ship_ID:
+            for shipName in shipsInfo.shipName_all:
                 # 각 선박 ID에 대해 독립적인 UKF 인스턴스 생성 및 저장
-                ukf_instances[ship_id] = UKF()
+                shipInstance_all[shipName] = UKF()
 
             first_loop = False  # 첫 번째 루프가 실행된 후에는 이 조건을 더 이상 만족시키지 않음
 
-        for ship_id, ship_info in ship_list.items():
+        for shipName in shipsInfo.shipName_all:
+            shipID = shipState_all[shipName]['shipID']
 
-            predicted_state = ukf_instances[ship_id].update_ukf(ship_list[ship_id]['Pos_X'], ship_list[ship_id]['Pos_Y'], ship_list[ship_id]['Vel_U'], ship_list[ship_id]['Heading'])
-            Pre_X = predicted_state[0]
-            Pre_Y = predicted_state[1]
+            predicted_state = ukf_instances[shipName].update_ukf(ukf.Pos_X, ukf.Pos_Y, ukf.Vel_U, ukf.Heading)
+            Pre_heading = predicted_state[2]
+            Pre_speed = predicted_state[3]
 
-            # 예측 진행
-            ship_list[ship_id].update({
-                'Ship_ID' : ship_list[ship_id]['Ship_ID'],
-                'Pos_X' : Pre_X,
-                'Pos_Y' : Pre_Y,
-                'Vel_U' : ship_list[ship_id]['Vel_U'],
-                'Heading' : ship_list[ship_id]['Heading']
-                })
+            shipState_all[shipName] = {**{'shipID': shipID} , **shipInstance_all[shipName].moving_ships(Pre_heading, Pre_speed)}
 
-        # print(ship_list)
-        # print("예측됨 X: {}, Y: {}".format(ship_list[OS_ID]['next_X'], ship_list[OS_ID]['next_Y']))
-        print("plzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
 
         # Pack the state information to publish
-        shipID_all = [ship_list[ship_id]['Ship_ID'] for ship_id in ship_list.keys()]
-        Pos_X_all = [ship_list[ship_id]['Pos_X'] for ship_id in ship_list.keys()]
-        Pos_Y_all = [ship_list[ship_id]['Pos_Y'] for ship_id in ship_list.keys()]
-        Vel_U_all = [ship_list[ship_id]['Vel_U'] for ship_id in ship_list.keys()]
-        Heading_deg_all = [ship_list[ship_id]['Heading'] for ship_id in ship_list.keys()]
-        delta_deg_all = [0 for ship_id in ship_list.keys()]
+        shipID_all = [shipState_all[shipName]['shipID'] for shipName in shipsInfo.shipName_all]
+        Pos_X_all = [shipState_all[shipName]['X'] for shipName in shipsInfo.shipName_all]
+        Pos_Y_all = [shipState_all[shipName]['Y'] for shipName in shipsInfo.shipName_all]
+        Vel_U_all = [shipState_all[shipName]['U'] for shipName in shipsInfo.shipName_all]
+        Heading_deg_all = [shipState_all[shipName]['psi_deg'] for shipName in shipsInfo.shipName_all]
+        delta_deg_all = [shipState_all[shipName]['delta_deg'] for shipName in shipsInfo.shipName_all]
 
         ukf.frm_info_publish(
                 shipID_all, 
@@ -248,8 +267,7 @@ def main():
                 delta_deg_all, 
                 start_time, 
             )
-        
-
+ 
         rate.sleep()
         
     rospy.spin()

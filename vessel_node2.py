@@ -22,7 +22,8 @@ class data_inNout:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
     def __init__(self):
         # Subscriber = input
-        rospy.Subscriber('/frm_info', frm_info, self.OP_callback) 
+        rospy.Subscriber('/frm_info', frm_info, self.OP_callback)
+        # rospy.Subscriber('/AIS_data', frm_info, self.OP_callback)  
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
         # rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
         # rospy.Subscriber('/wpts_idx_os_kriso', wpt_idx_os, self.wp_idx_callback)
