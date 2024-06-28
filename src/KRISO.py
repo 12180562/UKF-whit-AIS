@@ -9,7 +9,6 @@ from udp_col_msg.msg import path_output
 from udp_msgs.msg import frm_info
 import rospy
 from math import sqrt
-import random
 
 class KRISO:
     """22m급의 KASS MMG 운항 모델 반영"""
@@ -103,7 +102,6 @@ def main():
             shipState_all[shipName]["scale"],
             dt,
             )
-        print(shipInstance_all)
     start_time = rospy.Time.now()
 
     last_publish_time = rospy.Time.now()  # 마지막으로 발행한 시간을 초기화

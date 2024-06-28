@@ -22,7 +22,6 @@ import rospkg
 class data_inNout:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
     def __init__(self):
-        # Subscriber = input
         rospy.Subscriber('/frm_info', frm_info, self.OP_callback)
         # rospy.Subscriber('/AIS_data', frm_info, self.OP_callback)  
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
@@ -620,7 +619,7 @@ def main():
         data.cri_out(cri_pub_list)
         data.vo_out(vo_pub_list)
 
-        if local_goal_EDA < 5 * (ship_L/OS_scale) :
+        if local_goal_EDA < 10 * (ship_L/OS_scale) :
         # 만약 `reach criterion`와 거리 비교를 통해 waypoint 도달하였다면, 
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
