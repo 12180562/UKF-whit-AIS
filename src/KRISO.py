@@ -67,7 +67,6 @@ def main():
     latest_shipState_all = dict()
 
     for shipName in shipsInfo.shipName_all:
-
         # Get the initial states
         paramStr_shipID = "shipInfo_all/" + shipName + "_info/ship_ID"
         paramStr_shipScale = "shipInfo_all/" + shipName + "_info/ship_scale"
@@ -102,6 +101,7 @@ def main():
             shipState_all[shipName]["scale"],
             dt,
             )
+        
     start_time = rospy.Time.now()
 
     last_publish_time = rospy.Time.now()  # 마지막으로 발행한 시간을 초기화
@@ -115,8 +115,6 @@ def main():
     latest_desired_spd = None
     latest_shipState_all[shipName] = []
     first_publish = True
-
-    OS_ID = rospy.get_param("shipInfo_all/ship1_info/ship_ID")
 
     while not rospy.is_shutdown():  
         current_time = rospy.Time.now()  # 현재 시간을 계속 추적
@@ -153,7 +151,7 @@ def main():
 
         # Update the ship state
         for shipName in shipsInfo.shipName_all:
-            current_index += 1  # 인덱스 증가
+            current_index += 1
 
             if shipName == "ship1":
                 shipID = shipState_all[shipName]['shipID']

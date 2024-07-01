@@ -237,7 +237,7 @@ shipInfo_all:
     ship_ID : 2002, ## 자선의 ship ID 정의
     ship_domain_radius : 44.0,  # original
     target_speed : 6.0,       #[knots]
-    initial_start_x : 200.0,    # [m]
+    initial_start_x : 150.0,    # [m]
     initial_start_y : 0.0,    # [m]
     initial_start_U : 6.0,    # [knots]  // 너무 작으면 발산함
     initial_start_psi : 0,   # [deg]
@@ -288,7 +288,7 @@ waypoint_List: {
   ],
   wpts_y_ship2: [
     # 150, -150
-    0.0,    100,      0.0,    -100,   0.0,    -100,   0.0,  100
+    0.0,    100,      0.0,    100,   0.0,    -100,   0.0,  -100
     # 100.0, -100, 100.0, -100, 100.0, -100
     # 0, 0
   ],
