@@ -15,42 +15,6 @@ from math import sqrt
 from filterpy.kalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
     
 class UKF:
-    '''
-    혹시나 나중에 csv파일로 뽑아야 한다면 이걸로 하기
-    class UKFNode:
-        def __init__(self):
-            rospy.init_node('ukf_node')
-
-            # CSV 파일 초기화
-            current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            self.file_name = f"ukf_results_{current_time}.csv"
-            self.csv_file = open(self.file_name, mode='w', newline='')
-            self.csv_writer = csv.writer(self.csv_file)
-            self.csv_writer.writerow(['Time', 'Ship ID', 'Latitude', 'Longitude'])
-            
-            self.subscriber = rospy.Subscriber('AIS_data', String, self.sensor_callback)
-            self.ships = {}
-
-        def sensor_callback(self, data):
-            ship_id, lat, lon, speed, heading = data.data.split(',')
-            ship_id = ship_id
-            current_measurement = np.array([float(lat), float(lon), float(speed), float(heading)])
-
-            if ship_id not in self.ships:
-                self.ships[ship_id] = UKF()
-
-            predicted_state = self.ships[ship_id].update_ukf(current_measurement)
-
-            # 현재 시간, 선박 ID, 위도, 경도 추출 및 CSV 파일에 기록
-            time = rospy.get_time()
-            self.csv_writer.writerow([time, ship_id, predicted_state[0], predicted_state[1]])
-            self.csv_file.flush()
-        
-            rospy.on_shutdown(self.on_shutdown())
-
-        def on_shutdown(self):
-            self.csv_file.close()
-    '''
     def __init__(self):
         rospy.Subscriber('/AIS_data', frm_info, self.OP_callback)
         self.OS_pub = rospy.Publisher('/frm_info', frm_info, queue_size=10)
@@ -72,14 +36,6 @@ class UKF:
         self.initialize_ukf()
 
     def OP_callback(self, operation):
-        ''' subscribe `/frm_info` 
-        
-        params : 
-            `frm_info` 변수명은 입출력관계도 KRISO 참조
-
-        Note :
-            `psi`값이 [-2pi, 2pi]값으로 들어오므로, 편의상 강제로 [0, 2pi]로 변경
-        '''
         self.ship_ID = list(operation.m_nShipID)
 
         self.Pos_X  = operation.m_fltPos_X
@@ -92,7 +48,6 @@ class UKF:
         self.Heading = raw_psi % 360
 
     def frm_info_publish(self, ship_ID, Pos_X, Pos_Y, vel, psi_deg, delta_deg, start_time):
-        """ 전체 `/frm_info`중 인하대 node에서 필요한 위치 및 속도 정보 생성 """
         kriso = frm_info()
         kriso.header.stamp = rospy.Time.now() - start_time
         kriso.header.frame_id = "ship_info"
@@ -186,15 +141,11 @@ class UKF:
 
             self.predicted_values = []
 
-        # Extract and log Kalman gain
         kalman_gain = self.ukf.K
-        rospy.loginfo("Kalman Gain: %s", kalman_gain)
-        
-        # for i in range(4):
-        #     # for j in 4:
-        #     print(self.ukf.P[i][i])    
-        # print(self.ukf.P)
-        return self.ukf.x #, self.ukf.P
+        # rospy.loginfo("Kalman Gain: %s", kalman_gain)
+        rospy.loginfo("Covariance Matrix: %s", self.ukf.P)
+
+        return self.ukf.x
     
 def main():
     rospy.init_node('ship_predict', anonymous=False)
@@ -266,7 +217,7 @@ def main():
 
         for shipName in shipsInfo.shipName_all:
             shipID = shipState_all[shipName]['shipID']
-            
+
             if shipName == 'ship1':
                 Pre_speed = ukf.Vel_U[count2]
                 Pre_heading = ukf.Heading[count2]
