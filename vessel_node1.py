@@ -402,6 +402,7 @@ def main():
 
             temp_enc = TS_list[ts_ID]['status']
             TS_ENC_temp.append(temp_enc)
+            print(temp_enc)
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
 
@@ -504,23 +505,23 @@ def main():
 
         t += 1
 
-        # if len(data.target_heading_list) != rospy.get_param('filter_length'):
-        #     data.target_heading_list.append(desired_heading)
+        if len(data.target_heading_list) != rospy.get_param('filter_length'):
+            data.target_heading_list.append(desired_heading)
         
-        # else:
-        #     del data.target_heading_list[0]
+        else:
+            del data.target_heading_list[0]
 
-        # sum_of_heading = 0
-        # real_target_heading = 0
-        # for i in data.target_heading_list:
-        #     sum_of_heading = sum_of_heading + i
+        sum_of_heading = 0
+        real_target_heading = 0
+        for i in data.target_heading_list:
+            sum_of_heading = sum_of_heading + i
 
-        # if len(data.target_heading_list) >= 2:
-        #     if data.target_heading_list[len(data.target_heading_list)-1]*data.target_heading_list[len(data.target_heading_list)-2] < 0:
-        #         data.target_heading_list = [data.target_heading_list[-1]]
-        #         real_target_heading = desired_heading
-        #     else:
-        #         real_target_heading = sum_of_heading/len(data.target_heading_list)
+        if len(data.target_heading_list) >= 2:
+            if data.target_heading_list[len(data.target_heading_list)-1]*data.target_heading_list[len(data.target_heading_list)-2] < 0:
+                data.target_heading_list = [data.target_heading_list[-1]]
+                real_target_heading = desired_heading
+            else:
+                real_target_heading = sum_of_heading/len(data.target_heading_list)
 
         
 
@@ -540,7 +541,7 @@ def main():
             False, 
             0, 
             desired_spd, 
-            desired_heading,
+            real_target_heading,
             ]
 
         vis_pub_list = [

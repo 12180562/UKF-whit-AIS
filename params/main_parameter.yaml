@@ -171,9 +171,9 @@ min_targetSpeed : 0.95
 max_targetSpeed : 1.25
 num_targetSpeedCandidates : 3
 
-min_targetHeading_deg_local : -45.0
-max_targetHeading_deg_local: 45.0
-num_targetHeadingCandidates: 31
+min_targetHeading_deg_local : -30.0
+max_targetHeading_deg_local: 30.0
+num_targetHeadingCandidates: 21
 
 Kp : 2.0
 Ki : 0.0
@@ -187,14 +187,14 @@ ship3_index : 10
 # kalman filter parameter
 
 ukf_dt: 1
-ukf_angle_dt: 10
-ais_delay: 0.5
+ukf_angle_dt: 1
+ais_delay: 1
 ############################################
 # param for static_OB
 
 delta_t : 40
-detecting_radious : 100
-detecting_distance : 100
+detecting_radious : 100000
+detecting_distance : 99999
 space_number : 20
 
 # ==========================================+
@@ -225,7 +225,7 @@ shipInfo_all:
     target_speed : 7.0,  #[knots]
     initial_start_x : 150.0,    # [m]
     initial_start_y : 0.0,    # [m]
-    initial_start_U : 7.0,    # [knots] // 너무 작으면 발산함
+    initial_start_U : 10.0,    # [knots] // 너무 작으면 발산함
     initial_start_psi : 45,   # [deg]
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
@@ -239,7 +239,7 @@ shipInfo_all:
     target_speed : 6.0,       #[knots]
     initial_start_x : 150.0,    # [m]
     initial_start_y : 0.0,    # [m]
-    initial_start_U : 6.0,    # [knots]  // 너무 작으면 발산함
+    initial_start_U : 10.0,    # [knots]  // 너무 작으면 발산함
     initial_start_psi : 0,   # [deg]
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
@@ -287,13 +287,13 @@ waypoint_List: {
     # 300, 0
   ],
   wpts_y_ship2: [
-    # 150, -150
+    # -150, 150
     0.0,    50,      0.0,    50,   0.0,    -50,   0.0,  -50
     # 100.0, -100, 100.0, -100, 100.0, -100
     # 0, 0
   ],
   wpts_x_ship3: [
-    # 300, 0,
+    # 0, 300,
     200.0,  150.0,  100.0,  150.0,  150.0,  150.0,  150.0,  150.0
     # 330.0, 330.0, 330.0, 330.0, 330.0, 330.0, 
   ],
@@ -330,7 +330,7 @@ target_spd_List: {
 
   target_speed_ship3: [
     # 1.0, 1.0
-    1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+    1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
     # 1.0, 1.0,1.0, 1.0,1.0, 1.0,
     ],
 
