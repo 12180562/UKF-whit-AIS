@@ -9,7 +9,7 @@
     <!-- Define the vessels' initial condition at the `/params/main_parameter.yaml` -->
     <node pkg="kass_inha"  type="vessel_node1.py"  name="ship1_Node"  respawn="true" output="screen"/>
     <node pkg="kass_inha"  type="vessel_node2.py"  name="ship2_Node"  respawn="true" output="screen"/>
-    <node pkg="kass_inha"  type="vessel_node3.py"  name="ship3_Node"  respawn="true" />
+    <!-- <node pkg="kass_inha"  type="vessel_node3.py"  name="ship3_Node"  respawn="true" /> -->
     <!-- <node pkg="kass_inha"  type="vessel_node4.py"  name="ship4_Node"  respawn="true" /> 
     <node pkg="kass_inha"  type="vessel_node5.py"  name="ship5_Node"  respawn="true" /> -->
 

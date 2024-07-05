@@ -216,6 +216,9 @@ class VO_module:
         self.time_horizon = rospy.get_param('timeHorizon')
         self.rule = rospy.get_param('Portside_rule')     
 
+        
+        
+        
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
         """
         If all the velocity candiates are in collision cone it returns `True`. Otherwise, it returns `False`.
@@ -1677,7 +1680,7 @@ class VO_module:
                     RVOdata_all,
                     V_des,
                     )
-                # print("All vectors can not avoid the collision\n Find vector in collision cone")
+                print("All vectors can not avoid the collision\n Find vector in collision cone")
 
             # When no collision velocities
             elif isAllVelsAvoidable:
@@ -1686,7 +1689,7 @@ class VO_module:
                     velCandidates,
                     key= lambda v: np.linalg.norm(v - V_des),
                     )
-                # print("All vectors can avoid the collision")
+                print("All vectors can avoid the collision")
                 
             else:
                 # No strategy (only avoidance velocities)
@@ -1696,10 +1699,10 @@ class VO_module:
                     shipID_all=TS.keys(),
                     )
                 
-                selection_key = "inLeft"
+                selection_key = "inRight"
                 if nearest_status == "Port crossing" and nearest_DCPA <= 60 :
                     selection_key = "inRight"
-                    # print("Neareast ship is Port crossing situation. Avoid to left side")
+                    print("Neareast ship is Port crossing situation. Avoid to left side")
                 
 
                 #=========================================================+
@@ -1730,9 +1733,9 @@ class VO_module:
                     key= lambda v: np.linalg.norm(v - V_des),
                     )
                 
-                # if np.linalg.norm(vA_post - V_des) < 0.1:
-                #     print("No collision risk")
-                #     print("Follow the vector to goal")
+                if np.linalg.norm(vA_post - V_des) < 0.1:
+                    print("No collision risk")
+                    print("Follow the vector to goal")
 
         return vA_post 
 
