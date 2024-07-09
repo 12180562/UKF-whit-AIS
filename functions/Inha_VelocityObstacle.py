@@ -1680,7 +1680,7 @@ class VO_module:
                     RVOdata_all,
                     V_des,
                     )
-                print("All vectors can not avoid the collision\n Find vector in collision cone")
+                # print("All vectors can not avoid the collision\n Find vector in collision cone")
 
             # When no collision velocities
             elif isAllVelsAvoidable:
@@ -1689,7 +1689,7 @@ class VO_module:
                     velCandidates,
                     key= lambda v: np.linalg.norm(v - V_des),
                     )
-                print("All vectors can avoid the collision")
+                # print("All vectors can avoid the collision")
                 
             else:
                 # No strategy (only avoidance velocities)
@@ -1702,7 +1702,7 @@ class VO_module:
                 selection_key = "inRight"
                 if nearest_status == "Port crossing" and nearest_DCPA <= 60 :
                     selection_key = "inRight"
-                    print("Neareast ship is Port crossing situation. Avoid to left side")
+                    # print("Neareast ship is Port crossing situation. Avoid to left side")
                 
 
                 #=========================================================+
@@ -1734,9 +1734,10 @@ class VO_module:
                     )
                 
                 if np.linalg.norm(vA_post - V_des) < 0.1:
-                    print("No collision risk")
-                    print("Follow the vector to goal")
-
+                    # print("No collision risk")
+                    # print("Follow the vector to goal")
+                    pass
+                
         return vA_post 
 
     def __extract_RVO_data(self, OS, TS):

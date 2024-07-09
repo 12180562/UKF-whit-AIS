@@ -8,7 +8,7 @@ from functions.Inha_DataProcess import Inha_dataProcess
 
 from udp_col_msg.msg import col, vis_info, cri_info, VO_info, static_OB_info
 from udp_msgs.msg import frm_info, group_wpts_info, wpt_idx_os, group_boundary_info
-from ctrl_msgs.msg import ctrl_output_pknu
+# from ctrl_msgs.msg import ctrl_output_pknu
 
 from math import sqrt, atan2
 from numpy import rad2deg
@@ -264,13 +264,13 @@ def main():
         
         if len(data.ship_ID) == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            # print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
+            print("========= Waiting for `/frm_info` topic subscription in {}=========".format(node_Name))
             rate.sleep()
             continue
 
         if data.len_waypoint_info == 0:
             ## 아직 초기값이 들어오지 않은 상태라면 return 시켜 버림 
-            # print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
+            print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
             rate.sleep()
             continue
 
@@ -402,7 +402,7 @@ def main():
 
             temp_enc = TS_list[ts_ID]['status']
             TS_ENC_temp.append(temp_enc)
-            print(temp_enc)
+            # print(temp_enc)
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
 

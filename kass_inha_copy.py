@@ -5,8 +5,6 @@ from numpy import rad2deg
 import numpy as np
 import pymap3d as pm
 
-
-
 class CRI:
     def __init__(self, latitude, longitude, latOfObject, longOfObject, cog, cogOfObject, sog, sogOfObject, parameter):
     # def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt):
@@ -217,7 +215,6 @@ class CRI:
             else:
                 return "Overtaking"
 
-
         elif 22.5 < RB <= 90:
             if 157.5 <= HAD <= 202.5:
                 return "Head-on"
@@ -228,7 +225,6 @@ class CRI:
             else:
                 return "Overtaking"
 
-
         elif 90 < RB <= 112.5:
             if 67.5 <= HAD < 202.5:
                 return "Safe"
@@ -237,7 +233,6 @@ class CRI:
             else:
                 return "Overtaking"
 
-
         elif 247.5 <= RB < 270:
             if 157.5 <= HAD <= 292.5:
                 return "Safe"
@@ -245,7 +240,6 @@ class CRI:
                 return "Port crossing"
             else:
                 return "Overtaking"
-
 
         elif 270 <= RB < 337.5:
             if 157.5 <= HAD <= 202.5:   
@@ -333,7 +327,6 @@ class CRI:
         else:
             result = sqrt(pow(Rf,2)/(pow(sin(RB),2) + pow(cos(RB),2) * (pow(Rf,2)/pow(Rp,2))))
         return result
-    
 
 class Inha_dataProcess:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
@@ -451,7 +444,7 @@ class Inha_dataProcess:
         return V_x, V_y
 
     def waypoint_generator(self, OS, V_selected):
-  
+
         wp_x = []
         wp_y = []
         OS_X = np.array([OS['Pos_X'], OS['Pos_Y']])
@@ -539,7 +532,6 @@ class Inha_dataProcess:
 
         return TS_list
 
-
 class VO_module:
     def __init__(self, parameter):
         # NOTE: It is not clear what min and max of speed could be.
@@ -561,8 +553,7 @@ class VO_module:
         self.rule = parameter['Portside_rule']
         self.errorCode = None
         self.error = False
-        
-        
+
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
         for vel_annotated in vel_all_annotated:
             isVelCollidable = False
@@ -587,7 +578,6 @@ class VO_module:
 
         return True
 
-    
     def __remove_annotation(self, vel_annotated_all):
         vels = []
         

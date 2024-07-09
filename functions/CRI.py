@@ -288,7 +288,7 @@ class CRI:
         return s, t
 
     def ship_domain(self):
-        if self.Vo == 0.0: 
+        if self.Vo <= 0.0: 
             self.Vo = 0.1
 
         KAD = pow(10, (0.3591 * log10(self.Vo) + 0.0952))  ## 논문에서 보면 지수함수를 사용

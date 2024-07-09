@@ -1,4 +1,4 @@
-# Install script for directory: /home/phlyoo/catkin_ws/src/kass_inha
+# Install script for directory: /home/ubuntu/catkin_ws/src/kass_inha
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -56,7 +56,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/usr/local" TYPE PROGRAM FILES "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/_setup_util.py")
+file(INSTALL DESTINATION "/usr/local" TYPE PROGRAM FILES "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/_setup_util.py")
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
@@ -68,7 +68,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/usr/local" TYPE PROGRAM FILES "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/env.sh")
+file(INSTALL DESTINATION "/usr/local" TYPE PROGRAM FILES "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/env.sh")
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
@@ -81,8 +81,8 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
 file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES
-    "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/setup.bash"
-    "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/local_setup.bash"
+    "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/setup.bash"
+    "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/local_setup.bash"
     )
 endif()
 
@@ -96,8 +96,8 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
 file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES
-    "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/setup.sh"
-    "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/local_setup.sh"
+    "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/setup.sh"
+    "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/local_setup.sh"
     )
 endif()
 
@@ -111,8 +111,8 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
 file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES
-    "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/setup.zsh"
-    "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/local_setup.zsh"
+    "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/setup.zsh"
+    "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/local_setup.zsh"
     )
 endif()
 
@@ -125,27 +125,27 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/.rosinstall")
+file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/.rosinstall")
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/kass_inha.pc")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/kass_inha.pc")
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/kass_inha/cmake" TYPE FILE FILES
-    "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/kass_inhaConfig.cmake"
-    "/home/phlyoo/catkin_ws/src/kass_inha/build/catkin_generated/installspace/kass_inhaConfig-version.cmake"
+    "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/kass_inhaConfig.cmake"
+    "/home/ubuntu/catkin_ws/src/kass_inha/build/catkin_generated/installspace/kass_inhaConfig-version.cmake"
     )
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/kass_inha" TYPE FILE FILES "/home/phlyoo/catkin_ws/src/kass_inha/package.xml")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/kass_inha" TYPE FILE FILES "/home/ubuntu/catkin_ws/src/kass_inha/package.xml")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/phlyoo/catkin_ws/src/kass_inha/build/gtest/cmake_install.cmake")
+  include("/home/ubuntu/catkin_ws/src/kass_inha/build/gtest/cmake_install.cmake")
 
 endif()
 
@@ -157,5 +157,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/phlyoo/catkin_ws/src/kass_inha/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/ubuntu/catkin_ws/src/kass_inha/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

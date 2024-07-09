@@ -67,8 +67,8 @@ set(kass_inha_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("TRUE" STREQUAL "TRUE")
-  set(kass_inha_SOURCE_PREFIX /home/phlyoo/catkin_ws/src/kass_inha)
-  set(kass_inha_DEVEL_PREFIX /home/phlyoo/catkin_ws/src/kass_inha/build/devel)
+  set(kass_inha_SOURCE_PREFIX /home/ubuntu/catkin_ws/src/kass_inha)
+  set(kass_inha_DEVEL_PREFIX /home/ubuntu/catkin_ws/src/kass_inha/build/devel)
   set(kass_inha_INSTALL_PREFIX "")
   set(kass_inha_PREFIX ${kass_inha_DEVEL_PREFIX})
 else()
@@ -110,7 +110,7 @@ if(NOT " " STREQUAL " ")
         message(FATAL_ERROR "Project 'kass_inha' specifies '${idir}' as an include dir, which is not found.  It does not exist in '${include}'.  ${_report}")
       endif()
     else()
-      message(FATAL_ERROR "Project 'kass_inha' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/phlyoo/catkin_ws/src/kass_inha/${idir}'.  ${_report}")
+      message(FATAL_ERROR "Project 'kass_inha' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/ubuntu/catkin_ws/src/kass_inha/${idir}'.  ${_report}")
     endif()
     _list_append_unique(kass_inha_INCLUDE_DIRS ${include})
   endforeach()
@@ -154,7 +154,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/phlyoo/catkin_ws/src/kass_inha/build/devel/lib;/home/phlyoo/catkin_ws/devel/lib;/opt/ros/melodic/lib)
+    foreach(path /home/ubuntu/catkin_ws/src/kass_inha/build/devel/lib;/home/ubuntu/catkin_ws/devel/lib;/opt/ros/noetic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
@@ -211,7 +211,7 @@ foreach(depend ${depends})
   _unpack_libraries_with_build_configuration(kass_inha_LIBRARIES ${kass_inha_LIBRARIES})
 
   _list_append_unique(kass_inha_LIBRARY_DIRS ${${kass_inha_dep}_LIBRARY_DIRS})
-  list(APPEND kass_inha_EXPORTED_TARGETS ${${kass_inha_dep}_EXPORTED_TARGETS})
+  _list_append_deduplicate(kass_inha_EXPORTED_TARGETS ${${kass_inha_dep}_EXPORTED_TARGETS})
 endforeach()
 
 set(pkg_cfg_extras "")
