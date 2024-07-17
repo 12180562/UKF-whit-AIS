@@ -11,7 +11,7 @@ from udp_msgs.msg import frm_info
 import numpy as np
 import rospy
 from math import sqrt
-
+from collections import deque
 from filterpy.kalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
     
 class UKF:
@@ -20,7 +20,8 @@ class UKF:
         self.OS_pub = rospy.Publisher('/frm_info', frm_info, queue_size=10)
 
         self.dt = rospy.get_param('ukf_dt')  # 샘플링 시간
-        self.mmg_dt = rospy.get_param("mmg_dt")    
+        self.mmg_dt = rospy.get_param("mmg_dt")
+        self.window_size = rospy.get_param("window_size")
         self.last_measurement = None
         self.last_heading = None
         self.ukf_initialized = False
@@ -30,6 +31,8 @@ class UKF:
         self.Vel_U  = (0.00001, 0.00001, 0.00001)
         self.delta_deg = (0.00001, 0.00001, 0.00001)
         self.Heading = (0.00001, 0.00001, 0.00001)
+        # 이동평균 결과를 저장할 리스트
+        self.averages = [0,0,0,0]
 
         self.ship_ID = [0,0,0]
         self.shipName = shipName
@@ -87,14 +90,14 @@ class UKF:
         Kappa (κ):
         kappa는 보통 0 또는 3-n (여기서 n은 상태 변수의 차원)으로 설정됩니다. kappa는 시그마 포인트 생성시 중심 포인트의 가중치를 조정합니다.
         kappa를 조정함으로써 필터의 안정성과 정확성을 향상시킬 수 있습니다. 특히, kappa를 사용하여 비선형 시스템의 특성을 더 잘 반영할 수 있습니다.'''
-        sigma_points = MerweScaledSigmaPoints(n=4, alpha=0.1, beta=2., kappa=0)
+        sigma_points = MerweScaledSigmaPoints(n=4, alpha=0.1, beta=2., kappa=12)
         self.ukf = UnscentedKalmanFilter(dim_x=4, dim_z=4, dt=self.dt, fx=self.state_transition, hx=self.measurement_function, points=sigma_points)
         self.ukf.x = np.array([0., 0., 0., 0.])  # 초기 상태 추정치
-        self.ukf.P = np.eye(4) * 1.  # 초기 공분산 행렬
+        self.ukf.P = np.eye(4) * 10000.  # 초기 공분산 행렬
         # self.ukf.P *= 10  # 초기 공분산 행렬
 
-        self.ukf.R = np.eye(4) * 1.  # 측정 노이즈
-        self.ukf.Q = np.eye(4) * 1.  # 프로세스 노이즈
+        self.ukf.R = np.eye(4) * .5  # 측정 노이즈
+        self.ukf.Q = np.eye(4) * .5  # 프로세스 노이즈
 
         # Get the initial states
         paramStr_shipID = "shipInfo_all/" + self.shipName + "_info/ship_ID"
@@ -132,20 +135,6 @@ class UKF:
             )
 
     def state_transition(self, x, dt):
-        # angle_dt = rospy.get_param('ukf_angle_dt')  # 각속도 조정 파라미터
-
-        # if self.last_heading is not None:
-        #     heading_change = x[3] - self.last_heading
-        #     if heading_change > 180:
-        #         heading_change -= 360
-        #     elif heading_change < -180:
-        #         heading_change += 360
-        #     angle_velocity = heading_change / angle_dt
-        #     a = self.last_heading
-        #     a += angle_velocity
-        # else:
-        #     a = x[3]
-        # print(self.shipName,x[0],x[1],x[2],x[3])
         self.shipState_after_predict[self.shipName] = {**{'shipID': self.ship_id} , **self.shipInstance_all[self.shipName].moving_ships(x[3], abs(x[2]))}
 
         x_new = np.zeros_like(x)
@@ -194,23 +183,36 @@ class UKF:
             self.ukf.update(measurement)
 
             # self.predicted_values = []
-        print(self.shipName ,self.predicted_values)
+        # print(self.shipName ,self.predicted_values)
         kalman_gain = self.ukf.K
         # rospy.loginfo("Kalman Gain: %s", kalman_gain)
         # rospy.loginfo("Covariance Matrix: %s", self.ukf.P)
 
-        # 4개의 그룹을 위한 리스트 초기화
-        averages = [[] for _ in range(4)]
+        x_window = deque(maxlen=self.window_size)
+        y_window = deque(maxlen=self.window_size)
+        speed_window = deque(maxlen=self.window_size)
+        heading_window = deque(maxlen=self.window_size)
 
-        # 각 인덱스 그룹별로 요소를 분류
-        for i in range(len(self.predicted_values)):
-            group_index = i % 4
-            averages[group_index].append(self.predicted_values[i])
-
-        # 각 그룹의 평균 계산
-        average_results = [sum(group) / 4 for group in averages]
-        return average_results
-        # return self.ukf.x
+        for i in range(0, len(self.predicted_values), 4):
+            x, y, speed, heading = self.predicted_values[i:i+4]
+            
+            x_window.append(x)
+            y_window.append(y)
+            speed_window.append(speed)
+            heading_window.append(heading)
+            
+            current_x_avg = sum(x_window) / len(x_window)
+            current_y_avg = sum(y_window) / len(y_window)
+            current_speed_avg = sum(speed_window) / len(speed_window)
+            current_heading_avg = sum(heading_window) / len(heading_window)
+            
+            self.averages[0] = current_x_avg
+            self.averages[1] = current_y_avg
+            self.averages[2] = current_speed_avg
+            self.averages[3] = current_heading_avg
+            # print(self.ukf.x)
+        # return self.averages
+        return self.ukf.x
     
 def main():
     rospy.init_node('ship_predict', anonymous=False)
@@ -222,14 +224,10 @@ def main():
 
     shipsInfo = InfoLoader(rospy.get_param("shipInfo_all"))
 
-    
-
     first_loop = True  # 첫 번째 루프 실행 여부를 추적하는 변수
     predicted_state = []
 
-
     start_time = rospy.Time.now()
-
 
     while not rospy.is_shutdown():
 
@@ -294,7 +292,7 @@ def main():
                 delta_deg_all, 
                 start_time, 
             )
-
+        print(uncertain_ships['ship3'].ukf.x)
         rate.sleep()
         
     rospy.spin()

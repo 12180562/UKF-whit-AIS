@@ -1699,9 +1699,9 @@ class VO_module:
                     shipID_all=TS.keys(),
                     )
                 
-                selection_key = "inRight"
-                if nearest_status == "Port crossing" and nearest_DCPA <= 60 :
-                    selection_key = "inRight"
+                selection_key = "inLeft"
+                # if nearest_status == "Port crossing" and nearest_DCPA <= 60 :
+                #     selection_key = "inRight"
                     # print("Neareast ship is Port crossing situation. Avoid to left side")
                 
 

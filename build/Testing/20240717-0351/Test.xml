@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20240717-0351-Experimental"
+	Name="ubuntu-VivoBook-ASUSLaptop-X512DA-A512DA"
+	Generator="ctest-3.16.3"
+	CompilerName="/usr/bin/c++"
+	CompilerVersion="9.4.0"
+	OSName="Linux"
+	Hostname="ubuntu-VivoBook-ASUSLaptop-X512DA-A512DA"
+	OSRelease="5.15.0-113-generic"
+	OSVersion="#123~20.04.1-Ubuntu SMP Wed Jun 12 17:33:13 UTC 2024"
+	OSPlatform="x86_64"
+	Is64Bits="1"
+	VendorString="AuthenticAMD"
+	VendorID="Advanced Micro Devices"
+	FamilyID="23"
+	ModelID="24"
+	ProcessorCacheSize="512"
+	NumberOfLogicalCPU="8"
+	NumberOfPhysicalCPU="4"
+	TotalVirtualMemory="2047"
+	TotalPhysicalMemory="9885"
+	LogicalProcessorsPerPhysical="2"
+	ProcessorClockFrequency="2800.97"
+	>
+	<Testing>
+		<StartDateTime>Jul 17 10:30 CDT</StartDateTime>
+		<StartTestTime>1721230255</StartTestTime>
+		<TestList/>
+		<EndDateTime>Jul 17 10:30 CDT</EndDateTime>
+		<EndTestTime>1721230255</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>
