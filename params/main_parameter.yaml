@@ -154,8 +154,8 @@ mmg_dt: 1
 ############################################
 
 ########### 1852/110 ###########
-SD_param: 5
-cri_param: 1000
+SD_param: 3
+cri_param: 500
 Portside_rule: True
 
 ############################################
@@ -171,9 +171,9 @@ min_targetSpeed : 0.95
 max_targetSpeed : 1.25
 num_targetSpeedCandidates : 3
 
-min_targetHeading_deg_local : -30.0
-max_targetHeading_deg_local: 30.0
-num_targetHeadingCandidates: 21
+min_targetHeading_deg_local : -45.0
+max_targetHeading_deg_local: 45.0
+num_targetHeadingCandidates: 31
 
 Kp : 2.0
 Ki : 0.0
@@ -275,7 +275,7 @@ shipInfo_all:
 
 waypoint_List: {
   wpts_x_ship1: [
-    0.0, 300.0,
+    300.0, 0.0,
   ],  
   wpts_y_ship1: [
     0.0, 0.0,
