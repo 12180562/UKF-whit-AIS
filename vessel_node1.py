@@ -3,7 +3,6 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
-# from functions.Inha_VelocityObstacle2 import VO_module2
 from functions.Inha_DataProcess import Inha_dataProcess
 
 from udp_col_msg.msg import col, vis_info, cri_info, VO_info, static_OB_info

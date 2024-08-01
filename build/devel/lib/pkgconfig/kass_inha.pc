@@ -1,4 +1,4 @@
-prefix=/home/ubuntu/catkin_ws/src/kass_inha/build/devel
+prefix=/home/phlyoo/catkin_ws/src/kass_inha/build/devel
 
 Name: kass_inha
 Description: Description of kass_inha

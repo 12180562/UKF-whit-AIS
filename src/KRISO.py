@@ -111,7 +111,7 @@ def main():
     # print("발행 주기(초):", publish_interval.to_sec())
     # publish_interval = rospy.Duration(random.uniform(1.0, 5.0))  # 발행 주기 랜덤
 
-    latest_desired_Heading = [0] * 3
+    latest_desired_Heading = shipState_all["ship2"]["psi_deg"]
     latest_shipState_all[shipName] = []
     first_publish = True
     diff = 0.0
@@ -166,34 +166,37 @@ def main():
                 # print(desired_Heading)
 
                 if (current_time - last_publish_time >= publish_interval) or first_publish:
-                    if current_index - 1 >= len(latest_desired_Heading):
-                        latest_desired_Heading.append(desired_Heading)
-                    else:
-                        latest_desired_Heading[current_index - 1] = desired_Heading
+                    # if current_index - 1 >= len(latest_desired_Heading):
+                    #     latest_desired_Heading.append(desired_Heading)
+                    # else:
+                    #     latest_desired_Heading[current_index - 1] = desired_Heading
+                    # latest_shipState_all[shipName] = shipState_all[shipName]
                     latest_shipState_all[shipName] = shipState_all[shipName]
-                    print("갱신")
+                    # print("갱신")
                     if current_index == total_ships:
                         last_publish_time = current_time  # 마지막 발행 시간을 현재 시간으로 업데이트
-                        
+                # print(latest_desired_Heading)     
                 # 차이 계산
-                diff = latest_desired_Heading[current_index - 1] - desired_Heading
+                    latest_desired_Heading = desired_Heading
+                diff = latest_desired_Heading - desired_Heading
                 if diff > 180:
                     diff -= 360
                 elif diff < -180:
                     diff += 360
                 else:
                     diff = diff
-                print(diff)
+                # print(diff)
 
-                if abs(diff) >= 45:
+                if abs(diff) >= 0.7:
                     shipID = shipState_all[shipName]['shipID']
                     desired_Heading = kriso.path_out_inha_dic[f'{shipID}'].targetCourse
                     desired_spd = kriso.path_out_inha_dic[f'{shipID}'].targetSpeed
                     shipState_all[shipName] = {**{'shipID': shipID} , **shipInstance_all[shipName].moving_ships(desired_Heading, desired_spd)}
-                    print("헤딩 변화")
+                    # latest_desired_Heading = desired_Heading
+                    # print("헤딩 변화")
                 else:
                     shipState_all[shipName] = latest_shipState_all[shipName]
-                    print("지연")
+                    # print("지연")
 
         first_publish = False  # 첫 번째 발행이 끝났으니 플래그를 False로 설정
         

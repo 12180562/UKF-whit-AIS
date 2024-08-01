@@ -241,7 +241,7 @@ def main():
         shipID_all = [shipState_after_predict[shipName]['shipID'] for shipName in shipsInfo.shipName_all]
         Pos_X_all = [shipState_after_predict[shipName]['X'] for shipName in shipsInfo.shipName_all]
         Pos_Y_all = [shipState_after_predict[shipName]['Y'] for shipName in shipsInfo.shipName_all]
-        Vel_U_all = [shipState_after_predict[shipName]['U'] for shipName in shipsInfo.shipName_all]
+        Vel_U_all = [shipState_after_predict[shipName]['U']+0.13 for shipName in shipsInfo.shipName_all]
         Heading_deg_all = [shipState_after_predict[shipName]['psi_deg'] for shipName in shipsInfo.shipName_all]
         delta_deg_all = [shipState_after_predict[shipName]['delta_deg'] for shipName in shipsInfo.shipName_all]
 
