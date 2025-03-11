@@ -5,7 +5,8 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
 from functions.Inha_DataProcess import Inha_dataProcess
-from functions.Ais_ukf import UKF
+# from functions.ukf_befor import UKF
+from functions.ukf import UKF
 
 from udp_col_msg.msg import col, vis_info, cri_info, VO_info
 from udp_msgs.msg import frm_info, group_wpts_info
@@ -266,8 +267,8 @@ def main():
     ukf_dt = rospy.get_param('ukf_dt')
 
     last_publish_time = rospy.Time.now()  # 마지막으로 발행한 시간을 초기화
-    delay = rospy.get_param('ais_delay')
-    publish_interval = rospy.Duration(delay)  # 발행 주기를 5초로 설정
+    AIS_delay = rospy.get_param('ais_delay')
+    publish_interval = rospy.Duration(AIS_delay)  # 발행 주기를 5초로 설정
     
     ukf_instance = {}
     TS_list_ori={}  
@@ -276,7 +277,8 @@ def main():
 
 
     predicted_state = []
-    previous_input_list = {}
+    AIS_previous_input_list = {}
+    radar_previous_input_list = {}
 
     X_diff = {}
     Y_diff = {}
@@ -288,6 +290,10 @@ def main():
     first_loop = True
     first_publish = True
     heading_diff = 0.0
+
+    radar_delay = rospy.get_param('radar_delay')
+    radar_update_interval = rospy.Duration(radar_delay)  # 2.5초
+    radar_last_update_time = rospy.Time.now()
 
 #####################################################################################################################
 
@@ -324,8 +330,7 @@ def main():
         # TODO : why do this?
 
 # UKF part
-#####################################################################################################################
-        
+#####################################################################################################################            
         # print("TS_list_ori: ", TS_list_ori)
         if first_loop:
             for ts_ID in TS_ID:
@@ -334,11 +339,20 @@ def main():
             first_loop = False
 
         for ts_ID in TS_ID:
+            if (current_time - radar_last_update_time >= radar_update_interval) or first_publish:
+                relative_distance = sqrt((TS_list_ori[ts_ID]["Pos_X"]-OS_list["Pos_X"])**2 + \
+                                (TS_list_ori[ts_ID]["Pos_Y"]-OS_list["Pos_Y"])**2)
+                relative_bearing = rad2deg(atan2(TS_list_ori[ts_ID]["Pos_Y"]-OS_list["Pos_Y"], \
+                                            TS_list_ori[ts_ID]["Pos_X"]-OS_list["Pos_X"]))
+                radar_last_update_time = current_time
+
+            print(relative_distance, relative_bearing)
+
             if(current_time - last_publish_time >= publish_interval) or first_publish:
                 TS_list_del[ts_ID] = TS_list_ori[ts_ID]
                 last_publish_time = current_time
-                print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-
+                print("-------------Infromation Update-------------")
+            
             heading_diff = TS_list_del[ts_ID]['Heading'] - TS_list_ori[ts_ID]['Heading']
 
             if heading_diff < 0:
@@ -355,22 +369,43 @@ def main():
         first_publish = False
         # print("delay: ",TS_list_del)
 
-        input_list = []
+        AIS_input_list = []
+        radar_input_list = []
         TS_list_pre = copy.deepcopy(TS_list_ori)
+
+        os_pos = np.array([OS_list["Pos_X"], OS_list["Pos_Y"]])
         
         for ts_ID in TS_ID:
-            input_list.append(TS_list_del[ts_ID]['Pos_X'])
-            input_list.append(TS_list_del[ts_ID]['Pos_Y'])
-            input_list.append(TS_list_del[ts_ID]['Vel_U'])
-            input_list.append(TS_list_del[ts_ID]['Heading'])
+            AIS_input_list.append(TS_list_del[ts_ID]['Pos_X'])
+            AIS_input_list.append(TS_list_del[ts_ID]['Pos_Y'])
+            AIS_input_list.append(TS_list_del[ts_ID]['Vel_U'])
+            AIS_input_list.append(TS_list_del[ts_ID]['Heading'])
+            radar_input_list.append(relative_distance)
+            radar_input_list.append(relative_bearing)
 
-            if ts_ID in previous_input_list and previous_input_list[ts_ID] == input_list:
-                predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
+            predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
 
+
+            if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
+                pass
             else:
-                predicted_state, covariance= ukf_instance[ts_ID].update(input_list, ukf_dt)
+                predicted_state, covariance= ukf_instance[ts_ID].update_AIS(AIS_input_list)
 
-            previous_input_list[ts_ID] = input_list.copy()
+            if ts_ID in radar_previous_input_list and radar_previous_input_list[ts_ID] == radar_input_list:
+                pass
+            else:
+                predicted_state, covariance= ukf_instance[ts_ID].update_Radar(radar_input_list, os_pos)
+
+# --------------------------------------- Only AIS and change import----------------------------------------------------------
+            # if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
+            #     predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
+
+            # else:
+            #     predicted_state, covariance= ukf_instance[ts_ID].update(AIS_input_list, ukf_dt)
+# -----------------------------------------------------------------------------------------------------------
+
+            AIS_previous_input_list[ts_ID] = AIS_input_list.copy()
+            radar_previous_input_list[ts_ID] = radar_input_list.copy()
 
             update_keys = ['Pos_X', 'Pos_Y', 'Vel_U', 'Heading']
 
@@ -386,17 +421,17 @@ def main():
             pos_err[ts_ID] = np.sqrt(X_diff[ts_ID]**2 + Y_diff[ts_ID]**2)
             cov[ts_ID] = np.diagonal(covariance)
 
-            # print("\n")
-            # print(pos_err[ts_ID])
+            print("\n")
+            print(pos_err[ts_ID])
             # print("\n")
             # print(cov[ts_ID])
             
-            # TS_list = TS_list_ori
+            TS_list = TS_list_ori
             # TS_list = TS_list_del
-            TS_list = TS_list_pre
+            # TS_list = TS_list_pre
 #####################################################################################################################
-        print(TS_list)
-        print("\n")
+        # print(TS_list)
+        # print("\n")
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
         OS_list['V_x'] = OS_Vx
