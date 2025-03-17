@@ -5,7 +5,7 @@ from numpy import deg2rad,rad2deg
 # import rospy
 
 class CRI:
-    def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt, ship_scale):
+    def __init__(self, L, B, Xo, Yo, Xt, Yt, Co, Ct, Vo, Vt, ship_scale, x_var = 0, y_var = 0):
         self.ship_scale = ship_scale
         self.L = L / self.ship_scale    #타선의 길이 [m] from pram
         self.B = B / self.ship_scale     #타선의 폭 [m]
@@ -19,6 +19,9 @@ class CRI:
         self.Vt = Vt    #타선 속도   [knots]
         self.ratio = 1852 / self.ship_scale #1852/110  #1 해리는 1852m
         # self.ratio = (12*self.L) / self.ship_scale #1852/110  #1 해리는 1852m
+        self.x_var = sqrt(x_var)
+        self.y_var = sqrt(y_var)
+        self.mapped_radius = 0
 
     def RD(self):
         '''Relative Distance, 자선과 타선 사이의 상대 거리'''
@@ -87,26 +90,48 @@ class CRI:
         return result
 
     def tcpa(self):
-        result = (self.RD() * cos(self.RC() - self.TB() - pi))/self.RV()
+        # dx = self.Xt - self.Xo
+        # dy = self.Yt - self.Yo
+        # vrel_dot = self.Vrx() ** 2 + self.Vry() ** 2
+        # if vrel_dot == 0:
+        #     return None
+        # result = -(dx * self.Vrx() + dy * self.Vry()) / vrel_dot
+        v_r = self.RV()
+        if v_r == 0:
+            result = 0
+        
+        numerator = abs((self.Xo - self.Xt) * self.Vrx() + (self.Yo - self.Yt) * self.Vry())      
+        result = numerator / (v_r ** 2)  
+
         return result
 
     def dcpa(self):
-        result = sqrt(pow(self.RD(), 2) + pow((self.tcpa() * self.RV()), 2))
+        # dx = self.Xt - self.Xo
+        # dy = self.Yt - self.Yo
+        # x_rel = dx + self.Vrx() * self.tcpa()
+        # y_rel = dy + self.Vry() * self.tcpa()
+        # result = sqrt(x_rel**2 + y_rel**2)
+        v_r = self.RV()
+        if v_r == 0:
+            result = self.RD()
+        numerator = abs((self.Xo - self.Xt) * self.Vrx() - (self.Yo - self.Yt) * self.Vry())
+        result = numerator / v_r
+        
         return result
 
     def d1(self):
         '''Safe approaching distance'''
-        RB = np.rad2deg(self.RB())
-        if 0 <= RB < 112.5:
-            result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
-        elif 112.5 <= RB < 180:
-            result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
-        elif 180 <= RB < 247.5:
-            result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
-        else:
-            result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
-        # result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
-        # print(self.RB())
+        # RB = np.rad2deg(self.RB())
+        # if 0 <= RB < 112.5:
+        #     result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
+        # elif 112.5 <= RB < 180:
+        #     result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
+        # elif 180 <= RB < 247.5:
+        #     result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
+        # else:
+        #     result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
+        result =  15 * self.L
+        # print("d1 : ", result)
         return result
 
     def d2(self):
@@ -131,7 +156,8 @@ class CRI:
 
     def D2(self):
         '''Distance of last action'''
-        result = self.ratio * (1.7 * cos(self.RB() - np.deg2rad(19))) + sqrt(4.4 + 2.89 * pow(cos(self.RB() - np.deg2rad(19)), 2))
+        # result = self.ratio * (1.7 * cos(self.RB() - np.deg2rad(19))) + sqrt(4.4 + 2.89 * pow(cos(self.RB() - np.deg2rad(19)), 2))
+        result = 2 * self.D1()
         return result
 
     def UD(self):
@@ -288,20 +314,25 @@ class CRI:
         return s, t
 
     def ship_domain(self):
-        if self.Vo <= 0.0: 
-            self.Vo = 0.1
+        if self.Vt <= 0.0: 
+            self.Vt = 0.1
 
-        KAD = pow(10, (0.3591 * log10(self.Vo) + 0.0952))  ## 논문에서 보면 지수함수를 사용
-        KDT = pow(10, (0.5411 * log10(self.Vo) - 0.0795))  ## 논문에서 보면 지수함수를 사용 -> 
+        KAD = pow(10, (0.3591 * log10(self.Vt) + 0.0952))  ## 논문에서 보면 지수함수를 사용
+        KDT = pow(10, (0.5411 * log10(self.Vt) - 0.0795))  ## 논문에서 보면 지수함수를 사용
         AD = self.L * KAD
         DT = self.L * KDT
 
         s, t = self.CoE()
 
-        R_fore = self.L + (0.67 * (1 + s) * sqrt(pow(AD,2) + pow(DT/2,2)))
-        R_aft = self.L + (0.67 * sqrt(pow(AD,2) + pow(DT/2,2)))
-        R_stbd = self.B + DT * (1 + t)
-        R_port = self.B + (0.75 * DT * (1 + t))
+        # R_fore = self.L + (0.67 * (1 + s) * sqrt(pow(AD,2) + pow(DT/2,2)))
+        # R_aft = self.L + (0.67 * sqrt(pow(AD,2) + pow(DT/2,2)))
+        # R_stbd = self.B + DT * (1 + t)
+        # R_port = self.B + (0.75 * DT * (1 + t))
+
+        R_fore = (1 + 1.34 * sqrt(pow(KAD, 2) + pow(KDT / 2, 2))) * self.L
+        R_aft = (1 + 0.67 * sqrt(pow(KAD, 2) + pow(KDT / 2, 2))) * self.L
+        R_stbd = (0.2 + KDT) * self.L
+        R_port = (0.2 + 0.75*KDT) * self.L
 
         return R_fore, R_aft, R_stbd, R_port
 
@@ -324,9 +355,116 @@ class CRI:
         SD = self.ship_domain()
         result = SD[3]
         return result
+    
+    def SD_dist_yoo(self):
+        n_points = 360
+        self.var_scale = 1  # 10 넣으면 우측으로 갈곳 없음
+        Rf, Ra, Rs, Rp = self.Rf(), self.Ra(), self.Rs(), self.Rp()
+        rb = self.RB()
 
-    #Ship domain distance
-    def SD_dist(self):
+        # 도메인 스케일
+        Rf_scaled = self.var_scale * Rf
+        Ra_scaled = self.var_scale * Ra
+        Rs_scaled = self.var_scale * Rs
+        Rp_scaled = self.var_scale * Rp
+
+        boundary_points = []
+        # r_vals = []  # 각도별 r을 저장할 리스트
+
+        angles = np.linspace(0, 2 * pi, n_points, endpoint=False)
+
+        # sgn(x), sgn(y)는 현재 코드처럼 self.Xt, self.Yt 사용
+        sgnx = 1.0 if self.Xt >= 0 else -1.0
+        sgny = 1.0 if self.Yt >= 0 else -1.0
+
+        # 분모 계산은 각도와 무관하게 이 sgnx/sgny로 고정
+        denom_x = (1 + sgnx)*Rf_scaled - (1 - sgnx)*Ra_scaled
+        denom_y = (1 + sgny)*Rs_scaled - (1 - sgny)*Rp_scaled
+
+        # (Xt, Yt)에 대한 QSD (각도와 관계없이 동일)
+        QSD = (2*self.Xt/denom_x)**2 + (2*self.Yt/denom_y)**2
+        print("x_var : ",self.x_var)
+        print("y_var : ",self.y_var)
+        for th in angles:
+            cx = cos(th)
+            cy = sin(th)
+
+            A = (2*cx/denom_x)**2 + (2*cy/denom_y)**2
+            if A < 1e-14:
+                r = 0.0
+            else:
+                r = sqrt(1.0 / A)
+
+            X_ell = r*cx + self.Xt + self.x_var
+            Y_ell = r*cy + self.Yt + self.y_var
+
+            boundary_points.append((X_ell, Y_ell))
+            # r_vals.append(r)
+            if round(rb) == round(th):
+                # print("th : ",th)
+                # print("roundRB : ",round(rb))
+                self.mapped_radius = sqrt((X_ell-self.Xt)**2+(Y_ell-self.Yt)**2)
+            # print("mapped_radius : ", self.mapped_radius)
+        return np.array(boundary_points), self.mapped_radius
+    
+    def lb_rb(self):
+        boundary_pts, _ = self.SD_dist_yoo()
+
+        rel_bearings = []
+        for (bx, by) in boundary_pts:
+            dx = bx - self.Xo
+            dy = by - self.Yo
+            angle_rad = (atan2(dy, dx) + 2*pi) % (2*pi)
+            rel_bearings.append(angle_rad)
+
+        rel_bearings.sort()
+
+        extended = rel_bearings + [rel_bearings[0] + 2*pi]
+
+        max_gap = 0
+        pair_index = (0, 0)
+        N = len(rel_bearings)
+
+        for i in range(N):
+            for j in range(i+1, N):
+                diff = abs(rel_bearings[j] - rel_bearings[i])
+                if diff > pi:
+                    diff = 2*pi - diff
+                if diff > max_gap:
+                    max_gap = diff
+                    pair_index = (i, j)
+
+        angle_a = extended[pair_index[1]] % (2*pi)
+        angle_b = extended[pair_index[0]] % (2*pi)
+
+        d = (angle_b - angle_a + 2*pi) % (2*pi)
+
+        bisector = (angle_a + d/2) % (2*pi)
+
+        def relative_angle(angle, reference):
+            diff = (angle - reference + 2*pi) % (2*pi)
+            return diff
+
+        rel1 = relative_angle(angle_a, bisector)
+        rel2 = relative_angle(angle_b, bisector)
+
+        if rel1 > 0 and rel2 < 0:
+            left_bound_rad = angle_a
+            right_bound_rad = angle_b
+        elif rel1 < 0 and rel2 > 0:
+            left_bound_rad = angle_b
+            right_bound_rad = angle_a
+        else:
+            if abs(rel1) > abs(rel2):
+                left_bound_rad = angle_a if rel1 > 0 else angle_b
+                right_bound_rad = angle_b if rel1 > 0 else angle_a
+            else:
+                left_bound_rad = angle_b if rel2 > 0 else angle_a
+                right_bound_rad = angle_a if rel2 > 0 else angle_b
+
+        return left_bound_rad, right_bound_rad
+
+    def SD_dist_lee(self):
         RB = np.rad2deg(self.RB())
         Rf, Ra, Rs, Rp = self.Rf(), self.Ra(), self.Rs(), self.Rp()
         if 0 <= RB < 90:
@@ -339,14 +477,10 @@ class CRI:
             result = sqrt(pow(Rf,2)/(pow(sin(RB),2) + pow(cos(RB),2) * (pow(Rf,2)/pow(Rp,2))))
 
         return result
-    
-    # 선박 안전 영역을 4가지 방향에 대해서 계산
-    # 타선을 원점으로 하는 4개의 점이 생성됨
-    # 생성된 4개의 점을 순서쌍으로 만들고 자선과 두 점 사이의 각이 최대인 경우의 왼쪽 바운더리와 오른쪽 바운더리를 반환
-    # 아웃풋은 왼쪽 바운더리와 오른쪽 바운더리
-    def SD_dist_new(self):
-        Rf, Ra, Rs, Rp = self.Rf(), self.Ra(), self.Rs(), self.Rp()
 
+    def SD_dist_hyo(self):
+        Rf, Ra, Rs, Rp = self.Rf(), self.Ra(), self.Rs(), self.Rp()
+        
         param = 4
         Xot = self.Xt-self.Xo
         Yot = self.Yt-self.Yo

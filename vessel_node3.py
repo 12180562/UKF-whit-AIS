@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
@@ -7,7 +8,7 @@ from functions.Inha_DataProcess import Inha_dataProcess
 
 from udp_col_msg.msg import col, vis_info, cri_info, VO_info, static_OB_info
 from udp_msgs.msg import frm_info, group_wpts_info, wpt_idx_os, group_boundary_info
-from ctrl_msgs.msg import ctrl_output_pknu
+# from ctrl_msgs.msg import ctrl_output_pknu
 
 from math import sqrt, atan2
 from numpy import rad2deg
@@ -21,8 +22,7 @@ import rospkg
 class data_inNout:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
     def __init__(self):
-        # rospy.Subscriber('/frm_info', frm_info, self.OP_callback)
-        rospy.Subscriber('/AIS_data', frm_info, self.OP_callback)  
+        rospy.Subscriber('/frm_info', frm_info, self.OP_callback)
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
         # rospy.Subscriber('/static_OB_info', static_OB_info, self.static_OB_callback)
         # rospy.Subscriber('/wpts_idx_os_kriso', wpt_idx_os, self.wp_idx_callback)
@@ -100,15 +100,6 @@ class data_inNout:
         raw_psi = np.asanyarray(operation.m_fltHeading)
         self.Heading = raw_psi % 360
 
-    # def wp_idx_callback(self, idx):
-        # self.waypoint_idx = idx.m_idxWptOS
-        # self.waypoint_idx = idx.i_way[self.ship1_index]
-
-    # def static_OB_callback(self, static_OB):
-
-    #     self.static_obstacle_info = static_OB.data
-    #     self.static_point_info = static_OB.point
-
         ############################ for connect with KRISO format ##################################
 
     # def static_unavailable_callback(self, static_OB):
@@ -178,7 +169,6 @@ class data_inNout:
         inha.targetCourse = round(pub_list[11], 3)
         
         self.WP_pub.publish(inha)
-
 
     def vis_out(self, pub_list):
         vis = vis_info()
@@ -276,8 +266,6 @@ def main():
             print("========= Waiting for `/waypoint_info` topic subscription in {} =========".format(node_Name))
             rate.sleep()
             continue
-
-        startTime = time.time()
 
         inha = Inha_dataProcess(
             data.ship_ID,
@@ -409,26 +397,35 @@ def main():
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
 
             if distance <= rospy.get_param("detecting_distance"):
-                TS_list_copy[ts_ID] = TS_list[ts_ID]
-                TS_ID_copy.append(ts_ID)
-        # print(distance)
-        # print(TS_list)
+                if ts_ID not in TS_list_copy:
+                    TS_list_copy[ts_ID] = TS_list[ts_ID]
+                    encounterMMSI.append(ts_ID)
+                    # print(f"TS was detected at around OS: {ts_ID}")
+            else:
+                if ts_ID in TS_list_copy:
+                    del TS_list_copy[ts_ID]
+                    encounterMMSI.remove(ts_ID)
+                    # print(f"TS moved out of range: {ts_ID}")
+
+        TS_ID = encounterMMSI
+        TS_list = TS_list_copy
+
+        # print("distance : ", distance)
+        # print("DCPA: ", temp_DCPA)
         
-        if len(encounterMMSI) ==0 :
+        if len(encounterMMSI) == 0:
             encounter = False
-            encounterMMSI = []
-
-        # NOTE: `VO_update()` takes the majority of the computation time
-        # TODO: Reduce the computation time of `VO_update()`
-        # V_opt, VO_BA_all = Local_PP.VO_update(OS_list, TS_list_sort, static_OB, V_des, v_min)
+        else:
+            encounter = True
 
         ############################ for connect with KRISO format ##################################
 
-        # data.static_obstacle_info = data.static_available_info + data.static_unavailable_info
+        # TODO: Reduce the computation time for this part (~timeChckpt4_vesselNode)
+        desired_spd_list = []
+        desired_heading_list = []
 
-        ############################ for connect with KRISO format ##################################
-
-        V_selected, pub_collision_cone = Local_PP.VO_update(
+        if VO_operate:
+            V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 
             TS_list, 
             V_des, 
@@ -436,16 +433,6 @@ def main():
             data.static_point_info
             )
 
-        # TODO: Reduce the computation time for this part (~timeChckpt4_vesselNode)
-        desired_spd_list = []
-        desired_heading_list = []
-
-        # NOTE: Only one step ahead
-        wp = inha.waypoint_generator(OS_list, V_selected, dt)
-        wp_x = wp[0]
-        wp_y = wp[1]
-
-        if VO_operate:
             eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
             temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
             desired_spd_list.append(temp_spd)
@@ -455,6 +442,12 @@ def main():
         
         else:
             V_selected = V_des
+
+            # NOTE: Only one step ahead
+            wp = inha.waypoint_generator(OS_list, V_selected, dt)
+            wp_x = wp[0]
+            wp_y = wp[1]
+
             eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
             temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
             desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
@@ -563,6 +556,7 @@ def main():
         # 앞서 정의한 `waypint 도달 유무 확인용 flag`를 `True`로 바꾸어 `while`문 종료
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             targetspdIndex = waypointIndex
+            # if waypointIndex == len(wpts_x_os) - 1:
             # data.waypoint_idx = (data.waypoint_idx + 1) % len(wpts_x_os)  # kriso 
             # data.waypoint_idx = (int(data.waypoint_idx) + 1) % len(wpts_x_os) # 부경대
 
@@ -570,6 +564,7 @@ def main():
             # waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             # targetspdIndex = waypointIndex
 
+                # rospy.signal_shutdown("종료")
         rate.sleep()
         
         # print("Loop end time: ", time.time() - startTime)

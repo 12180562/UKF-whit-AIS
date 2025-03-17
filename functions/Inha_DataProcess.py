@@ -56,6 +56,10 @@ class Inha_dataProcess:
                     'Pos_Y' : self.Pos_Y[i],
                     'Vel_U' : self.Vel_U[i],
                     'Heading' : self.Heading[i],
+                    'x_var' : 0, 
+                    'y_var' : 0, 
+                    'U_var' : 0, 
+                    'theta_var' : 0
                     }
 
         # print(self.ship_dic)
@@ -101,6 +105,8 @@ class Inha_dataProcess:
             OS['Vel_U'],
             TS['Vel_U'],
             rospy.get_param("shipInfo_all/ship1_info/ship_scale"),
+            TS['x_var'], 
+            TS['y_var']
         )
 
         RD = cri.RD()
@@ -130,13 +136,15 @@ class Inha_dataProcess:
         Ra = cri.Ra()
         Rs = cri.Rs()
         Rp = cri.Rp()
-        SD_dist = cri.SD_dist()
-        # rb, lb = cri.SD_dist_new()
+        _, SD_dist = cri.SD_dist_yoo()
+        # SD_dist = cri.SD_dist_lee()
+        # rb, lb = cri.SD_dist_hyo()
+        lb, rb = cri.lb_rb()
 
         cri_value = cri.CRI()
 
-        # return RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value, rb,lb
-        return RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
+        return RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value, rb,lb
+        # return RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
     def U_to_vector_V(self, U, deg):
         ''' Heading angle을 지구좌표계 기준의 속도벡터로 변환
@@ -213,8 +221,8 @@ class Inha_dataProcess:
         else:
             TS_ID = TS_list.keys()
             for ts_ID in TS_ID:
-                # RD, TB, RB, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value,rb,lb = self.CRI_cal(OS_list, TS_list[ts_ID])
-                RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value = self.CRI_cal(OS_list, TS_list[ts_ID])
+                RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value,rb,lb = self.CRI_cal(OS_list, TS_list[ts_ID])
+                # RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value = self.CRI_cal(OS_list, TS_list[ts_ID])
 
                 TS_list[ts_ID]['RD'] = RD 
                 TS_list[ts_ID]['RC'] = RC
@@ -241,11 +249,11 @@ class Inha_dataProcess:
                 TS_list[ts_ID]['Rs'] = Rs
                 TS_list[ts_ID]['Rp'] = Rp
                 TS_list[ts_ID]['mapped_radius'] = SD_dist * self.SD_param
-                # TS_list[ts_ID]["right_boundary"] = rb
-                # TS_list[ts_ID]["left_boundary"] = lb
+                TS_list[ts_ID]["right_boundary"] = rb
+                TS_list[ts_ID]["left_boundary"] = lb
 
                 TS_list[ts_ID]['CRI'] = cri_value
 
-                # print(enc)
+                # print("ts_ID: ",ts_ID, "SD: ", TS_list[ts_ID]['mapped_radius'])
 
         return TS_list

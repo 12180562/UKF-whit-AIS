@@ -80,7 +80,6 @@ class data_inNout:
 
         self.waypoint_dict = wp_dic
         
-
     def OP_callback(self, operation):
         ''' subscribe `/frm_info` 
         
@@ -195,7 +194,6 @@ class data_inNout:
         cri.Rs = pub_list[10]
         cri.Rp = pub_list[11]
         cri.encounter_classification = pub_list[12]
-        # print(cri.encounter_classification)
 
         self.cri_pub.publish(cri)
 
@@ -422,7 +420,12 @@ def main():
 
         ############################ for connect with KRISO format ##################################
 
-        V_selected, pub_collision_cone = Local_PP.VO_update(
+        # TODO: Reduce the computation time for this part (~timeChckpt4_vesselNode)
+        desired_spd_list = []
+        desired_heading_list = []
+
+        if VO_operate:
+            V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 
             TS_list, 
             V_des, 
@@ -430,16 +433,6 @@ def main():
             data.static_point_info
             )
 
-        # TODO: Reduce the computation time for this part (~timeChckpt4_vesselNode)
-        desired_spd_list = []
-        desired_heading_list = []
-
-        # NOTE: Only one step ahead
-        wp = inha.waypoint_generator(OS_list, V_selected, dt)
-        wp_x = wp[0]
-        wp_y = wp[1]
-
-        if VO_operate:
             eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
             temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
             desired_spd_list.append(temp_spd)
@@ -449,6 +442,12 @@ def main():
         
         else:
             V_selected = V_des
+
+            # NOTE: Only one step ahead
+            wp = inha.waypoint_generator(OS_list, V_selected, dt)
+            wp_x = wp[0]
+            wp_y = wp[1]
+
             eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
             temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
             desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)

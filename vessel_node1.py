@@ -5,8 +5,8 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
 from functions.Inha_DataProcess import Inha_dataProcess
-# from functions.ukf_befor import UKF
-from functions.ukf import UKF
+from functions.ukf_befor import UKF
+# from functions.ukf import UKF
 
 from udp_col_msg.msg import col, vis_info, cri_info, VO_info
 from udp_msgs.msg import frm_info, group_wpts_info
@@ -344,6 +344,7 @@ def main():
                                 (TS_list_ori[ts_ID]["Pos_Y"]-OS_list["Pos_Y"])**2)
                 relative_bearing = rad2deg(atan2(TS_list_ori[ts_ID]["Pos_Y"]-OS_list["Pos_Y"], \
                                             TS_list_ori[ts_ID]["Pos_X"]-OS_list["Pos_X"]))
+                # relative_bearing = (relative_bearing + 360) % 360
                 radar_last_update_time = current_time
 
             print(relative_distance, relative_bearing)
@@ -369,13 +370,14 @@ def main():
         first_publish = False
         # print("delay: ",TS_list_del)
 
-        AIS_input_list = []
-        radar_input_list = []
+
         TS_list_pre = copy.deepcopy(TS_list_ori)
 
         os_pos = np.array([OS_list["Pos_X"], OS_list["Pos_Y"]])
         
         for ts_ID in TS_ID:
+            AIS_input_list = []
+            radar_input_list = []
             AIS_input_list.append(TS_list_del[ts_ID]['Pos_X'])
             AIS_input_list.append(TS_list_del[ts_ID]['Pos_Y'])
             AIS_input_list.append(TS_list_del[ts_ID]['Vel_U'])
@@ -383,35 +385,42 @@ def main():
             radar_input_list.append(relative_distance)
             radar_input_list.append(relative_bearing)
 
-            predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
+# --------------------------------------- use AIS and Radar change import----------------------------------------------------------
+            # predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
 
 
-            if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
-                pass
-            else:
-                predicted_state, covariance= ukf_instance[ts_ID].update_AIS(AIS_input_list)
+            # if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
+            #     pass
+            # else:
+            #     predicted_state, covariance= ukf_instance[ts_ID].update_AIS(AIS_input_list)
 
-            if ts_ID in radar_previous_input_list and radar_previous_input_list[ts_ID] == radar_input_list:
-                pass
-            else:
-                predicted_state, covariance= ukf_instance[ts_ID].update_Radar(radar_input_list, os_pos)
+            # if ts_ID in radar_previous_input_list and radar_previous_input_list[ts_ID] == radar_input_list:
+            #     pass
+            # else:
+            #     predicted_state, covariance= ukf_instance[ts_ID].update_Radar(radar_input_list, os_pos)
 
 # --------------------------------------- Only AIS and change import----------------------------------------------------------
-            # if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
-            #     predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
+            if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
+                predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
 
-            # else:
-            #     predicted_state, covariance= ukf_instance[ts_ID].update(AIS_input_list, ukf_dt)
+            else:
+                predicted_state, covariance= ukf_instance[ts_ID].update(AIS_input_list, ukf_dt)
 # -----------------------------------------------------------------------------------------------------------
 
             AIS_previous_input_list[ts_ID] = AIS_input_list.copy()
             radar_previous_input_list[ts_ID] = radar_input_list.copy()
 
-            update_keys = ['Pos_X', 'Pos_Y', 'Vel_U', 'Heading']
+            update_keys_state = ['Pos_X', 'Pos_Y', 'Vel_U', 'Heading']
 
-            for key, value in zip(update_keys, predicted_state):
+            for key, value in zip(update_keys_state, predicted_state):
                 if key in TS_list_pre[ts_ID]:
                     TS_list_pre[ts_ID][key] = value
+            
+            cov[ts_ID] = list(np.diagonal(covariance))
+            update_keys_var = ['x_var', 'y_var', 'U_var', 'theta_var']
+
+            for key, value in zip(update_keys_var, cov[ts_ID]):
+                TS_list_pre[ts_ID][key] = value
 
             X_diff[ts_ID] = TS_list_pre[ts_ID]["Pos_X"] - TS_list_ori[ts_ID]["Pos_X"]
             Y_diff[ts_ID] = TS_list_pre[ts_ID]["Pos_Y"] - TS_list_ori[ts_ID]["Pos_Y"]
@@ -419,19 +428,20 @@ def main():
             H_diff[ts_ID] = TS_list_pre[ts_ID]["Heading"] - TS_list_ori[ts_ID]["Heading"]
         
             pos_err[ts_ID] = np.sqrt(X_diff[ts_ID]**2 + Y_diff[ts_ID]**2)
-            cov[ts_ID] = np.diagonal(covariance)
 
             print("\n")
-            print(pos_err[ts_ID])
+            print("pos_err : ", pos_err[ts_ID])
             # print("\n")
             # print(cov[ts_ID])
+            # print(type(cov[ts_ID]))
             
-            TS_list = TS_list_ori
+            # TS_list = TS_list_ori
             # TS_list = TS_list_del
-            # TS_list = TS_list_pre
+            TS_list = TS_list_pre
 #####################################################################################################################
         # print(TS_list)
         # print("\n")
+
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
         OS_list['V_x'] = OS_Vx
@@ -511,6 +521,7 @@ def main():
             # print(temp_enc)
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
+        # print("distance : ",distance)
 
         V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 
