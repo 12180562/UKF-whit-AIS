@@ -21,6 +21,10 @@ class CRI:
         # self.ratio = (12*self.L) / self.ship_scale #1852/110  #1 해리는 1852m
         self.x_var = sqrt(x_var)
         self.y_var = sqrt(y_var)
+
+        # self.x_var = 0
+        # self.y_var = 0
+
         self.mapped_radius = 0
 
     def RD(self):
@@ -383,8 +387,8 @@ class CRI:
 
         # (Xt, Yt)에 대한 QSD (각도와 관계없이 동일)
         QSD = (2*self.Xt/denom_x)**2 + (2*self.Yt/denom_y)**2
-        print("x_var : ",self.x_var)
-        print("y_var : ",self.y_var)
+        # print("x_var : ",self.x_var)
+        # print("y_var : ",self.y_var)
         for th in angles:
             cx = cos(th)
             cy = sin(th)
