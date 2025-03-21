@@ -19,11 +19,14 @@ class CRI:
         self.Vt = Vt    #타선 속도   [knots]
         self.ratio = 1852 / self.ship_scale #1852/110  #1 해리는 1852m
         # self.ratio = (12*self.L) / self.ship_scale #1852/110  #1 해리는 1852m
-        self.x_var = sqrt(x_var)
-        self.y_var = sqrt(y_var)
+        self.x_sigma = 2*sqrt(x_var)
+        self.y_sigma = 2*sqrt(y_var)
 
         # self.x_var = 0
         # self.y_var = 0
+        # 평균에 대해 쁠마 1 표준편차 (시그마)는 68% 데이터 포함
+        # 쁠마 2 시그마는 95%
+        # 쁠마 3 시그마는 99.7% 포함
 
         self.mapped_radius = 0
 
@@ -399,8 +402,8 @@ class CRI:
             else:
                 r = sqrt(1.0 / A)
 
-            X_ell = r*cx + self.Xt + self.x_var
-            Y_ell = r*cy + self.Yt + self.y_var
+            X_ell = r*cx + self.Xt + self.x_sigma
+            Y_ell = r*cy + self.Yt + self.y_sigma
 
             boundary_points.append((X_ell, Y_ell))
             # r_vals.append(r)

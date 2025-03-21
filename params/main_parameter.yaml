@@ -162,7 +162,7 @@ Portside_rule: True
 
 weight_focusObs: 1
 weight_agressivness: 1
-timeHorizon: 300  # 350일때 상대거리 800 # 150일때 상대거리 약 13L
+timeHorizon: 100  # 350일때 상대거리 800 # 150일때 상대거리 약 13L
 filter_length : 10
 
 ############################################

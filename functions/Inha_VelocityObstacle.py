@@ -1579,24 +1579,23 @@ class VO_module:
                     reachableVel_global_all,
                     key= lambda v: np.linalg.norm(v - V_des),
                     )
+            collision_risk = 0.0
 
         else:
             TS_ID = TS.keys()
 
-            nearest_status = "starboard"
-            nearest_DCPA = 100000
+            # nearest_status = "starboard"
+            # nearest_DCPA = 100000
 
-            for ts_ID in TS_ID:
-                status = TS[ts_ID]['status']
-                DCPA = TS[ts_ID]['DCPA']
-                if DCPA <= nearest_DCPA:
-                    nearest_DCPA = DCPA
-                    nearest_ts_ID = ts_ID
-                    nearest_status = status
-                else:
-                    pass
-
-            
+            # for ts_ID in TS_ID:
+            #     status = TS[ts_ID]['status']
+            #     DCPA = TS[ts_ID]['DCPA']
+            #     if DCPA <= nearest_DCPA:
+            #         nearest_DCPA = DCPA
+            #         nearest_ts_ID = ts_ID
+            #         nearest_status = status
+            #     else:
+            #         pass
 
             # Generate target heading angle candidates
             min_targetHeading_rad_local = np.deg2rad(self.min_targetHeading_deg_local)
@@ -1627,6 +1626,37 @@ class VO_module:
                 RVOdata_all,
                 TS,
                 )
+            # print(reachableVel_all_annotated)
+            # print("\n")
+
+# --------------------------------Collision Probabillity ----------------------------------------------
+            total_count = len(reachableVel_all_annotated)
+
+            if total_count == 0:
+                # 후보 벡터가 하나도 없다면 모든 선박에 대해 0% 처리
+                collision_risk_by_ship = {ts_id: 0.0 for ts_id in TS_ID}
+            else:
+                # 2) 선박별 '위험 벡터' 카운트(= inCollisionCone인 벡터 수)
+                dangerous_count_by_ship = {ts_id: 0 for ts_id in TS_ID}
+                
+                # 3) 모든 후보 벡터를 순회하며, 각 선박별 'inCollisionCone'인지 검사
+                for record in reachableVel_all_annotated:
+                    # record 예: { 'vel': array([...]), 2001: 'inCollisionCone', 2002: 'inRight', ... }
+                    for ts_id in TS_ID:
+                        if record[ts_id] == 'inCollisionCone' and "inRight":
+                            dangerous_count_by_ship[ts_id] += 1
+
+                # 4) 선박별 충돌 위험도(%) 계산
+                collision_risk_by_ship = {}
+                for ts_id in TS_ID:
+                    ship_risk = (dangerous_count_by_ship[ts_id] / total_count) * 100.0
+                    collision_risk_by_ship[ts_id] = ship_risk
+
+            # 5) 로그/출력
+            # print("total_count :", total_count)
+            print("collision_risk_by_ship :", collision_risk_by_ship)
+
+# --------------------------------Collision Probabillity ----------------------------------------------
 
             '''
             Data structure of `vels_annotated`:
