@@ -253,7 +253,6 @@ class CRI:
             else:
                 return "Overtaking"
 
-
         elif 22.5 < RB <= 90:
             if 157.5 <= HAD <= 202.5:
                 return "Head-on"
@@ -264,7 +263,6 @@ class CRI:
             else:
                 return "Overtaking"
 
-
         elif 90 < RB <= 112.5:
             if 67.5 <= HAD < 202.5:
                 return "Safe"
@@ -273,7 +271,6 @@ class CRI:
             else:
                 return "Overtaking"
 
-
         elif 247.5 <= RB < 270:
             if 157.5 <= HAD <= 292.5:
                 return "Safe"
@@ -281,7 +278,6 @@ class CRI:
                 return "Port crossing"
             else:
                 return "Overtaking"
-
 
         elif 270 <= RB < 337.5:
             if 157.5 <= HAD <= 202.5:
@@ -415,7 +411,9 @@ class CRI:
         return np.array(boundary_points), self.mapped_radius
     
     def lb_rb(self):
-        boundary_pts, _ = self.SD_dist_yoo()
+        boundary_pts, mapped_radius = self.SD_dist_yoo()
+        rb = self.RB()
+        rd = self.RD()
 
         rel_bearings = []
         for (bx, by) in boundary_pts:
@@ -425,8 +423,7 @@ class CRI:
             rel_bearings.append(angle_rad)
 
         rel_bearings.sort()
-
-        extended = rel_bearings + [rel_bearings[0] + 2*pi]
+        # rel_bearings.append(rel_bearings[0] + 2*pi)
 
         max_gap = 0
         pair_index = (0, 0)
@@ -440,35 +437,51 @@ class CRI:
                 if diff > max_gap:
                     max_gap = diff
                     pair_index = (i, j)
+                    
+                    
+        # left_bound_rad = rb + atan2(mapped_radius,rd)
+        # right_bound_rad = rb - atan2(mapped_radius,rd)
+        # if max_gap < 2*atan2(mapped_radius,rd): # 이거는 헤드온에서 돌아감
+        #     left_bound_rad = (rb - atan2(mapped_radius,rd)+2*pi)%(2*pi)
+        #     right_bound_rad = (rb + atan2(mapped_radius,rd)+2*pi)%(2*pi)
+        #     print(1)
+        # else:                                   # 이거는 스타보드에서 돌아감
+        angle_a = rel_bearings[pair_index[1]] #% (2*pi)
+        angle_b = rel_bearings[pair_index[0]] #% (2*pi)
 
-        angle_a = extended[pair_index[1]] % (2*pi)
-        angle_b = extended[pair_index[0]] % (2*pi)
+        d = (angle_a - angle_b + 2*pi) % (2*pi)
 
-        d = (angle_b - angle_a + 2*pi) % (2*pi)
-
-        bisector = (angle_a + d/2) % (2*pi)
+        bisector = (angle_b + d/2) % (2*pi)
 
         def relative_angle(angle, reference):
             diff = (angle - reference + 2*pi) % (2*pi)
+            
             return diff
 
         rel1 = relative_angle(angle_a, bisector)
         rel2 = relative_angle(angle_b, bisector)
-
+        
         if rel1 > 0 and rel2 < 0:
-            left_bound_rad = angle_a
-            right_bound_rad = angle_b
-        elif rel1 < 0 and rel2 > 0:
             left_bound_rad = angle_b
             right_bound_rad = angle_a
+            print(1)
+        elif rel1 < 0 and rel2 > 0:
+            left_bound_rad = angle_a
+            right_bound_rad = angle_b
+            print(2)
         else:
-            if abs(rel1) > abs(rel2):
-                left_bound_rad = angle_a if rel1 > 0 else angle_b
-                right_bound_rad = angle_b if rel1 > 0 else angle_a
+            if abs(rel1) > abs(rel2): # starboard 에선 이건 > 가 맞다
+                left_bound_rad = angle_b #if rel1 > 0 else angle_b
+                right_bound_rad = angle_a #if rel1 > 0 else angle_a
+                print(3)
             else:
-                left_bound_rad = angle_b if rel2 > 0 else angle_a
-                right_bound_rad = angle_a if rel2 > 0 else angle_b
-
+                left_bound_rad = angle_a-deg2rad(10) #if rel2 > 0 else angle_a
+                right_bound_rad = angle_b+ deg2rad(10)#if rel2 > 0 else angle_b
+                print(4)
+        print("max_gap : ",max_gap)
+        print("mapped_radius : ",2*atan2(mapped_radius,rd))
+        print("left_bound_rad : ",rad2deg(left_bound_rad))
+        print("right_bound_rad : ",rad2deg(right_bound_rad))
         return left_bound_rad, right_bound_rad
 
     def SD_dist_lee(self):

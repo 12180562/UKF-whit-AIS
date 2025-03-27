@@ -155,7 +155,7 @@ mmg_dt: 1
 
 ########### 1852/110 ###########
 SD_param: 1 # SD_dist 사용하지 않음
-cri_param: 100 # 최소값 10을 사용하는 것이 수학적으로 맞음 
+cri_param: 15 # 최소값 10을 사용하는 것이 수학적으로 맞음 
 Portside_rule: True
 
 ############################################
@@ -171,8 +171,8 @@ min_targetSpeed : 1.0
 max_targetSpeed : 1.2
 num_targetSpeedCandidates : 3
 
-min_targetHeading_deg_local : -45.0
-max_targetHeading_deg_local: 45.0
+min_targetHeading_deg_local : -60.0
+max_targetHeading_deg_local: 60.0
 num_targetHeadingCandidates: 31
 
 Kp : 2.0
@@ -226,10 +226,13 @@ shipInfo_all:
     ship_ID : 2001, ## 자선의 ship ID 정의
     ship_domain_radius : 44.0,  # original
     target_speed : 10.0,  #[knots]
-    initial_start_x : 150.0,    # [m]
-    initial_start_y : 150.0,    # [m]
+    initial_start_x : 300.0,    # [m]
+    initial_start_y : 0.0,    # [m]
+    initial_start_psi : 180,   # [deg]
+    # initial_start_x : 150.0,    # [m]
+    # initial_start_y : 150.0,    # [m]
+    # initial_start_psi : 270,   # [deg]
     initial_start_U : 8.0,    # [knots] // 너무 작으면 발산함
-    initial_start_psi : 270,   # [deg]
     include_inha_modules : False  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
   }
 
@@ -278,22 +281,22 @@ shipInfo_all:
 
 waypoint_List: {
   wpts_x_ship1: [
-    0.0, 300.0,
+    300.0, 0.0,
   ],  
   wpts_y_ship1: [
     0.0, 0.0,
   ],
   wpts_x_ship2: [
-    # 300, 0
+    300, 0
+    # 150, 150
     # 150.0,  200.0,  150.0,  100.0,  150.0,  100.0,  150.0,  200.0
     # 500.0, 500.0, 500.0, 500.0, 500.0, 500.0, 
-    150, 150
   ],
   wpts_y_ship2: [
-    # 0, 0
+    0, 0
+    # -150, 150
     # 0.0,    50,      0.0,    50,   0.0,    -50,   0.0,  -50
     # 100.0, -100, 100.0, -100, 100.0, -100
-    -150, 150
   ],
   # wpts_x_ship3: [
   #   150, 150,

@@ -5,14 +5,14 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
 from functions.Inha_DataProcess import Inha_dataProcess
-from functions.ukf_befor import UKF
-# from functions.ukf import UKF
+# from functions.ukf_befor import UKF
+from functions.ukf import UKF
 
 from udp_col_msg.msg import col, vis_info, cri_info, VO_info
 from udp_msgs.msg import frm_info, group_wpts_info
 from ukf_ais.msg import ShipInfo, ResultInfo
 
-from math import sqrt, atan2
+from math import *
 from numpy import rad2deg
 
 import csv
@@ -172,7 +172,7 @@ class data_inNout:
 
         self.VO_pub.publish(vo)
 
-    def ori_out(self, pub_list):
+    def ts_out(self, pub_list):
         for ship_ID, ship_data in pub_list.items():
             message = ShipInfo()
             message.Ship_ID = ship_data['Ship_ID']
@@ -183,27 +183,38 @@ class data_inNout:
 
             self.ori_pub.publish(message)
 
-    def del_out(self, pub_list):
-        for ship_ID, ship_data in pub_list.items():
-            message = ShipInfo()
-            message.Ship_ID = ship_data['Ship_ID']
-            message.Pos_X = ship_data['Pos_X']
-            message.Pos_Y = ship_data['Pos_Y']
-            message.Vel_U = ship_data['Vel_U']
-            message.Heading = ship_data['Heading']
+    # def ori_out(self, pub_list):
+    #     for ship_ID, ship_data in pub_list.items():
+    #         message = ShipInfo()
+    #         message.Ship_ID = ship_data['Ship_ID']
+    #         message.Pos_X = ship_data['Pos_X']
+    #         message.Pos_Y = ship_data['Pos_Y']
+    #         message.Vel_U = ship_data['Vel_U']
+    #         message.Heading = ship_data['Heading']
 
-            self.del_pub.publish(message)
+    #         self.ori_pub.publish(message)
 
-    def pre_out(self, pub_list):
-        for ship_ID, ship_data in pub_list.items():
-            message = ShipInfo()
-            message.Ship_ID = ship_data['Ship_ID']
-            message.Pos_X = ship_data['Pos_X']
-            message.Pos_Y = ship_data['Pos_Y']
-            message.Vel_U = ship_data['Vel_U']
-            message.Heading = ship_data['Heading']
+    # def del_out(self, pub_list):
+    #     for ship_ID, ship_data in pub_list.items():
+    #         message = ShipInfo()
+    #         message.Ship_ID = ship_data['Ship_ID']
+    #         message.Pos_X = ship_data['Pos_X']
+    #         message.Pos_Y = ship_data['Pos_Y']
+    #         message.Vel_U = ship_data['Vel_U']
+    #         message.Heading = ship_data['Heading']
 
-            self.pre_pub.publish(message)
+    #         self.del_pub.publish(message)
+
+    # def pre_out(self, pub_list):
+    #     for ship_ID, ship_data in pub_list.items():
+    #         message = ShipInfo()
+    #         message.Ship_ID = ship_data['Ship_ID']
+    #         message.Pos_X = ship_data['Pos_X']
+    #         message.Pos_Y = ship_data['Pos_Y']
+    #         message.Vel_U = ship_data['Vel_U']
+    #         message.Heading = ship_data['Heading']
+
+    #         self.pre_pub.publish(message)
 
     def result_out(self, pos_err, cov):
         ukf_result = ResultInfo()
@@ -390,25 +401,25 @@ def main():
             radar_input_list.append(relative_bearing)
 
 # --------------------------------------- use AIS and Radar change import----------------------------------------------------------
-            # predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
+            predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
 
 
-            # if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
-            #     pass
-            # else:
-            #     predicted_state, covariance= ukf_instance[ts_ID].update_AIS(AIS_input_list)
+            if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
+                pass
+            else:
+                predicted_state, covariance= ukf_instance[ts_ID].update_AIS(AIS_input_list)
 
-            # if ts_ID in radar_previous_input_list and radar_previous_input_list[ts_ID] == radar_input_list:
-            #     pass
-            # else:
-            #     predicted_state, covariance= ukf_instance[ts_ID].update_Radar(radar_input_list, os_pos)
+            if ts_ID in radar_previous_input_list and radar_previous_input_list[ts_ID] == radar_input_list:
+                pass
+            else:
+                predicted_state, covariance= ukf_instance[ts_ID].update_Radar(radar_input_list, os_pos)
 
 # --------------------------------------- Only AIS and change import----------------------------------------------------------
-            if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
-                predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
+            # if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
+            #     predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
 
-            else:
-                predicted_state, covariance= ukf_instance[ts_ID].update(AIS_input_list, ukf_dt)
+            # else:
+            #     predicted_state, covariance= ukf_instance[ts_ID].update(AIS_input_list, ukf_dt)
 # -----------------------------------------------------------------------------------------------------------
 
             AIS_previous_input_list[ts_ID] = AIS_input_list.copy()
@@ -558,7 +569,6 @@ def main():
             desired_heading_list.append(temp_heading_deg)
             desired_spd = desired_spd_list[targetspdIndex]
             desired_heading = desired_heading_list[0]
-
         if t%10 ==0:
             pass
 
@@ -582,6 +592,8 @@ def main():
             else:
                 real_target_heading = sum_of_heading/len(data.target_heading_list)
 
+        a = (real_target_heading + 360) % 360
+
         OS_pub_list = [
             int(OS_ID), 
             False,
@@ -597,7 +609,7 @@ def main():
             0, 
             desired_spd, 
             # desired_heading
-            real_target_heading,
+            a,
             ]
 
         vis_pub_list = [
@@ -674,9 +686,10 @@ def main():
         data.cri_out(cri_pub_list)
         data.vo_out(vo_pub_list)
 
-        data.ori_out(TS_list_ori)
-        data.del_out(TS_list_del)
-        data.pre_out(TS_list_pre)
+        data.ts_out(TS_list_ori)
+        # data.ori_out(TS_list_ori)
+        # data.del_out(TS_list_del)
+        # data.pre_out(TS_list_pre)
         data.result_out(pos_err, cov)
 
         if local_goal_EDA < 5 * (ship_L/OS_scale) :

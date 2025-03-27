@@ -215,6 +215,7 @@ class VO_module:
         self.cri_param = rospy.get_param('cri_param')
         self.time_horizon = rospy.get_param('timeHorizon')
         self.rule = rospy.get_param('Portside_rule')     
+        self.scale = 70
 
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
         """
@@ -555,6 +556,17 @@ class VO_module:
                 '''
                 # NOTE: vA2B_RVO is the relative velocity from the agent A to B
                 #       on the RVO configuration space, not the VO configuration space
+                left_angle = RVOdata['boundLineAngle_left_rad_global']  % (2*pi)
+                right_angle = RVOdata['boundLineAngle_right_rad_global'] % (2*pi)
+
+                x = cos(left_angle) + cos(right_angle)
+                y = sin(left_angle) + sin(right_angle)
+
+                angle = atan2(y, x)
+
+                if angle < 0:
+                    angle += 2*pi
+
                 vA2B_RVO = reachableVel_global - RVOdata['collisionConeTranslated']
 
                 angle_vA2B_RVO_rad_global = atan2(
@@ -566,16 +578,18 @@ class VO_module:
                     velVecAngle_rad_global=angle_vA2B_RVO_rad_global, 
                     boundLineAngle_left_rad_global=RVOdata['boundLineAngle_left_rad_global'],
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
-                    LOSangle_rad_global=0.5*(RVOdata['boundLineAngle_left_rad_global']+RVOdata['boundLineAngle_right_rad_global']),
+                    # LOSangle_rad_global = 0.5*(RVOdata['boundLineAngle_left_rad_global']+RVOdata['boundLineAngle_right_rad_global'])
+                    LOSangle_rad_global=angle,
                     ):
-
+                    
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inLeft'
                 
                 elif self.__is_in_right(
                     velVecAngle_rad_global=angle_vA2B_RVO_rad_global, 
                     boundLineAngle_left_rad_global=RVOdata['boundLineAngle_left_rad_global'],
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
-                    LOSangle_rad_global=0.5*(RVOdata['boundLineAngle_left_rad_global']+RVOdata['boundLineAngle_right_rad_global']),
+                    # LOSangle_rad_global = 0.5*(RVOdata['boundLineAngle_left_rad_global']+RVOdata['boundLineAngle_right_rad_global'])
+                    LOSangle_rad_global=angle,
                     ):
 
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inRight'
@@ -586,7 +600,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*self.cri_param,
+                    # timeHorizon=RVOdata['CRI']*self.cri_param,
+                    timeHorizon=RVOdata['CRI']*self.cri_param*self.scale,
                     # timeHorizon=self.time_horizon
                     ):
                     # print("is within timehorizon",RVOdata['CRI']*self.cri_param)
@@ -598,7 +613,8 @@ class VO_module:
                     boundLineAngle_right_rad_global=RVOdata['boundLineAngle_right_rad_global'],
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
-                    timeHorizon=RVOdata['CRI']*self.cri_param,
+                    # timeHorizon=RVOdata['CRI']*self.cri_param,
+                    timeHorizon=RVOdata['CRI']*self.cri_param*self.scale,
                     # timeHorizon=self.time_horizon
                     ):
                     # print('is in collision cone',RVOdata['CRI']*self.cri_param)
@@ -608,7 +624,8 @@ class VO_module:
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
 
             reachableVel_global_all_annotated.append(reachableVel_global_annotated)
-
+        print("angle : ",np.rad2deg(angle))
+        print("LOSangle_rad_global : ",np.rad2deg(0.5*(RVOdata['boundLineAngle_left_rad_global']+RVOdata['boundLineAngle_right_rad_global'])))
         return reachableVel_global_all_annotated
 
     def __take_vels(self, vel_all_annotated, annotation, shipID_all):
@@ -719,39 +736,63 @@ class VO_module:
 
             `False`: If the given angle is NOT between the angles of the left and right boundary lines.
         """
-        if abs(theta_right - theta_left) <= pi:
-            if theta_left < 0 and theta_right < 0:
-                if theta_given > 0:
-                    theta_given -= 2*pi
-            elif theta_left > 0 and theta_right > 0:
-                if theta_given < 0:
-                    theta_given += 2*pi
-            if theta_right <= theta_given <= theta_left:    
-                return True
-            else :
-                return False
-        else:
-            if (theta_left < 0) and (theta_right > 0):
-                ## 각도 보정 
-                theta_left += 2*pi
-                if theta_given <0:
-                    theta_given += 2*pi
+        # if abs(theta_right - theta_left) <= pi:
+        #     if theta_left < 0 and theta_right < 0:
+        #         if theta_given > 0:
+        #             theta_given -= 2*pi
+        #     elif theta_left > 0 and theta_right > 0:
+        #         if theta_given < 0:
+        #             theta_given += 2*pi
+        #     if theta_right <= theta_given <= theta_left:    
+        #         return True
+        #     else :
+        #         return False
+        # else:
+        #     if (theta_left < 0) and (theta_right > 0):
+        #         ## 각도 보정 
+        #         theta_left += 2*pi
+        #         if theta_given <0:
+        #             theta_given += 2*pi
 
-                if theta_right <= theta_given <= theta_left:
-                    return True
-                else :
-                    return False
+        #         if theta_right <= theta_given <= theta_left:
+        #             return True
+        #         else :
+        #             return False
             
-            if (theta_left > 0) and (theta_right <0):
-                theta_right += 2*pi            
-                if theta_given < 0:
-                    theta_given += 2*pi
+        #     if (theta_left > 0) and (theta_right <0):
+        #         theta_right += 2*pi            
+        #         if theta_given < 0:
+        #             theta_given += 2*pi
                     
-                if theta_left <= theta_given <= theta_right:
-                    return True
-                else:
-                    return False
-        # print(theta_left, theta_right, theta_given)
+        #         if theta_left <= theta_given <= theta_right:
+        #             return True
+        #         else:
+        #             return False
+            # 1) [0, 2π) 범위로 정규화하는 헬퍼 함수
+        def normalize_angle(angle):
+            return angle % (2*pi)
+
+        # 2) 세 각을 [0, 2π)로 정규화
+        a1 = normalize_angle(theta_left)
+        a2 = normalize_angle(theta_right)
+        a3 = normalize_angle(theta_given)
+
+        # 3) (a2 - a1)을 0~2π로 맞춰 구함
+        diff = (a2 - a1) % (2*pi)
+        
+        # diff <= π 이면 a1→a2가 작은 호,
+        # diff > π 이면 a2→a1이 작은 호
+        if diff <= pi:
+            # a1→a2가 "작은 호"인 경우
+            # => a3가 이 호 안에 있는지 확인
+            #    (a3가 a1로부터 diff(호 길이)만큼 시계방향으로 떨어져 있으면 OK)
+            distance = (a3 - a1) % (2*pi)
+            return (distance <= diff)
+        else:
+            # a2→a1이 "작은 호"인 경우 (길이는 2π - diff)
+            distance = (a3 - a2) % (2*pi)
+            return (distance <= (2*pi - diff))
+            # print(theta_left, theta_right, theta_given)
 
     def __is_in_left(
         self, 
@@ -1640,17 +1681,18 @@ class VO_module:
                 dangerous_count_by_ship = {ts_id: 0 for ts_id in TS_ID}
                 
                 # 3) 모든 후보 벡터를 순회하며, 각 선박별 'inCollisionCone'인지 검사
-                for record in reachableVel_all_annotated:
+                for ts_id in TS_ID:
+                    for record in reachableVel_all_annotated:
                     # record 예: { 'vel': array([...]), 2001: 'inCollisionCone', 2002: 'inRight', ... }
-                    for ts_id in TS_ID:
-                        if record[ts_id] == 'inCollisionCone' and "inRight":
+                        if record[ts_id] == "inCollisionCone": # or record[ts_id] == "inRight":
                             dangerous_count_by_ship[ts_id] += 1
 
                 # 4) 선박별 충돌 위험도(%) 계산
                 collision_risk_by_ship = {}
                 for ts_id in TS_ID:
                     ship_risk = (dangerous_count_by_ship[ts_id] / total_count) * 100.0
-                    collision_risk_by_ship[ts_id] = ship_risk
+                    collision_risk_by_ship[ts_id] = round(ship_risk,2)
+                    # print("dangerous_count_by_ship[ts_id] : ",dangerous_count_by_ship[ts_id] )
 
             # 5) 로그/출력
             # print("total_count :", total_count)
@@ -1756,6 +1798,7 @@ class VO_module:
                 else:
                     velCandidates = self.__remove_annotation(avoidanceVel_all_annotated)
                 # Take the closest velocity to V_des among the chosen velocities
+                # print("velCandidates : ",velCandidates)
                 vA_post = min(
                     velCandidates,
                     key= lambda v: np.linalg.norm(v - V_des),
@@ -1875,7 +1918,9 @@ class VO_module:
                 # boundLineAngle_right_rad_global = LOSangle_rad - atan2(TS[ts_ID]['mapped_radius'],LOSdist)
                 boundLineAngle_left_rad_global = TS[ts_ID]['left_boundary']
                 boundLineAngle_right_rad_global = TS[ts_ID]['right_boundary']
-                # print("angle diff : ", (boundLineAngle_left_rad_global - boundLineAngle_right_rad_global))
+                # print("boundLineAngle_left_rad_global : ", np.rad2deg(boundLineAngle_left_rad_global))
+                # print("boundLineAngle_right_rad_global : ",np.rad2deg(boundLineAngle_right_rad_global))
+                # print("Cone angle : ", round(((boundLineAngle_left_rad_global - boundLineAngle_right_rad_global)+2*pi) % 2*pi,4))
 
                 collisionConeTranslated = (1 - self.weight_alpha) * vA + self.weight_alpha * vB
                 '''

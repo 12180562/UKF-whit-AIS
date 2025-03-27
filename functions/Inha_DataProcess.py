@@ -142,7 +142,7 @@ class Inha_dataProcess:
         lb, rb = cri.lb_rb()
 
         cri_value = cri.CRI()
-
+        print("SD_dist : ",SD_dist)
         return RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value, rb,lb
         # return RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
