@@ -624,8 +624,8 @@ class VO_module:
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
 
             reachableVel_global_all_annotated.append(reachableVel_global_annotated)
-        print("angle : ",np.rad2deg(angle))
-        print("LOSangle_rad_global : ",np.rad2deg(0.5*(RVOdata['boundLineAngle_left_rad_global']+RVOdata['boundLineAngle_right_rad_global'])))
+        # print("angle : ",np.rad2deg(angle))
+        # print("LOSangle_rad_global : ",np.rad2deg(0.5*(RVOdata['boundLineAngle_left_rad_global']+RVOdata['boundLineAngle_right_rad_global'])))
         return reachableVel_global_all_annotated
 
     def __take_vels(self, vel_all_annotated, annotation, shipID_all):
@@ -1973,14 +1973,14 @@ class VO_module:
                 RVOdata_all.append(RVOdata)
                 # To publish the collision cone data for visualization
                 bound_left_view = [
-                    cos(boundLineAngle_left_rad_global)* int(LOSdist)/2,
-                    sin(boundLineAngle_left_rad_global)* int(LOSdist)/2,
+                    cos(boundLineAngle_left_rad_global)* int(LOSdist),
+                    sin(boundLineAngle_left_rad_global)* int(LOSdist),
                     ]  # cone visualization /3 하면 장애물까지 거리의 1/3만 생김
                 bound_right_view = [
-                    cos(boundLineAngle_right_rad_global)* int(LOSdist)/2,
-                    sin(boundLineAngle_right_rad_global)* int(LOSdist)/2,
+                    cos(boundLineAngle_right_rad_global)* int(LOSdist),
+                    sin(boundLineAngle_right_rad_global)* int(LOSdist),
                     ]
-
+            
                 pub_collision_cone.append(RVOapexPos_global[0])
                 pub_collision_cone.append(RVOapexPos_global[1])
                 pub_collision_cone.append(bound_left_view[0] + RVOapexPos_global[0])

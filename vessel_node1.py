@@ -5,10 +5,10 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.Inha_VelocityObstacle import VO_module
 from functions.Inha_DataProcess import Inha_dataProcess
-# from functions.ukf_befor import UKF
-from functions.ukf import UKF
+from functions.ukf_befor import UKF
+# from functions.ukf import UKF
 
-from udp_col_msg.msg import col, vis_info, cri_info, VO_info
+from udp_col_msg.msg import col, vis_info, cri_info_yoo, VO_info
 from udp_msgs.msg import frm_info, group_wpts_info
 from ukf_ais.msg import ShipInfo, ResultInfo
 
@@ -29,13 +29,13 @@ class data_inNout:
         rospy.Subscriber('/waypoint_info', group_wpts_info, self.wp_callback)
 
         self.WP_pub = rospy.Publisher('/vessel1_info', col, queue_size=0)
-        self.cri_pub = rospy.Publisher('/cri1_info', cri_info, queue_size=10)
+        self.cri_pub = rospy.Publisher('/cri1_info', cri_info_yoo, queue_size=10)
         self.VO_pub = rospy.Publisher('/VO1_info', VO_info, queue_size=10)
         self.Vis_pub = rospy.Publisher('/vis1_info', vis_info, queue_size=10)
 
-        self.ori_pub = rospy.Publisher('TS_list_ori', ShipInfo, queue_size=10)
-        self.del_pub = rospy.Publisher('TS_list_del', ShipInfo, queue_size=10)
-        self.pre_pub = rospy.Publisher('TS_list_predict', ShipInfo, queue_size=10)
+        self.ori_pub = rospy.Publisher('TS_list', ShipInfo, queue_size=10)
+        # self.del_pub = rospy.Publisher('TS_list_del', ShipInfo, queue_size=10)
+        # self.pre_pub = rospy.Publisher('TS_list_predict', ShipInfo, queue_size=10)
 
         self.result_pub = rospy.Publisher('result_info', ResultInfo, queue_size=10)
 
@@ -147,7 +147,7 @@ class data_inNout:
         self.Vis_pub.publish(vis)
 
     def cri_out(self, pub_list):
-        cri = cri_info()
+        cri = cri_info_yoo()
         cri.DCPA = pub_list[0]
         cri.TCPA = pub_list[1]
         cri.UDCPA = pub_list[2]
@@ -160,7 +160,9 @@ class data_inNout:
         cri.Ra = pub_list[9]
         cri.Rs = pub_list[10]
         cri.Rp = pub_list[11]
-        cri.encounter_classification = pub_list[12]
+        cri.bx = pub_list[12]
+        cri.by = pub_list[13]
+        cri.encounter_classification = pub_list[14]
         # print(cri.encounter_classification)
 
         self.cri_pub.publish(cri)
@@ -357,17 +359,14 @@ def main():
                                             TS_list_ori[ts_ID]["Pos_X"]-OS_list["Pos_X"]))
                 # relative_bearing = (relative_bearing + 360) % 360
                 radar_last_update_time = current_time
-
+                print("-------------Radar Infromation Update-------------")
             # print(relative_distance, relative_bearing)
 
             if(current_time - last_publish_time >= publish_interval) or first_publish:
                 TS_list_del[ts_ID] = TS_list_ori[ts_ID]
                 last_publish_time = current_time
-                print("-------------Infromation Update-------------")
-                print("-------------Infromation Update-------------")
-                print("-------------Infromation Update-------------")
-                print("-------------Infromation Update-------------")
-                print("-------------Infromation Update-------------")
+                print("-------------AIS Infromation Update-------------")
+
             
             heading_diff = TS_list_del[ts_ID]['Heading'] - TS_list_ori[ts_ID]['Heading']
 
@@ -376,7 +375,7 @@ def main():
             elif heading_diff >= 360:
                 heading_diff -= 360
 
-            if abs(heading_diff) >= 5:
+            if abs(heading_diff) >= 20:
                 TS_list_del[ts_ID] = TS_list_ori[ts_ID]
 
             else:
@@ -401,25 +400,25 @@ def main():
             radar_input_list.append(relative_bearing)
 
 # --------------------------------------- use AIS and Radar change import----------------------------------------------------------
-            predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
+            # predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
 
 
-            if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
-                pass
-            else:
-                predicted_state, covariance= ukf_instance[ts_ID].update_AIS(AIS_input_list)
+            # if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
+            #     pass
+            # else:
+            #     predicted_state, covariance= ukf_instance[ts_ID].update_AIS(AIS_input_list)
 
-            if ts_ID in radar_previous_input_list and radar_previous_input_list[ts_ID] == radar_input_list:
-                pass
-            else:
-                predicted_state, covariance= ukf_instance[ts_ID].update_Radar(radar_input_list, os_pos)
+            # if ts_ID in radar_previous_input_list and radar_previous_input_list[ts_ID] == radar_input_list:
+            #     pass
+            # else:
+            #     predicted_state, covariance= ukf_instance[ts_ID].update_Radar(radar_input_list, os_pos)
 
 # --------------------------------------- Only AIS and change import----------------------------------------------------------
-            # if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
-            #     predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
+            if ts_ID in AIS_previous_input_list and AIS_previous_input_list[ts_ID] == AIS_input_list:
+                predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
 
-            # else:
-            #     predicted_state, covariance= ukf_instance[ts_ID].update(AIS_input_list, ukf_dt)
+            else:
+                predicted_state, covariance= ukf_instance[ts_ID].update(AIS_input_list, ukf_dt)
 # -----------------------------------------------------------------------------------------------------------
 
             AIS_previous_input_list[ts_ID] = AIS_input_list.copy()
@@ -445,14 +444,14 @@ def main():
             pos_err[ts_ID] = np.sqrt(X_diff[ts_ID]**2 + Y_diff[ts_ID]**2)
 
             print("\n")
-            print("pos_err : ", pos_err[ts_ID])
+            print("pos_err :    ", round(pos_err[ts_ID],3))
             # print("\n")
             # print(cov[ts_ID])
             # print(type(cov[ts_ID]))
             
-            TS_list = TS_list_ori
+            # TS_list = TS_list_ori
             # TS_list = TS_list_del
-            # TS_list = TS_list_pre
+            TS_list = TS_list_pre
 #####################################################################################################################
         # print(TS_list)
         # print("\n")
@@ -483,6 +482,8 @@ def main():
         TS_Ra_temp = []
         TS_Rs_temp = []
         TS_Rp_temp = []
+        TS_bx_temp = []
+        TS_by_temp = []
         TS_ENC_temp = []
 
         for ts_ID in TS_ID:
@@ -531,13 +532,19 @@ def main():
             temp_Rp = TS_list[ts_ID]['Rp']
             TS_Rp_temp.append(temp_Rp)
 
+            temp_point = TS_list[ts_ID]['SD_point']
+            for (by, bx) in temp_point:
+                TS_bx_temp.append(by)
+                TS_by_temp.append(bx)
+
             temp_enc = TS_list[ts_ID]['status']
             TS_ENC_temp.append(temp_enc)
             # print(temp_enc)
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
-        print("distance : ",distance)
-        print("CRI : ", temp_cri)
+        print("distance :   ", round(distance,3))
+        print("CRI :        ", temp_cri)
+        # print(temp_point)
         V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 
             TS_list, 
@@ -632,6 +639,8 @@ def main():
             TS_Ra_temp,
             TS_Rs_temp,
             TS_Rp_temp,
+            TS_bx_temp,
+            TS_by_temp,
             TS_ENC_temp,
         ]
 
@@ -686,7 +695,7 @@ def main():
         data.cri_out(cri_pub_list)
         data.vo_out(vo_pub_list)
 
-        data.ts_out(TS_list_ori)
+        data.ts_out(TS_list)
         # data.ori_out(TS_list_ori)
         # data.del_out(TS_list_del)
         # data.pre_out(TS_list_pre)

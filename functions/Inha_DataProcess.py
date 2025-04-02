@@ -136,14 +136,14 @@ class Inha_dataProcess:
         Ra = cri.Ra()
         Rs = cri.Rs()
         Rp = cri.Rp()
-        _, SD_dist = cri.SD_dist_yoo()
+        SD_point, SD_dist = cri.SD_dist_yoo()
         # SD_dist = cri.SD_dist_lee()
         # rb, lb = cri.SD_dist_hyo()
         lb, rb = cri.lb_rb()
 
         cri_value = cri.CRI()
-        print("SD_dist : ",SD_dist)
-        return RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value, rb,lb
+        # print("SD_dist : ",SD_dist)
+        return RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_point, SD_dist, cri_value, rb,lb
         # return RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value
 
     def U_to_vector_V(self, U, deg):
@@ -221,7 +221,7 @@ class Inha_dataProcess:
         else:
             TS_ID = TS_list.keys()
             for ts_ID in TS_ID:
-                RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value,rb,lb = self.CRI_cal(OS_list, TS_list[ts_ID])
+                RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_point, SD_dist, cri_value,rb,lb = self.CRI_cal(OS_list, TS_list[ts_ID])
                 # RD, RC, TB, RB, K, Vox, Voy, Vtx, Vty, DCPA, TCPA, UDCPA, UTCPA, UD, UB, UK, enc, Rf, Ra, Rs, Rp, SD_dist, cri_value = self.CRI_cal(OS_list, TS_list[ts_ID])
 
                 TS_list[ts_ID]['RD'] = RD 
@@ -248,7 +248,8 @@ class Inha_dataProcess:
                 TS_list[ts_ID]['Ra'] = Ra
                 TS_list[ts_ID]['Rs'] = Rs
                 TS_list[ts_ID]['Rp'] = Rp
-                TS_list[ts_ID]['mapped_radius'] = SD_dist * self.SD_param
+                TS_list[ts_ID]['SD_point'] = SD_point
+                TS_list[ts_ID]['mapped_radius'] = SD_dist #* self.SD_param
                 TS_list[ts_ID]["right_boundary"] = rb
                 TS_list[ts_ID]["left_boundary"] = lb
 

@@ -360,10 +360,10 @@ class CRI:
         return result
     
     def SD_dist_yoo(self):
-        n_points = 360
         self.var_scale = 1  # 10 넣으면 우측으로 갈곳 없음
         Rf, Ra, Rs, Rp = self.Rf(), self.Ra(), self.Rs(), self.Rp()
-        rb = self.RB()
+        # print(Rf, Ra, Rs, Rp)
+        tb = self.TB()
 
         # 도메인 스케일
         Rf_scaled = self.var_scale * Rf
@@ -371,57 +371,113 @@ class CRI:
         Rs_scaled = self.var_scale * Rs
         Rp_scaled = self.var_scale * Rp
 
-        boundary_points = []
-        # r_vals = []  # 각도별 r을 저장할 리스트
+        def ellipse_radius(a, b, theta):
+            """
+            중심이 (0,0)에 있고,
+            x축 방향 반경이 a, y축 방향 반경이 b인 타원의
+            극좌표식 r(θ)를 반환.
+            (단, 타원의 주축이 x축과 y축에 평행하다고 가정)
+            """
+            a_scaled = a + self.y_sigma
+            b_scaled = b + self.x_sigma
+            return (a_scaled * b_scaled) / np.sqrt((b_scaled * np.cos(theta))**2 + (a_scaled * np.sin(theta))**2)
+        # a는 장반경으로 x축 세로방향, b는 단반경을 y축 가로방향을 의미함
+        # self.x_sigma는 시뮬레이션 기준 x축 세로방향
+        # self.y_sigma는 시뮬레이션 기준 y축 가로방향
+        # 점들을 저장할 리스트
+        xy_points = []
 
-        angles = np.linspace(0, 2 * pi, n_points, endpoint=False)
+        # 각 사분면별로 90개의 점을 만든다고 가정 (총 360점)
+        num_points_per_quadrant = 90
 
-        # sgn(x), sgn(y)는 현재 코드처럼 self.Xt, self.Yt 사용
-        sgnx = 1.0 if self.Xt >= 0 else -1.0
-        sgny = 1.0 if self.Yt >= 0 else -1.0
+        # 1사분면(0 ~ 90도) : (Rf, 0) -> (0, Rs) 여기서 양의 각도는 반시계 방향
+        #   a=Rf, b=Rs, theta 범위 = [0, pi/2]
+        thetas_1 = np.linspace(0, (np.pi/2), num_points_per_quadrant, endpoint=False)
+        for t in thetas_1:
+            r = ellipse_radius(Rf_scaled, Rp_scaled, t)
+            x = r * np.cos(t)
+            y = r * np.sin(t)
+            xy_points.append([x, y])
 
-        # 분모 계산은 각도와 무관하게 이 sgnx/sgny로 고정
-        denom_x = (1 + sgnx)*Rf_scaled - (1 - sgnx)*Ra_scaled
-        denom_y = (1 + sgny)*Rs_scaled - (1 - sgny)*Rp_scaled
+        # 2사분면(90 ~ 180도) : (0, Rs) -> (-Ra, 0)
+        #   a=Ra, b=Rs, theta 범위 = [pi/2, pi]
+        thetas_2 = np.linspace(np.pi/2, np.pi, num_points_per_quadrant, endpoint=False)
+        for t in thetas_2:
+            r = ellipse_radius(Ra_scaled, Rp_scaled, t)
+            x = r * np.cos(t)
+            y = r * np.sin(t)
+            xy_points.append([x, y])
 
-        # (Xt, Yt)에 대한 QSD (각도와 관계없이 동일)
-        QSD = (2*self.Xt/denom_x)**2 + (2*self.Yt/denom_y)**2
-        # print("x_var : ",self.x_var)
-        # print("y_var : ",self.y_var)
-        for th in angles:
-            cx = cos(th)
-            cy = sin(th)
+        # 3사분면(180 ~ 270도) : (-Ra, 0) -> (0, -Rp)
+        #   a=Ra, b=Rp, theta 범위 = [pi, 3pi/2]
+        thetas_3 = np.linspace(np.pi, 3*np.pi/2, num_points_per_quadrant, endpoint=False)
+        for t in thetas_3:
+            r = ellipse_radius(Ra_scaled, Rs_scaled, t)
+            x = r * np.cos(t)
+            y = r * np.sin(t)
+            xy_points.append([x, y])
 
-            A = (2*cx/denom_x)**2 + (2*cy/denom_y)**2
-            if A < 1e-14:
-                r = 0.0
-            else:
-                r = sqrt(1.0 / A)
+        # 4사분면(270 ~ 360도) : (0, -Rp) -> (Rf, 0)
+        #   a=Rf, b=Rp, theta 범위 = [3pi/2, 2pi]
+        thetas_4 = np.linspace(3*np.pi/2, 2*np.pi, num_points_per_quadrant, endpoint=True)
+        for t in thetas_4:
+            r = ellipse_radius(Rf_scaled, Rs_scaled, t)
+            x = r * np.cos(t)
+            y = r * np.sin(t)
+            xy_points.append([x, y])
 
-            X_ell = r*cx + self.Xt + self.x_sigma
-            Y_ell = r*cy + self.Yt + self.y_sigma
+        Ct = self.Ct
+        angle = -Ct + np.pi/2
+        cos_angle = np.cos(angle)
+        sin_angle = np.sin(angle)
+        rotation_matrix = np.array([[cos_angle, -sin_angle],
+                                    [sin_angle,  cos_angle]])
+        translation = np.array([self.Yt, self.Xt])
 
-            boundary_points.append((X_ell, Y_ell))
-            # r_vals.append(r)
-            if round(rb) == round(th):
-                # print("th : ",th)
-                # print("roundRB : ",round(rb))
-                self.mapped_radius = sqrt((X_ell-self.Xt)**2+(Y_ell-self.Yt)**2)
-            # print("mapped_radius : ", self.mapped_radius)
-        return np.array(boundary_points), self.mapped_radius
+        rotated_points = []
+        for (x, y) in xy_points:
+            rotated = rotation_matrix.dot(np.array([x, y]))
+            # 회전된 점에 평행이동을 적용합니다.
+            translated = rotated + translation
+            # print(translated)
+            rotated_points.append(translated.tolist())
+
+        angle_0 = tb % (2*np.pi)
+        # 4) angle_0가 속하는 구간 확인
+        if 0+self.Ct <= angle_0 < (np.pi/2)+self.Ct:
+            # 1사분면 파라미터
+            a, b = (Rf, Rs)
+        elif (np.pi/2)+self.Ct <= angle_0 < np.pi+self.Ct:
+            # 2사분면 파라미터
+            a, b = (Ra, Rs)
+        elif np.pi+self.Ct <= angle_0 < (3*np.pi/2)+self.Ct:
+            # 3사분면 파라미터
+            a, b = (Ra, Rp)
+        else:
+            # 4사분면 파라미터
+            a, b = (Rf, Rp)
+
+        # 5) 해당 구간의 (a, b)를 써서 r( tb_rad ) 계산
+        #    (주의: 구간 판별은 angle_0 기준이지만,
+        #           실제 ellipse_radius()는 '실제 θ'인 tb_rad 를 넣어주면 됨)
+        self.mapped_radius = ellipse_radius(a, b, tb)
+        # print("self.x_sigma : ",self.x_sigma)
+        # print("self.y_sigma : ",self.y_sigma)
+        # print("\n")
+        # print("rotated_points : ",rotated_points)
+        # print("\n")
+        # print("mapped_radius : ",self.mapped_radius)
+        return rotated_points, self.mapped_radius    
     
     def lb_rb(self):
         boundary_pts, mapped_radius = self.SD_dist_yoo()
-        rb = self.RB()
-        rd = self.RD()
 
         rel_bearings = []
-        for (bx, by) in boundary_pts:
+        for (by, bx) in boundary_pts:
             dx = bx - self.Xo
             dy = by - self.Yo
             angle_rad = (atan2(dy, dx) + 2*pi) % (2*pi)
             rel_bearings.append(angle_rad)
-
         rel_bearings.sort()
         # rel_bearings.append(rel_bearings[0] + 2*pi)
 
@@ -437,17 +493,9 @@ class CRI:
                 if diff > max_gap:
                     max_gap = diff
                     pair_index = (i, j)
-                    
-                    
-        # left_bound_rad = rb + atan2(mapped_radius,rd)
-        # right_bound_rad = rb - atan2(mapped_radius,rd)
-        # if max_gap < 2*atan2(mapped_radius,rd): # 이거는 헤드온에서 돌아감
-        #     left_bound_rad = (rb - atan2(mapped_radius,rd)+2*pi)%(2*pi)
-        #     right_bound_rad = (rb + atan2(mapped_radius,rd)+2*pi)%(2*pi)
-        #     print(1)
-        # else:                                   # 이거는 스타보드에서 돌아감
-        angle_a = rel_bearings[pair_index[1]] #% (2*pi)
-        angle_b = rel_bearings[pair_index[0]] #% (2*pi)
+
+        angle_a = rel_bearings[pair_index[1]]
+        angle_b = rel_bearings[pair_index[0]]
 
         d = (angle_a - angle_b + 2*pi) % (2*pi)
 
@@ -464,24 +512,24 @@ class CRI:
         if rel1 > 0 and rel2 < 0:
             left_bound_rad = angle_b
             right_bound_rad = angle_a
-            print(1)
+
         elif rel1 < 0 and rel2 > 0:
             left_bound_rad = angle_a
             right_bound_rad = angle_b
-            print(2)
+
         else:
             if abs(rel1) > abs(rel2): # starboard 에선 이건 > 가 맞다
                 left_bound_rad = angle_b #if rel1 > 0 else angle_b
                 right_bound_rad = angle_a #if rel1 > 0 else angle_a
-                print(3)
+
             else:
-                left_bound_rad = angle_a-deg2rad(10) #if rel2 > 0 else angle_a
-                right_bound_rad = angle_b+ deg2rad(10)#if rel2 > 0 else angle_b
-                print(4)
-        print("max_gap : ",max_gap)
-        print("mapped_radius : ",2*atan2(mapped_radius,rd))
-        print("left_bound_rad : ",rad2deg(left_bound_rad))
-        print("right_bound_rad : ",rad2deg(right_bound_rad))
+                left_bound_rad = angle_a#-deg2rad(10) #if rel2 > 0 else angle_a
+                right_bound_rad = angle_b#+ deg2rad(10)#if rel2 > 0 else angle_b
+
+        # print("max_gap : ",max_gap)
+        # print("mapped_radius : ",2*atan2(mapped_radius,rd))
+        # print("left_bound_rad : ",rad2deg(left_bound_rad))
+        # print("right_bound_rad : ",rad2deg(right_bound_rad))
         return left_bound_rad, right_bound_rad
 
     def SD_dist_lee(self):
