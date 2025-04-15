@@ -361,7 +361,7 @@ def main():
                                 (TS_list_ori[ts_ID]["Pos_Y"]-OS_list["Pos_Y"])**2)
                 relative_bearing = rad2deg(atan2(TS_list_ori[ts_ID]["Pos_Y"]-OS_list["Pos_Y"], \
                                             TS_list_ori[ts_ID]["Pos_X"]-OS_list["Pos_X"]))
-                # relative_bearing = (relative_bearing + 360) % 360
+
                 radar_last_update_time = current_time
                 # print("-------------Radar Infromation Update-------------")
                 relative_distance_list[ts_ID] = relative_distance
@@ -381,7 +381,7 @@ def main():
             elif heading_diff >= 360:
                 heading_diff -= 360
 
-            if abs(heading_diff) >= 20:
+            if abs(heading_diff) >= 5:
                 TS_list_del[ts_ID] = TS_list_ori[ts_ID]
 
             else:
@@ -404,7 +404,7 @@ def main():
             AIS_input_list.append(TS_list_del[ts_ID]['Heading'])
             radar_input_list.append(relative_distance_list[ts_ID])
             radar_input_list.append(relative_bearing_list[ts_ID])
-
+            # print("relative_bearing ", relative_bearing_list[ts_ID])
 # --------------------------------------- use AIS and Radar change import----------------------------------------------------------
             predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
 
@@ -455,9 +455,9 @@ def main():
             # print(cov[ts_ID])
             # print(type(cov[ts_ID]))
             
-            # TS_list = TS_list_ori
+            TS_list = TS_list_ori
             # TS_list = TS_list_del
-            TS_list = TS_list_pre
+            # TS_list = TS_list_pre
 #####################################################################################################################
         print("\n")
         print("pos_err :    ", pos_err_list)
@@ -550,8 +550,8 @@ def main():
             # print(temp_enc)
 
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
-        # print("distance :   ", round(distance,3))
-        # print("CRI :        ", temp_cri)
+        print("distance :   ", round(distance,3))
+        print("CRI :        ", temp_cri)
         # print(temp_point)
         V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 
@@ -723,7 +723,7 @@ def main():
         # data.pre_out(TS_list_pre)
         data.result_out(pos_err, cov)
 
-        if local_goal_EDA < 5 * (ship_L/OS_scale) :
+        if local_goal_EDA < 2 * (ship_L/OS_scale) :
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             targetspdIndex = waypointIndex
 

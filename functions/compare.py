@@ -5,21 +5,14 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.MMG import KASS_MMG
 from functions.Controller import Controller
 from functions.mmg_non_dimension import MMG
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../mmgdynamics/src')))
-
-from mmgdynamics.dynamics import mmg_dynamics
-import mmgdynamics.calibrated_vessels as cvs
-from mmgdynamics.structs import Vessel
-
 from numpy import deg2rad, rad2deg
-from math import cos, sin, sqrt, pi
+from math import cos, sin, sqrt, pi, atan2
 import numpy as np 
 import rospy
 
 class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Heading 제어기를 포함하고 있어서 상속해줌
     """시뮬레이션을 위한 클래스"""
-    def __init__(self, initial_X, initial_Y, initial_velocity, initial_u,initial_v, initial_Heading_deg, initial_delta_deg, LBP ,ship_scale, dt):
+    def __init__(self, initial_X, initial_Y, initial_velocity, initial_u,initial_v, initial_Heading_deg, initial_delta_deg, ship_scale, dt):
         '''시뮬레이션을 위한 클래스
 
         Params
@@ -40,10 +33,9 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         self.uBody = initial_u   # x방향으로 진행중이므로, vBody속도는 없다고 가정하고 initial값을 줌    # m/sec.
         self.vBody = initial_v
 
-        self.LBP = LBP
-        self.ship_scale = ship_scale
+        self.ship_scale = 31.65 #ship_scale
 
-        self.rps = 0
+        self.rps = 5
 
         # mmg = MMG(ship_scale=rospy.get_param('shipInfo_all/ship1_info/ship_scale'))
         self.max_delta = 0.6106   # rad.
@@ -77,9 +69,9 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
 
     def moving_ships(self, target_heading, target_spd):
         
-        KASS_mmg = MMG(self.uBody,self.vBody,self.r_rad,self.psi_rad,self.LBP,self.ship_scale)           # MMG 조종운동방정식을 활용하여, 자선/타선의 동역학적 특성을 반영함
+        KASS_mmg = MMG(self.uBody,self.vBody,self.r_rad,self.psi_rad)# MMG 조종운동방정식을 활용하여, 자선/타선의 동역학적 특성을 반영함
         ########## ship scale에 맞게 모형선의 제원 값을 수정 #######
-        Rudder_rate_rad = KASS_mmg.Model['Rudder_rate'] *sqrt(self.ship_scale) / sqrt(KASS_mmg.Model['scale'])  # rad./sec.
+        Rudder_rate_rad = 0.0789 *sqrt(self.ship_scale) / sqrt(31.65)  # rad./sec.
 
         uBody = self.uBody 
         vBody = self.vBody 
@@ -93,27 +85,15 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         U = sqrt(uBody**2+vBody**2)
 
         _,_,_,target_rps = KASS_mmg.resistance_test(target_spd)
-        # print("target_rps : ",target_rps)
+
         # NOTE: It changes the `self`
         n = self.speed_controller(target_rps, self.rps)
         # print(target_spd,target_rps,n)
 
         ##########  `t`에서의 자선의 속도와 타각을 바탕으로 `t+1`에서의 자선의 가속도 계산 ##########
-        velocity_matrix = np.array([[uBody], [vBody], [r_rad]])
+        velocity_matrix = np.array([[uBody], [vBody], [r_rad]])         # Pack the ship velocity components
         
         acceleration_matrix = KASS_mmg.main(delta_rad,n)
-
-# Nicpau part  
-#############################################
-
-        # velocity_matrix = np.array([uBody, vBody, r_rad]) # Pack the ship velocity components
-        # vessel = Vessel(**cvs.kvlcc2_full)
-        # acceleration_matrix = mmg_dynamics(velocity_matrix, vessel, target_heading, 
-        #                                    delta_rad, target_rps, 
-        #                                    0, 0, 0, 0)
-
-#############################################
-
         velocity_matrix = velocity_matrix + acceleration_matrix * self.dt
 
         '`velocity_matrix` is  `np.array` !  so, we need to change as scalar'   
@@ -147,5 +127,5 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         shipState['psi_deg'] = rad2deg(psi_rad)
         shipState['delta_deg'] = rad2deg(delta_rad)
         shipState['r_deg'] = rad2deg(r_rad)
-
+        shipState['Drift_angle'] = (atan2(vBody, uBody)) % (2*pi)
         return shipState

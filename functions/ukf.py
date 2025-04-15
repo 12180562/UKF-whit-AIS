@@ -17,13 +17,13 @@ class UKF:
         self.Q = np.diag([0.01, 0.01, 0.01, 0.01])
         
         # AIS 측정 노이즈 공분산 (4x4): [x, y, speed, heading]
-        self.R_AIS = np.diag([0.5, 0.5, 0.2, 0.2])
+        self.R_AIS = np.diag([0.1, 0.1, 0.1, 0.1])
         
         # Radar 측정 노이즈 공분산 (2x2): [range, bearing_deg]
-        self.R_Radar = np.diag([1.0, 0.5])
+        self.R_Radar = np.diag([1.0, 1.0])
         
         # 시그마 포인트 파라미터 (alpha, beta 등 생략, kappa만 사용)
-        self.kappa = 0.0
+        self.kappa = 1.0
 
     # ---------------------------------------------------------
     # 1. 시그마 포인트 생성

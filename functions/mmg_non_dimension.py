@@ -53,8 +53,6 @@ class MMG:
         self.disp = 28607
         self.m = self.disp*self.density
         self.WSA = 5596.3
-        self.k_zz = 0.25*self.LBP
-        self.I_zz = self.k_zz**2*self.m
         self.kinematic_viscousity = 1.10966e-6
         self.A_r = 26.80
 
@@ -128,7 +126,6 @@ class MMG:
     def resistance_test(self, u):
         Re = u*self.model_LBP/self.kinematic_viscousity
         Fr = u/math.sqrt(9.81*self.model_LBP)
-        # print("[디버그] u =", u, "Re =", Re)
         C_f = 0.075/((math.log10(Re)-2)**2)
         C_r = self.C_r4*Fr**4+self.C_r3*Fr**3+self.C_r2*Fr**2+self.C_r1*Fr+self.C_r0
         C_t = C_f + C_r
@@ -209,7 +206,7 @@ class MMG:
 
     def main(self,delta,n):
         R_, w, t, _ = self.resistance_test(self.u)
-        u_p_,v_p_,J_p = self.propeller_inflow_velocity(w,self.u_,self.v_,self.r_,self.rps)
+        u_p_,v_p_,J_p = self.propeller_inflow_velocity(w,self.u_,self.v_,self.r_,n)
         K_t = self.POW_test(J_p)
         u_r_, v_r_ = self.rudder_inflow_velocity(u_p_,self.v_,self.r_,K_t,J_p)
         X_P_, X_R_, Y_R_, N_R_ = self.thrust_and_rudder_force(self.U,K_t,u_r_,v_r_,n,delta,t)
