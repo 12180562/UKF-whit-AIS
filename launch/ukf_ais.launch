@@ -1,7 +1,7 @@
 <launch>
     <node pkg="ukf_ais"  type="WP_pub.py"  name="WP_generator" respawn="true" />
     <!-- <node pkg="ukf_ais"  type="static_obstacle_publish.py"  name="STOB" respawn="true" /> -->
-    <node pkg="ukf_ais"  type="KRISO.py"  name="KRISO" respawn="true" />
+    <node pkg="ukf_ais"  type="KRISO.py"  name="KRISO" respawn="true" output="screen"/>
     <node pkg="ukf_ais"  type="PKNU.py" name="PKNU" respawn="true" /> 
     <!-- <node pkg="ukf_ais"  type="ship_predict.py" name="ship_predict" respawn="true" output="screen" /> -->
     <!-- <node pkg="ukf_ais"  type="heading_predict.py" name="heading_predict" respawn="true"/>  -->

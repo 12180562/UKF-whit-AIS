@@ -18,6 +18,7 @@ import numpy as np
 import rospy
 import time
 import rospkg
+import random
 
 class data_inNout:
     """inha_module의 data 송신을 위해 필요한 함수들이 정의됨"""
@@ -249,6 +250,16 @@ def main():
     encounter = None
     encounterMMSI = []
 
+    random_value = 0
+    random_heading = rospy.get_param("shipInfo_all/ship2_info/random_heading")
+    last_update_heading = time.time()
+
+#---------------------TS heading random--------------------------
+    # random.seed(42)
+    # random_value = random.randint(-10, 10)
+    # random_TF = True
+#---------------------TS heading random--------------------------
+
     while not rospy.is_shutdown():
         current_time = rospy.Time.now()  # 현재 시간을 계속 추적
         Local_PP = VO_module()
@@ -462,13 +473,27 @@ def main():
         wp_x = wp[0]
         wp_y = wp[1]
 
+        # random_value = 0
+
+#---------------------TS heading random-------------------------------------------------
+        
+        current_time_heading = time.time()  # 현재 시간 확인
+        if current_time_heading - last_update_heading >= 3:
+            random_value = random.randint(-10, 10)  # 1부터 100 사이 랜덤값 생성
+            # print("랜덤값:", random_value)
+            last_update_heading = current_time_heading
+
+#---------------------TS heading random-------------------------------------------------
         eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
         temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
         desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
         desired_heading_list.append(temp_heading_deg)
         desired_spd = desired_spd_list[targetspdIndex]
-        desired_heading = desired_heading_list[0]
-
+        if random_heading:
+            desired_heading = desired_heading_list[0]+random_value
+        else:
+            desired_heading = desired_heading_list[0]
+        # print("TS random heading : ",desired_heading)
         if t%10 ==0:
             pass
 

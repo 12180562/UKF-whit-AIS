@@ -334,8 +334,10 @@ class CRI:
 
         R_fore = (1 + 1.34 * sqrt(pow(KAD, 2) + pow(KDT / 2, 2))) * self.L
         R_aft = (1 + 0.67 * sqrt(pow(KAD, 2) + pow(KDT / 2, 2))) * self.L
-        R_stbd = (0.2 + KDT) * self.L
-        R_port = (0.2 + 0.75*KDT) * self.L
+        R_stbd = (1.5 + KDT) * self.L
+        R_port = (1.5 + 1*KDT) * self.L
+        # R_stbd = (0.2 + KDT) * self.L
+        # R_port = (0.2 + 0.75*KDT) * self.L
 
         return R_fore, R_aft, R_stbd, R_port
 

@@ -1696,7 +1696,7 @@ class VO_module:
 
             # 5) 로그/출력
             # print("total_count :", total_count)
-            print("collision_risk_by_ship :", collision_risk_by_ship)
+            # print("collision_risk_by_ship :", collision_risk_by_ship)
 
 # --------------------------------Collision Probabillity ----------------------------------------------
 

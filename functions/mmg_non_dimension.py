@@ -128,6 +128,7 @@ class MMG:
     def resistance_test(self, u):
         Re = u*self.model_LBP/self.kinematic_viscousity
         Fr = u/math.sqrt(9.81*self.model_LBP)
+        # print("[디버그] u =", u, "Re =", Re)
         C_f = 0.075/((math.log10(Re)-2)**2)
         C_r = self.C_r4*Fr**4+self.C_r3*Fr**3+self.C_r2*Fr**2+self.C_r1*Fr+self.C_r0
         C_t = C_f + C_r

@@ -135,7 +135,7 @@ def main():
             desired_Heading = kriso.path_out_inha_dic[f'{shipID}'].targetCourse
             desired_spd = kriso.path_out_inha_dic[f'{shipID}'].targetSpeed
             shipState_all[shipName] = {**{'shipID': shipID} , **shipInstance_all[shipName].moving_ships(desired_Heading, desired_spd)}
-        
+            # print(shipID, " : ", desired_spd)
         rate.sleep()
         
     rospy.spin()

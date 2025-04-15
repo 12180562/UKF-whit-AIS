@@ -93,14 +93,14 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         U = sqrt(uBody**2+vBody**2)
 
         _,_,_,target_rps = KASS_mmg.resistance_test(target_spd)
-
+        # print("target_rps : ",target_rps)
         # NOTE: It changes the `self`
         n = self.speed_controller(target_rps, self.rps)
         # print(target_spd,target_rps,n)
 
         ##########  `t`에서의 자선의 속도와 타각을 바탕으로 `t+1`에서의 자선의 가속도 계산 ##########
-        
         velocity_matrix = np.array([[uBody], [vBody], [r_rad]])
+        
         acceleration_matrix = KASS_mmg.main(delta_rad,n)
 
 # Nicpau part  
