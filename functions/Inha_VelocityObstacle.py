@@ -601,7 +601,8 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    timeHorizon=RVOdata['CRI']*self.cri_param*self.scale,
+                    # timeHorizon=RVOdata['CRI']*self.cri_param*self.scale,
+                    timeHorizon=self.cri_param*self.scale,
                     # timeHorizon=self.time_horizon
                     ):
                     # print("is within timehorizon",RVOdata['CRI']*self.cri_param)
@@ -614,7 +615,8 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    timeHorizon=RVOdata['CRI']*self.cri_param*self.scale,
+                    # timeHorizon=RVOdata['CRI']*self.cri_param*self.scale,
+                    timeHorizon=self.cri_param*self.scale,
                     # timeHorizon=self.time_horizon
                     ):
                     # print('is in collision cone',RVOdata['CRI']*self.cri_param)

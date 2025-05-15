@@ -19,9 +19,17 @@ class CRI:
         self.Vt = Vt    #타선 속도   [knots]
         self.ratio = 1852 / self.ship_scale #1852/110  #1 해리는 1852m
         # self.ratio = (12*self.L) / self.ship_scale #1852/110  #1 해리는 1852m
-        self.x_sigma = 2*sqrt(x_var)
-        self.y_sigma = 2*sqrt(y_var)
-
+        
+        self.range_of_judgment = 2
+        print(self.Ct)
+        if round(self.Ct,1) == round(np.pi,1):
+            self.x_sigma = self.range_of_judgment*sqrt(y_var)
+            self.y_sigma = self.range_of_judgment*sqrt(x_var)
+            print(1)
+        else:
+            self.x_sigma = self.range_of_judgment*sqrt(x_var)
+            self.y_sigma = self.range_of_judgment*sqrt(y_var)
+            print(2)
         # self.x_var = 0
         # self.y_var = 0
         # 평균에 대해 쁠마 1 표준편차 (시그마)는 68% 데이터 포함
@@ -29,6 +37,7 @@ class CRI:
         # 쁠마 3 시그마는 99.7% 포함
 
         self.mapped_radius = 0
+        self.var_scale = 2  # 10 넣으면 우측으로 갈곳 없음
 
     def RD(self):
         '''Relative Distance, 자선과 타선 사이의 상대 거리'''
@@ -107,7 +116,8 @@ class CRI:
         if v_r == 0:
             result = 0
         
-        numerator = abs((self.Xo - self.Xt) * self.Vrx() + (self.Yo - self.Yt) * self.Vry())      
+        # numerator = abs((self.Xo - self.Xt) * self.Vrx() + (self.Yo - self.Yt) * self.Vry())      
+        numerator = (self.Xo - self.Xt) * self.Vrx() + (self.Yo - self.Yt) * self.Vry()
         result = numerator / (v_r ** 2)  
 
         return result
@@ -334,11 +344,11 @@ class CRI:
 
         R_fore = (1 + 1.34 * sqrt(pow(KAD, 2) + pow(KDT / 2, 2))) * self.L
         R_aft = (1 + 0.67 * sqrt(pow(KAD, 2) + pow(KDT / 2, 2))) * self.L
-        R_stbd = (1.5 + KDT) * self.L
-        R_port = (1.5 + 1*KDT) * self.L
+        R_stbd = (1 + 1.25*KDT) * self.L
+        R_port = (1 + 0.75*KDT) * self.L
         # R_stbd = (0.2 + KDT) * self.L
         # R_port = (0.2 + 0.75*KDT) * self.L
-
+        # print(R_fore, R_aft, R_stbd, R_port)
         return R_fore, R_aft, R_stbd, R_port
 
     def Rf(self):
@@ -362,7 +372,6 @@ class CRI:
         return result
     
     def SD_dist_yoo(self):
-        self.var_scale = 1  # 10 넣으면 우측으로 갈곳 없음
         Rf, Ra, Rs, Rp = self.Rf(), self.Ra(), self.Rs(), self.Rp()
         # print(Rf, Ra, Rs, Rp)
         tb = self.TB()
@@ -463,12 +472,7 @@ class CRI:
         #    (주의: 구간 판별은 angle_0 기준이지만,
         #           실제 ellipse_radius()는 '실제 θ'인 tb_rad 를 넣어주면 됨)
         self.mapped_radius = ellipse_radius(a, b, tb)
-        # print("self.x_sigma : ",self.x_sigma)
-        # print("self.y_sigma : ",self.y_sigma)
-        # print("\n")
-        # print("rotated_points : ",rotated_points)
-        # print("\n")
-        # print("mapped_radius : ",self.mapped_radius)
+
         return rotated_points, self.mapped_radius    
     
     def lb_rb(self):
@@ -528,10 +532,6 @@ class CRI:
                 left_bound_rad = angle_a#-deg2rad(10) #if rel2 > 0 else angle_a
                 right_bound_rad = angle_b#+ deg2rad(10)#if rel2 > 0 else angle_b
 
-        # print("max_gap : ",max_gap)
-        # print("mapped_radius : ",2*atan2(mapped_radius,rd))
-        # print("left_bound_rad : ",rad2deg(left_bound_rad))
-        # print("right_bound_rad : ",rad2deg(right_bound_rad))
         return left_bound_rad, right_bound_rad
 
     def SD_dist_lee(self):

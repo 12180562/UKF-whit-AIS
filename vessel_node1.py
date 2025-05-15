@@ -237,7 +237,7 @@ def main():
     VO_operate = rospy.get_param("shipInfo_all/ship1_info/include_inha_modules")
 
     update_rate = rospy.get_param("update_rate")
-    dt =  rospy.get_param("mmg_dt")
+    dt = rospy.get_param("mmg_dt")
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     # path = "/home/phl/문서/" + timestr + ".csv"
@@ -261,7 +261,7 @@ def main():
 
     # 자선의 정보
     OS_scale = rospy.get_param("shipInfo_all/ship1_info/ship_scale")
-    target_speed = rospy.get_param("shipInfo_all/ship1_info/target_speed")  * 0.5144 / sqrt(OS_scale)
+    target_speed = (rospy.get_param("shipInfo_all/ship1_info/target_speed")  * 0.5144) / sqrt(OS_scale)
     ship_L = rospy.get_param("shipInfo_all/ship1_info/ship_L")
     
     data = data_inNout()
@@ -311,6 +311,10 @@ def main():
     radar_update_interval = rospy.Duration(radar_delay)  # 2.5초
     radar_last_update_time = rospy.Time.now()
 
+    start_time = time.perf_counter()    # 권장: 높은 해상도의 경과 시간 전용 타이머
+
+    # 2) 메인 루프 ― 예: 10 Hz(0.1 s마다)로 도는 시뮬레이션
+    dt = 0.1           # 한 주기 간격 [초]
 #####################################################################################################################
 
     while not rospy.is_shutdown():
@@ -455,14 +459,18 @@ def main():
             # print(cov[ts_ID])
             # print(type(cov[ts_ID]))
             
-            TS_list = TS_list_ori
+            # TS_list = TS_list_ori
             # TS_list = TS_list_del
-            # TS_list = TS_list_pre
+            TS_list = TS_list_pre
 #####################################################################################################################
         print("\n")
         print("pos_err :    ", pos_err_list)
         # print(TS_list)
         # print("\n")
+        elapsed = time.perf_counter() - start_time  # [초]
+    
+        # (b) 원하는 형식으로 출력하거나 로그 저장
+        print(f"Sim elapsed: {elapsed:8.3f} s")   # \r 로 한 줄에 덮어쓰기
 
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
@@ -552,6 +560,8 @@ def main():
             distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
         print("distance :   ", round(distance,3))
         print("CRI :        ", temp_cri)
+        # print("tcpa :        ", temp_TCPA)
+        # print("dcpa :        ", temp_DCPA)
         # print(temp_point)
         V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 

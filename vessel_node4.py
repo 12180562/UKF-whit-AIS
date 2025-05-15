@@ -251,15 +251,9 @@ def main():
     encounterMMSI = []
 
     random_value = 0
-    random_heading = rospy.get_param("shipInfo_all/ship3_info/random_heading")
+    random_heading = rospy.get_param("shipInfo_all/ship4_info/random_heading")
     last_update_heading = time.time()
-
-#---------------------TS heading random--------------------------
-    # random.seed(42)
-    # random_value = random.randint(-10, 10)
-    # random_TF = True
-#---------------------TS heading random--------------------------
-
+    random.seed(25)
     while not rospy.is_shutdown():
         current_time = rospy.Time.now()  # 현재 시간을 계속 추적
         Local_PP = VO_module()
@@ -473,13 +467,11 @@ def main():
         wp_x = wp[0]
         wp_y = wp[1]
 
-        # random_value = 0
-
 #---------------------TS heading random-------------------------------------------------
         
         current_time_heading = time.time()  # 현재 시간 확인
         if current_time_heading - last_update_heading >= 3:
-            random_value = random.randint(-10, 10)  # 1부터 100 사이 랜덤값 생성
+            random_value = random.randint(-20, 20)  # 1부터 100 사이 랜덤값 생성
             # print("랜덤값:", random_value)
             last_update_heading = current_time_heading
 

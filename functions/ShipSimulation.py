@@ -43,7 +43,7 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         self.LBP = LBP
         self.ship_scale = ship_scale
 
-        self.rps = 0
+        self.rps = 5
 
         # mmg = MMG(ship_scale=rospy.get_param('shipInfo_all/ship1_info/ship_scale'))
         self.max_delta = 0.6106   # rad.

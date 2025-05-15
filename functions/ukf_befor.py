@@ -2,7 +2,7 @@ import numpy as np
 
 class UKF:
     def __init__(self):
-        self.Q = np.diag([0.01, 0.01, 0.01, 0.01])  # 시스템 노이즈 공분산
+        self.Q = np.diag([0.1, 0.1, 0.1, 0.1])  # 시스템 노이즈 공분산
         self.R = np.diag([0.1, 0.1, 0.1, 0.1])  # 관측 노이즈 공분산
         self.x = np.array([0, 0, 0, 0])  # x, y, heading, speed 초기 값
         self.P = 100 * np.eye(4)  # 초기 공분산
@@ -64,7 +64,7 @@ class UKF:
     
     # 예측만 수행하는 함수
     def predict(self, dt):
-        kappa = 0  # 시그마 포인트 스케일링 매개변수
+        kappa = 1  # 시그마 포인트 스케일링 매개변수
 
         # 시그마 포인트 계산
         Xi, W = self.sigma_points(self.x, self.P, kappa)

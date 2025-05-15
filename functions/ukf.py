@@ -14,13 +14,13 @@ class UKF:
         self.n = 4  
         
         # 프로세스 노이즈 공분산 (4x4)
-        self.Q = np.diag([0.01, 0.01, 0.01, 0.01])
+        self.Q = np.diag([0.1, 0.1, 0.1, 0.1])
         
         # AIS 측정 노이즈 공분산 (4x4): [x, y, speed, heading]
-        self.R_AIS = np.diag([0.1, 0.1, 0.1, 0.1])
+        self.R_AIS = np.diag([0.05, 0.05, 0.05, 0.05])
         
         # Radar 측정 노이즈 공분산 (2x2): [range, bearing_deg]
-        self.R_Radar = np.diag([1.0, 1.0])
+        self.R_Radar = np.diag([0.1, 0.1])
         
         # 시그마 포인트 파라미터 (alpha, beta 등 생략, kappa만 사용)
         self.kappa = 1.0
