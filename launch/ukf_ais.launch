@@ -20,6 +20,6 @@
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ukf_ais)/Disp/data_vis_inha.rviz"/> -->
 
 	<rosparam command="load" file="$(find ukf_ais)/params/main_parameter.yaml" />
-    <rosparam command="load" file="$(find ukf_ais)/params/KASS_Coefficient.yaml"/>     
-    <rosparam command="load" file="$(find ukf_ais)/params/park_parameter.yaml"/>
+    <!-- <rosparam command="load" file="$(find ukf_ais)/params/KASS_Coefficient.yaml"/>      -->
+    <!-- <rosparam command="load" file="$(find ukf_ais)/params/park_parameter.yaml"/> -->
 </launch>

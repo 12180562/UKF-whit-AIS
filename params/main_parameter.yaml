@@ -171,7 +171,7 @@ min_targetSpeed : 1
 max_targetSpeed : 1.3
 num_targetSpeedCandidates : 3
 
-min_targetHeading_deg_local : -60.0
+min_targetHeading_deg_local: -60.0
 max_targetHeading_deg_local: 60.0
 num_targetHeadingCandidates: 61
 
