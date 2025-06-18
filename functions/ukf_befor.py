@@ -3,7 +3,7 @@ import numpy as np
 class UKF:
     def __init__(self):
         self.Q = np.diag([0.1, 0.1, 0.1, 0.1])  # 시스템 노이즈 공분산
-        self.R = np.diag([0.1, 0.1, 0.1, 0.1])  # 관측 노이즈 공분산
+        self.R = np.diag([0.05, 0.05, 0.05, 0.05])  # 관측 노이즈 공분산
         self.x = np.array([0, 0, 0, 0])  # x, y, heading, speed 초기 값
         self.P = 100 * np.eye(4)  # 초기 공분산
         self.n = 4 # 상태 벡터의 크기

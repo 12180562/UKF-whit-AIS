@@ -9,7 +9,7 @@ class MMG:
         """notice: wake, thrust deduction, rudder and propeller force are calculated in scale that is setted in model test.
         if we want to scaling, we have to calculate in same scale in model test.
         so, in this code, chanege the scale for calculate wake, thrust deduction and etc"""
-        self.Model = rospy.get_param('Model') # 다른 class 및 module에서 파라미터 호출하기 위함
+        # self.Model = rospy.get_param('Model') # 다른 class 및 module에서 파라미터 호출하기 위함
 
         self.U = math.sqrt(u**2+v**2)
         self.u = u

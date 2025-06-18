@@ -43,7 +43,7 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         self.LBP = LBP
         self.ship_scale = ship_scale
 
-        self.rps = 5
+        self.rps = 1
 
         # mmg = MMG(ship_scale=rospy.get_param('shipInfo_all/ship1_info/ship_scale'))
         self.max_delta = 0.6106   # rad.
@@ -79,7 +79,9 @@ class ShipSimulation(Controller): # `Controller()`       # Speed, Steering, Head
         
         KASS_mmg = MMG(self.uBody,self.vBody,self.r_rad,self.psi_rad,self.LBP,self.ship_scale)           # MMG 조종운동방정식을 활용하여, 자선/타선의 동역학적 특성을 반영함
         ########## ship scale에 맞게 모형선의 제원 값을 수정 #######
-        Rudder_rate_rad = KASS_mmg.Model['Rudder_rate'] *sqrt(self.ship_scale) / sqrt(KASS_mmg.Model['scale'])  # rad./sec.
+        # Rudder_rate_rad = KASS_mmg.Model['Rudder_rate'] *sqrt(self.ship_scale) / sqrt(KASS_mmg.Model['scale'])  # rad./sec.
+        Rudder_rate_full = 0.04049  # rad./sec. # 실선 todo scale 작업 필요 = 
+        Rudder_rate_rad = Rudder_rate_full * sqrt(self.ship_scale)
 
         uBody = self.uBody 
         vBody = self.vBody 

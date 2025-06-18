@@ -10,8 +10,8 @@
     <!-- Define the vessels' initial condition at the `/params/main_parameter.yaml` -->
     <node pkg="ukf_ais"  type="vessel_node1.py"  name="ship1_Node"  respawn="true" output="screen"/>
     <node pkg="ukf_ais"  type="vessel_node2.py"  name="ship2_Node"  respawn="true" output="screen"/>
-    <node pkg="ukf_ais"  type="vessel_node3.py"  name="ship3_Node"  respawn="true" />
-    <node pkg="ukf_ais"  type="vessel_node4.py"  name="ship4_Node"  respawn="true" /> 
+    <!-- <node pkg="ukf_ais"  type="vessel_node3.py"  name="ship3_Node"  respawn="true" /> -->
+    <!-- <node pkg="ukf_ais"  type="vessel_node4.py"  name="ship4_Node"  respawn="true" />  -->
     <!-- <node pkg="ukf_ais"  type="vessel_node5.py"  name="ship5_Node"  respawn="true" /> -->
 
     <node pkg="ukf_ais"  type="data_integration.py"  name="data_integration"  respawn="true"  output="screen"/>
@@ -20,6 +20,6 @@
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ukf_ais)/Disp/data_vis_inha.rviz"/> -->
 
 	<rosparam command="load" file="$(find ukf_ais)/params/main_parameter.yaml" />
-    <rosparam command="load" file="$(find ukf_ais)/params/KASS_Coefficient.yaml"/>     
-    <rosparam command="load" file="$(find ukf_ais)/params/park_parameter.yaml"/>
+    <!-- <rosparam command="load" file="$(find ukf_ais)/params/KASS_Coefficient.yaml"/>      -->
+    <!-- <rosparam command="load" file="$(find ukf_ais)/params/park_parameter.yaml"/> -->
 </launch>

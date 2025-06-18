@@ -214,8 +214,11 @@ class VO_module:
         self.weight_aggresiveness = rospy.get_param('weight_agressivness')
         self.cri_param = rospy.get_param('cri_param')
         self.time_horizon = rospy.get_param('timeHorizon')
-        self.rule = rospy.get_param('Portside_rule')     
-        self.scale = 70
+        self.rule = rospy.get_param('Portside_rule')
+
+        self.scale = rospy.get_param("shipInfo_all/ship1_info/ship_scale")
+        self.LBP_full = rospy.get_param("shipInfo_all/ship1_info/ship_L")
+        self.LBP = self.LBP_full/self.scale
 
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
         """
@@ -601,11 +604,12 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=RVOdata['CRI']*self.cri_param*self.scale,
-                    timeHorizon=self.cri_param*self.scale,
+                    # timeHorizon=RVOdata['CRI']*self.cri_param/self.scale,
+                    timeHorizon=RVOdata['CRI']*self.cri_param*self.LBP,
+                    # timeHorizon=self.cri_param*self.scale,
                     # timeHorizon=self.time_horizon
                     ):
-                    # print("is within timehorizon",RVOdata['CRI']*self.cri_param)
+                    # print(sqrt(self.scale))
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
                 
                 elif self.__is_in_collision_cone(
@@ -615,17 +619,23 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=RVOdata['CRI']*self.cri_param*self.scale,
-                    timeHorizon=self.cri_param*self.scale,
+                    # timeHorizon=RVOdata['CRI']*self.cri_param/self.scale,
+                    timeHorizon=RVOdata['CRI']*self.cri_param*self.LBP,
+                    # timeHorizon=self.cri_param*self.scale,
                     # timeHorizon=self.time_horizon
                     ):
                     # print('is in collision cone',RVOdata['CRI']*self.cri_param)
+                    # print(sqrt(self.scale))
+
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
 
                 else:
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inCollisionCone'
 
+
             reachableVel_global_all_annotated.append(reachableVel_global_annotated)
+        print("timeHorizon : ", RVOdata['CRI']*self.cri_param/self.scale)
+        print("velVecNorm : ", ((RVOdata['LOSdist']-RVOdata['mapped_radius'])*self.scale)/(RVOdata['CRI']*self.cri_param))
         # print("angle : ",np.rad2deg(angle))
         # print("LOSangle_rad_global : ",np.rad2deg(0.5*(RVOdata['boundLineAngle_left_rad_global']+RVOdata['boundLineAngle_right_rad_global'])))
         return reachableVel_global_all_annotated

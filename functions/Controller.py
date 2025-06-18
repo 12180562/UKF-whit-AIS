@@ -12,8 +12,8 @@ from math import pi
 class Controller:
     """Speed, Steering, Heading 제어기 부분 """
     def __init__(self):
-        mmg = MMG(ship_scale=rospy.get_param('OS_info/ship_scale'))
-        self.max_delta = mmg.Model['Rudder_max']    # rad.
+        # mmg = MMG(ship_scale=rospy.get_param('OS_info/ship_scale'))
+        self.max_delta = 0.6106    # rad.
         self.n_plus = 0.0
 
     def heading_controller(self, target_head, current_head):

@@ -312,7 +312,8 @@ def main():
     radar_last_update_time = rospy.Time.now()
 
     start_time = time.perf_counter()    # 권장: 높은 해상도의 경과 시간 전용 타이머
-
+    avoide_start = 0
+    avoide_cri = 0
     # 2) 메인 루프 ― 예: 10 Hz(0.1 s마다)로 도는 시뮬레이션
     dt = 0.1           # 한 주기 간격 [초]
 #####################################################################################################################
@@ -459,18 +460,18 @@ def main():
             # print(cov[ts_ID])
             # print(type(cov[ts_ID]))
             
-            # TS_list = TS_list_ori
+            TS_list = TS_list_ori
             # TS_list = TS_list_del
-            TS_list = TS_list_pre
+            # TS_list = TS_list_pre
 #####################################################################################################################
         print("\n")
         print("pos_err :    ", pos_err_list)
         # print(TS_list)
         # print("\n")
-        elapsed = time.perf_counter() - start_time  # [초]
+        # elapsed = time.perf_counter() - start_time  # [초]
     
-        # (b) 원하는 형식으로 출력하거나 로그 저장
-        print(f"Sim elapsed: {elapsed:8.3f} s")   # \r 로 한 줄에 덮어쓰기
+        # # (b) 원하는 형식으로 출력하거나 로그 저장
+        # print(f"Sim elapsed: {elapsed:8.3f} s")   # \r 로 한 줄에 덮어쓰기
 
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
@@ -563,6 +564,7 @@ def main():
         # print("tcpa :        ", temp_TCPA)
         # print("dcpa :        ", temp_DCPA)
         # print(temp_point)
+
         V_selected, pub_collision_cone = Local_PP.VO_update(
             OS_list, 
             TS_list, 
@@ -618,6 +620,13 @@ def main():
                 real_target_heading = sum_of_heading/len(data.target_heading_list)
 
         a = (real_target_heading + 360) % 360
+
+        if a<=3:
+            avoide_start = round(distance,3)
+            avoide_cri = temp_cri
+        print("avoide_start :   ", avoide_start)
+        print("n*L :            ", avoide_start/(ship_L/OS_scale))
+        print("avoide_cri :     ", avoide_cri)
 
         OS_pub_list = [
             int(OS_ID), 

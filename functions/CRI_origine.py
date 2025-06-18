@@ -22,16 +22,13 @@ class CRI:
         
         self.range_of_judgment = 2
         # print(self.Ct)
-        # if round(self.Ct,1) == round(np.pi,1):
-        #     self.x_sigma = self.range_of_judgment*sqrt(y_var)
-        #     self.y_sigma = self.range_of_judgment*sqrt(x_var)
-        #     # print(1)
-        # else:
-        #     self.x_sigma = self.range_of_judgment*sqrt(x_var)
-        #     self.y_sigma = self.range_of_judgment*sqrt(y_var)
-
-        self.x_sigma = self.range_of_judgment*sqrt(x_var)
-        self.y_sigma = self.range_of_judgment*sqrt(y_var)
+        if round(self.Ct,1) == round(np.pi,1):
+            self.x_sigma = self.range_of_judgment*sqrt(y_var)
+            self.y_sigma = self.range_of_judgment*sqrt(x_var)
+            # print(1)
+        else:
+            self.x_sigma = self.range_of_judgment*sqrt(x_var)
+            self.y_sigma = self.range_of_judgment*sqrt(y_var)
             # print(2)
         # self.x_var = 0
         # self.y_var = 0
@@ -150,15 +147,13 @@ class CRI:
         #     result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
         # else:
         #     result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
-        result =  20 * self.L
+        result =  15 * self.L
         # print("d1 : ", result)
         return result
 
     def d2(self):
         '''Safe passing distance'''
-        # result = 9 * self.d1()
-        result =  100 * self.L
-
+        result = 2 * self.d1()
         return result
 
     def UDCPA(self):
@@ -173,14 +168,13 @@ class CRI:
 
     def D1(self):
         '''Distance of action'''
-        result = 80 * self.L
+        result = 12 * self.L
         return result
 
     def D2(self):
         '''Distance of last action'''
         # result = self.ratio * (1.7 * cos(self.RB() - np.deg2rad(19))) + sqrt(4.4 + 2.89 * pow(cos(self.RB() - np.deg2rad(19)), 2))
-        # result = 9 * self.D1()
-        result = 130 * self.L
+        result = 2 * self.D1()
         return result
 
     def UD(self):
@@ -251,10 +245,8 @@ class CRI:
 
     def CRI(self):
         '''충돌위험도지수, UDCPA, UTCPA, UD, UB, UK 5개의 파라미터에 가중치를 곱하여 계산'''
-        result = 0.25 * self.UDCPA() + 0.27 * self.UTCPA() + 0.33 * self.UD() + 0.1 * self.UB() + 0.05 * self.UK() # scale-based parameters
-        # result = 0.4 * self.UDCPA() + 0.367 * self.UTCPA() + 0.133 * self.UD() + 0.067 * self.UB() + 0.033 * self.UK() #원래 값
+        result = 0.4 * self.UDCPA() + 0.367 * self.UTCPA() + 0.133 * self.UD() + 0.067 * self.UB() + 0.033 * self.UK() #원래 값
         # result = 0.4457 * self.UDCPA() + 0.2258 * self.UTCPA() + 0.1408 * self.UD() + 0.1321 * self.UB() + 0.0556 * self.UK() #원준 수정 값
-        # print("work")
         return round(result, 3)
 
     def encounter_classification(self):
