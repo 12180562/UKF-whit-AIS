@@ -571,7 +571,10 @@ class VO_module:
                     angle += 2*pi
 
                 vA2B_RVO = reachableVel_global - RVOdata['collisionConeTranslated']
-
+                # print("reachableVel_global : ",reachableVel_global)
+                # print("RVOdata['collisionConeTranslated'] : ",RVOdata['collisionConeTranslated'])
+                # print("vA2B_RVO : ",vA2B_RVO)
+                # print("\n")
                 angle_vA2B_RVO_rad_global = atan2(
                     vA2B_RVO[1],
                     vA2B_RVO[0],
@@ -604,8 +607,8 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=RVOdata['CRI']*self.cri_param/self.scale,
-                    timeHorizon=RVOdata['CRI']*self.cri_param*self.LBP,
+                    timeHorizon=RVOdata['CRI']*self.cri_param/sqrt(self.scale),
+                    # timeHorizon=RVOdata['CRI']*self.cri_param*self.LBP,
                     # timeHorizon=self.cri_param*self.scale,
                     # timeHorizon=self.time_horizon
                     ):
@@ -619,8 +622,8 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    # timeHorizon=RVOdata['CRI']*self.cri_param/self.scale,
-                    timeHorizon=RVOdata['CRI']*self.cri_param*self.LBP,
+                    timeHorizon=RVOdata['CRI']*self.cri_param/sqrt(self.scale),
+                    # timeHorizon=RVOdata['CRI']*self.cri_param*self.LBP,
                     # timeHorizon=self.cri_param*self.scale,
                     # timeHorizon=self.time_horizon
                     ):
@@ -634,8 +637,9 @@ class VO_module:
 
 
             reachableVel_global_all_annotated.append(reachableVel_global_annotated)
-        print("timeHorizon : ", RVOdata['CRI']*self.cri_param/self.scale)
-        print("velVecNorm : ", ((RVOdata['LOSdist']-RVOdata['mapped_radius'])*self.scale)/(RVOdata['CRI']*self.cri_param))
+        # print("velVecNorm : ", np.linalg.norm(vA2B_RVO))
+        # print("Vector Basis : ", (RVOdata['LOSdist']-RVOdata['mapped_radius'])/((RVOdata['CRI']*self.cri_param)/sqrt(self.scale)))
+        # print("Vector Basis : ", (RVOdata['LOSdist']-RVOdata['mapped_radius'])/((RVOdata['CRI']*self.cri_param)))
         # print("angle : ",np.rad2deg(angle))
         # print("LOSangle_rad_global : ",np.rad2deg(0.5*(RVOdata['boundLineAngle_left_rad_global']+RVOdata['boundLineAngle_right_rad_global'])))
         return reachableVel_global_all_annotated

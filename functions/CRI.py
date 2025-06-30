@@ -101,6 +101,7 @@ class CRI:
     def RV(self):
         '''Relative Velocity, 자선에 대한 타선의 상대속도'''
         result = sqrt(pow(self.Vrx(), 2) + pow(self.Vry(), 2)) + 0.001
+        # print("RV : ",result)
         return result
 
     def RC(self):
@@ -122,7 +123,7 @@ class CRI:
         # numerator = abs((self.Xo - self.Xt) * self.Vrx() + (self.Yo - self.Yt) * self.Vry())      
         numerator = (self.Xo - self.Xt) * self.Vrx() + (self.Yo - self.Yt) * self.Vry()
         result = numerator / (v_r ** 2)  
-
+        # print("TCPA : ", result)
         return result
 
     def dcpa(self):

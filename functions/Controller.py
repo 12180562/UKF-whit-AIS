@@ -4,7 +4,7 @@ import sys, os
 import rospy
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from functions.PID import PID
-from functions.MMG import KASS_MMG
+# from functions.MMG import KASS_MMG
 from functions.mmg_non_dimension import MMG
 from numpy import deg2rad
 from math import pi

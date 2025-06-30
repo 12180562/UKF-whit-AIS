@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from functions.MMG import KASS_MMG
+# from functions.MMG import KASS_MMG
 from functions.Controller import Controller
 from functions.mmg_non_dimension import MMG
 

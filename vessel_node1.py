@@ -70,6 +70,10 @@ class data_inNout:
         self.Pos_X  = operation.m_fltPos_X
         self.Pos_Y  = operation.m_fltPos_Y
         self.Vel_U  = operation.m_fltVel_U
+        # self.Vel_U  = []
+        # U = rospy.get_param("min_targetSpeed")
+        # self.Vel_U.append(U)
+        # self.Vel_U.append(U)
 
         self.delta_deg = operation.m_fltRudderAngleFeedSTBD # deg.
 
@@ -472,7 +476,7 @@ def main():
     
         # # (b) 원하는 형식으로 출력하거나 로그 저장
         # print(f"Sim elapsed: {elapsed:8.3f} s")   # \r 로 한 줄에 덮어쓰기
-
+        print("OS_U : ", OS_list['Vel_U'])
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
         OS_list['V_x'] = OS_Vx
