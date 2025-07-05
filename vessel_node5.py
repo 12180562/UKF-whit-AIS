@@ -94,7 +94,11 @@ class data_inNout:
 
         self.Pos_X  = operation.m_fltPos_X
         self.Pos_Y  = operation.m_fltPos_Y
-        self.Vel_U  = operation.m_fltVel_U
+        # self.Vel_U  = operation.m_fltVel_U
+        self.Vel_U  = rospy.get_param("target_spd_List/target_speed_ship2")
+        # U = 
+        # self.Vel_U.append(U)
+        # self.Vel_U.append(U)
 
         self.delta_deg = operation.m_fltRudderAngleFeedSTBD # deg.
 
@@ -253,13 +257,7 @@ def main():
     random_value = 0
     random_heading = rospy.get_param("shipInfo_all/ship5_info/random_heading")
     last_update_heading = time.time()
-
-#---------------------TS heading random--------------------------
-    # random.seed(42)
-    # random_value = random.randint(-10, 10)
-    # random_TF = True
-#---------------------TS heading random--------------------------
-
+    random.seed(25)
     while not rospy.is_shutdown():
         current_time = rospy.Time.now()  # 현재 시간을 계속 추적
         Local_PP = VO_module()
@@ -329,142 +327,144 @@ def main():
                         'radius' : []
                     }
         '''
-
-        # TS_list = inha.TS_info_supplement(
-        #     OS_list, 
-        #     TS_list,
-        #     )
+        '''
+        TS_list = inha.TS_info_supplement(
+            OS_list, 
+            TS_list,
+            )
         
-        # TS_RD_temp = []
-        # TS_RC_temp = []
-        # TS_K_temp = []
-        # TS_DCPA_temp = []
-        # TS_TCPA_temp = []
-        # TS_UDCPA_temp = []
-        # TS_UTCPA_temp = []
-        # TS_UD_temp = []
-        # TS_UB_temp = []
-        # TS_UK_temp = []
-        # TS_CRI_temp = []
-        # TS_Rf_temp = []
-        # TS_Ra_temp = []
-        # TS_Rs_temp = []
-        # TS_Rp_temp = []
-        # TS_ENC_temp = []
+        TS_RD_temp = []
+        TS_RC_temp = []
+        TS_K_temp = []
+        TS_DCPA_temp = []
+        TS_TCPA_temp = []
+        TS_UDCPA_temp = []
+        TS_UTCPA_temp = []
+        TS_UD_temp = []
+        TS_UB_temp = []
+        TS_UK_temp = []
+        TS_CRI_temp = []
+        TS_Rf_temp = []
+        TS_Ra_temp = []
+        TS_Rs_temp = []
+        TS_Rp_temp = []
+        TS_ENC_temp = []
 
-        # encounterMMSI = []
-        # TS_list_copy = {}
-        # TS_ID_copy = []
+        encounterMMSI = []
+        TS_list_copy = {}
+        TS_ID_copy = []
 
-        # for ts_ID in TS_ID:
-        #     temp_RD = TS_list[ts_ID]['RD']
-        #     TS_RD_temp.append(temp_RD)
+        for ts_ID in TS_ID:
+            temp_RD = TS_list[ts_ID]['RD']
+            TS_RD_temp.append(temp_RD)
             
-        #     temp_RC = TS_list[ts_ID]['RC']
-        #     TS_RC_temp.append(temp_RC)
+            temp_RC = TS_list[ts_ID]['RC']
+            TS_RC_temp.append(temp_RC)
 
-        #     temp_K = TS_list[ts_ID]['K']
-        #     TS_K_temp.append(temp_K)
+            temp_K = TS_list[ts_ID]['K']
+            TS_K_temp.append(temp_K)
 
-        #     temp_DCPA = TS_list[ts_ID]['DCPA']
-        #     TS_DCPA_temp.append(temp_DCPA)
+            temp_DCPA = TS_list[ts_ID]['DCPA']
+            TS_DCPA_temp.append(temp_DCPA)
 
-        #     temp_TCPA = TS_list[ts_ID]['TCPA']
-        #     TS_TCPA_temp.append(temp_TCPA)
+            temp_TCPA = TS_list[ts_ID]['TCPA']
+            TS_TCPA_temp.append(temp_TCPA)
 
-        #     temp_UDCPA = TS_list[ts_ID]['UDCPA']
-        #     TS_UDCPA_temp.append(temp_UDCPA)
+            temp_UDCPA = TS_list[ts_ID]['UDCPA']
+            TS_UDCPA_temp.append(temp_UDCPA)
             
-        #     temp_UTCPA = TS_list[ts_ID]['UTCPA']
-        #     TS_UTCPA_temp.append(temp_UTCPA)
+            temp_UTCPA = TS_list[ts_ID]['UTCPA']
+            TS_UTCPA_temp.append(temp_UTCPA)
 
-        #     temp_UD = TS_list[ts_ID]['UD']
-        #     TS_UD_temp.append(temp_UD)
+            temp_UD = TS_list[ts_ID]['UD']
+            TS_UD_temp.append(temp_UD)
 
-        #     temp_UB = TS_list[ts_ID]['UB']
-        #     TS_UB_temp.append(temp_UB)
+            temp_UB = TS_list[ts_ID]['UB']
+            TS_UB_temp.append(temp_UB)
 
-        #     temp_UK = TS_list[ts_ID]['UK']
-        #     TS_UK_temp.append(temp_UK)
+            temp_UK = TS_list[ts_ID]['UK']
+            TS_UK_temp.append(temp_UK)
 
-        #     temp_cri = TS_list[ts_ID]['CRI']
-        #     TS_CRI_temp.append(temp_cri)
+            temp_cri = TS_list[ts_ID]['CRI']
+            TS_CRI_temp.append(temp_cri)
 
-        #     temp_Rf = TS_list[ts_ID]['Rf']
-        #     TS_Rf_temp.append(temp_Rf)
+            temp_Rf = TS_list[ts_ID]['Rf']
+            TS_Rf_temp.append(temp_Rf)
 
-        #     temp_Ra = TS_list[ts_ID]['Ra']
-        #     TS_Ra_temp.append(temp_Ra)
+            temp_Ra = TS_list[ts_ID]['Ra']
+            TS_Ra_temp.append(temp_Ra)
 
-        #     temp_Rs = TS_list[ts_ID]['Rs']
-        #     TS_Rs_temp.append(temp_Rs)
+            temp_Rs = TS_list[ts_ID]['Rs']
+            TS_Rs_temp.append(temp_Rs)
 
-        #     temp_Rp = TS_list[ts_ID]['Rp']
-        #     TS_Rp_temp.append(temp_Rp)
+            temp_Rp = TS_list[ts_ID]['Rp']
+            TS_Rp_temp.append(temp_Rp)
 
-        #     temp_enc = TS_list[ts_ID]['status']
-        #     TS_ENC_temp.append(temp_enc)
+            temp_enc = TS_list[ts_ID]['status']
+            TS_ENC_temp.append(temp_enc)
 
-        #     distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
+            distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
 
-        #     if distance <= rospy.get_param("detecting_distance"):
-        #         if ts_ID not in TS_list_copy:
-        #             TS_list_copy[ts_ID] = TS_list[ts_ID]
-        #             encounterMMSI.append(ts_ID)
-        #             # print(f"TS was detected at around OS: {ts_ID}")
-        #     else:
-        #         if ts_ID in TS_list_copy:
-        #             del TS_list_copy[ts_ID]
-        #             encounterMMSI.remove(ts_ID)
-        #             # print(f"TS moved out of range: {ts_ID}")
+            if distance <= rospy.get_param("detecting_distance"):
+                if ts_ID not in TS_list_copy:
+                    TS_list_copy[ts_ID] = TS_list[ts_ID]
+                    encounterMMSI.append(ts_ID)
+                    # print(f"TS was detected at around OS: {ts_ID}")
+            else:
+                if ts_ID in TS_list_copy:
+                    del TS_list_copy[ts_ID]
+                    encounterMMSI.remove(ts_ID)
+                    # print(f"TS moved out of range: {ts_ID}")
 
-        # TS_ID = encounterMMSI
-        # TS_list = TS_list_copy
+        TS_ID = encounterMMSI
+        TS_list = TS_list_copy
 
-        # # print("distance : ", distance)
-        # # print("DCPA: ", temp_DCPA)
+        # print("distance : ", distance)
+        # print("DCPA: ", temp_DCPA)
         
-        # if len(encounterMMSI) == 0:
-        #     encounter = False
-        # else:
-        #     encounter = True
-
+        if len(encounterMMSI) == 0:
+            encounter = False
+        else:
+            encounter = True
+        '''
         ############################ for connect with KRISO format ##################################
 
         # TODO: Reduce the computation time for this part (~timeChckpt4_vesselNode)
         desired_spd_list = []
         desired_heading_list = []
 
-        # if VO_operate:
-        #     V_selected, pub_collision_cone = Local_PP.VO_update(
-        #     OS_list, 
-        #     TS_list, 
-        #     V_des, 
-        #     data.static_obstacle_info,
-        #     data.static_point_info
-        #     )
+        '''
+        if VO_operate:
+            V_selected, pub_collision_cone = Local_PP.VO_update(
+            OS_list, 
+            TS_list, 
+            V_des, 
+            data.static_obstacle_info,
+            data.static_point_info
+            )
 
-        #     eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
-        #     temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
-        #     desired_spd_list.append(temp_spd)
-        #     desired_heading_list.append(temp_heading_deg)
-        #     desired_spd = desired_spd_list[0]
-        #     desired_heading = desired_heading_list[0]
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list.append(temp_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[0]
+            desired_heading = desired_heading_list[0]
         
-        # else:
-        #     V_selected = V_des
+        else:
+            V_selected = V_des
 
-        #     # NOTE: Only one step ahead
-        #     wp = inha.waypoint_generator(OS_list, V_selected, dt)
-        #     wp_x = wp[0]
-        #     wp_y = wp[1]
+            # NOTE: Only one step ahead
+            wp = inha.waypoint_generator(OS_list, V_selected, dt)
+            wp_x = wp[0]
+            wp_y = wp[1]
 
-        #     eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
-        #     temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
-        #     desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
-        #     desired_heading_list.append(temp_heading_deg)
-        #     desired_spd = desired_spd_list[targetspdIndex]
-        #     desired_heading = desired_heading_list[0]
+            eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
+            temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
+            desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
+            desired_heading_list.append(temp_heading_deg)
+            desired_spd = desired_spd_list[targetspdIndex]
+            desired_heading = desired_heading_list[0]
+        '''
 
         V_selected = V_des
 
@@ -473,13 +473,11 @@ def main():
         wp_x = wp[0]
         wp_y = wp[1]
 
-        # random_value = 0
-
 #---------------------TS heading random-------------------------------------------------
         
         current_time_heading = time.time()  # 현재 시간 확인
         if current_time_heading - last_update_heading >= 3:
-            random_value = random.randint(-10, 10)  # 1부터 100 사이 랜덤값 생성
+            random_value = random.randint(-20, 20)  # 1부터 100 사이 랜덤값 생성
             # print("랜덤값:", random_value)
             last_update_heading = current_time_heading
 

@@ -220,6 +220,8 @@ class VO_module:
         self.LBP_full = rospy.get_param("shipInfo_all/ship1_info/ship_L")
         self.LBP = self.LBP_full/self.scale
 
+        self.collision_risk_by_ship = {}
+        
     def __is_all_vels_collidable(self, vel_all_annotated, shipID_all):
         """
         If all the velocity candiates are in collision cone it returns `True`. Otherwise, it returns `False`.
@@ -607,10 +609,10 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    timeHorizon=RVOdata['CRI']*self.cri_param/sqrt(self.scale),
+                    # timeHorizon=RVOdata['CRI']*self.cri_param/sqrt(self.scale),
                     # timeHorizon=RVOdata['CRI']*self.cri_param*self.LBP,
                     # timeHorizon=self.cri_param*self.scale,
-                    # timeHorizon=self.time_horizon
+                    timeHorizon=self.time_horizon/sqrt(self.scale)
                     ):
                     # print(sqrt(self.scale))
                     reachableVel_global_annotated[RVOdata['TS_ID']] = 'inTimeHorizon'
@@ -622,10 +624,10 @@ class VO_module:
                     velVecNorm=np.linalg.norm(vA2B_RVO),
                     shortestRelativeDist=RVOdata['LOSdist']-RVOdata['mapped_radius'],
                     # timeHorizon=RVOdata['CRI']*self.cri_param,
-                    timeHorizon=RVOdata['CRI']*self.cri_param/sqrt(self.scale),
+                    # timeHorizon=RVOdata['CRI']*self.cri_param/sqrt(self.scale),
                     # timeHorizon=RVOdata['CRI']*self.cri_param*self.LBP,
                     # timeHorizon=self.cri_param*self.scale,
-                    # timeHorizon=self.time_horizon
+                    timeHorizon=self.time_horizon/sqrt(self.scale)
                     ):
                     # print('is in collision cone',RVOdata['CRI']*self.cri_param)
                     # print(sqrt(self.scale))
@@ -1686,35 +1688,49 @@ class VO_module:
             # print(reachableVel_all_annotated)
             # print("\n")
 
-# --------------------------------Collision Probabillity ----------------------------------------------
+# Collision Risk Probabillity Part
+#################################################################################################################
+            
             total_count = len(reachableVel_all_annotated)
 
             if total_count == 0:
                 # 후보 벡터가 하나도 없다면 모든 선박에 대해 0% 처리
-                collision_risk_by_ship = {ts_id: 0.0 for ts_id in TS_ID}
+                self.collision_risk_by_ship = {ts_id: 0.0 for ts_id in TS_ID}
             else:
                 # 2) 선박별 '위험 벡터' 카운트(= inCollisionCone인 벡터 수)
                 dangerous_count_by_ship = {ts_id: 0 for ts_id in TS_ID}
                 
                 # 3) 모든 후보 벡터를 순회하며, 각 선박별 'inCollisionCone'인지 검사
                 for ts_id in TS_ID:
-                    for record in reachableVel_all_annotated:
-                    # record 예: { 'vel': array([...]), 2001: 'inCollisionCone', 2002: 'inRight', ... }
-                        if record[ts_id] == "inCollisionCone": # or record[ts_id] == "inRight":
-                            dangerous_count_by_ship[ts_id] += 1
+                    if ts_id >=3000:
+                        pass
+                    else:
+                        for record in reachableVel_all_annotated:
+                        # record 예: { 'vel': array([...]), 2001: 'inCollisionCone', 2002: 'inRight', ... }
+                            if record[ts_id] == "inCollisionCone" or record[ts_id+1000] == "inCollisionCone":
+                                dangerous_count_by_ship[ts_id] += 1
 
                 # 4) 선박별 충돌 위험도(%) 계산
-                collision_risk_by_ship = {}
+                self.collision_risk_by_ship = {}
                 for ts_id in TS_ID:
-                    ship_risk = (dangerous_count_by_ship[ts_id] / total_count) * 100.0
-                    collision_risk_by_ship[ts_id] = round(ship_risk,2)
-                    # print("dangerous_count_by_ship[ts_id] : ",dangerous_count_by_ship[ts_id] )
+                    if ts_id >=3000:
+                        pass
+                    else:
+                        ship_risk = (dangerous_count_by_ship[ts_id] / total_count) * 100.0
+                        self.collision_risk_by_ship[ts_id] = round(ship_risk,2)
+                        # print("dangerous_count_by_ship[ts_id] : ",dangerous_count_by_ship[ts_id] )
 
-            # 5) 로그/출력
-            # print("total_count :", total_count)
-            print("collision_risk_by_ship :", collision_risk_by_ship)
+            for vec in reachableVel_all_annotated:       # 벡터(dict) 하나씩
+                for k in list(vec.keys()):               # 키 복사본을 돌면서
+                    # 정수 키이고 3000 이상이면 삭제
+                    if isinstance(k, int) and k >= 3000:
+                        del vec[k]
+            
+            for sid in list(TS.keys()):   # 키 복사본으로 안전하게 순회
+                if isinstance(sid, int) and sid >= 3000:
+                    del TS[sid]
 
-# --------------------------------Collision Probabillity ----------------------------------------------
+##################################################################################################################
 
             '''
             Data structure of `vels_annotated`:
@@ -1790,7 +1806,6 @@ class VO_module:
                 #     selection_key = "inRight"
                     # print("Neareast ship is Port crossing situation. Avoid to left side")
                 
-
                 #=========================================================+
                 """ <<<<<<<< IMPORTANT! MUST READ IT CAREFULLY! >>>>>>>>>>|
                 - Since the RVO in this code is implemented based on x-y coord., the annotations such as 'left' or 'right' relies on x-y coord. 
@@ -1973,7 +1988,6 @@ class VO_module:
 # 룰이 추가되어 있으면, 포트 상태일 때 콘을 다르게 만드는 부분이 들어가서 문제가 발생. 이거는 어떻게 할지 무영이가 결정해야 할듯
 # port일 때 콘이 위에것처럼 만들어지면 all avoidable이 되어서 가장 빠른 벡터를 선택
 
-
                 RVOdata = {
                     "TS_ID": ts_ID,
                     "LOSdist": LOSdist,
@@ -2064,7 +2078,7 @@ class VO_module:
 
         V_opt = self.__choose_velocity(V_des, RVOdata_all, OS_original, TS_original,static_obstacle_info, static_point_info)
 
-        return V_opt, pub_collision_cone
+        return V_opt, pub_collision_cone, self.collision_risk_by_ship
 
     def vectorV_to_goal(self, OS, goal, V_max):
         """ 

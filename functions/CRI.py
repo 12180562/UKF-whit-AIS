@@ -40,7 +40,7 @@ class CRI:
         # 쁠마 3 시그마는 99.7% 포함
 
         self.mapped_radius = 0
-        self.var_scale = 2  # 10 넣으면 우측으로 갈곳 없음
+        self.scaling = 2  # 10 넣으면 우측으로 갈곳 없음
 
     def RD(self):
         '''Relative Distance, 자선과 타선 사이의 상대 거리'''
@@ -109,6 +109,7 @@ class CRI:
         result = atan2(self.Vry(), self.Vrx()) % (2*pi)
         return result
 
+    """
     def tcpa(self):
         # dx = self.Xt - self.Xo
         # dy = self.Yt - self.Yo
@@ -119,7 +120,7 @@ class CRI:
         v_r = self.RV()
         if v_r == 0:
             result = 0
-        
+
         # numerator = abs((self.Xo - self.Xt) * self.Vrx() + (self.Yo - self.Yt) * self.Vry())      
         numerator = (self.Xo - self.Xt) * self.Vrx() + (self.Yo - self.Yt) * self.Vry()
         result = numerator / (v_r ** 2)  
@@ -137,9 +138,58 @@ class CRI:
             result = self.RD()
         numerator = abs((self.Xo - self.Xt) * self.Vrx() - (self.Yo - self.Yt) * self.Vry())
         result = numerator / v_r
-        
+        print("DCPA : ", result)
         return result
+    """
 
+    def tcpa(self):
+        """
+        Time to Closest Point of Approach (초 단위).
+        양수 → 앞으로 그만큼 뒤에 가장 가까워짐
+        0   → 지금이 가장 가까운 순간
+        음수 → 이미 지나쳐서 멀어지는 중
+        """
+        # 1) 상대 위치 벡터 r = T - O
+        dx = self.Xt - self.Xo
+        dy = self.Yt - self.Yo
+
+        # 2) 상대 속도 벡터 Vr
+        vrx = self.Vrx()
+        vry = self.Vry()
+
+        # 3) |Vr|^2
+        vr2 = vrx**2 + vry**2
+
+        # 4) 상대 속도가 0이면 시간 개념이 없음 → 0 반환(또는 None)
+        if vr2 == 0:
+            return 0.0
+        # print("TCPA : ", -(dx * vrx + dy * vry) / vr2 )
+
+        # 5) TCPA 공식
+        return -(dx * vrx + dy * vry) / vr2
+    
+    def dcpa(self):
+        # 상대 위치 (T - O)
+        dx = self.Xt - self.Xo
+        dy = self.Yt - self.Yo
+
+        # 상대 속도
+        vrx = self.Vrx()
+        vry = self.Vry()
+
+        # |Vr|
+        v_r = sqrt(vrx**2 + vry**2)
+
+        # 상대 속도가 0이면 현재 거리 = DCPA
+        if v_r == 0:
+            return sqrt(dx**2 + dy**2)
+
+        # |r × Vr|  = | dx * vry - dy * vrx |
+        numerator = abs(dx * vry - dy * vrx)
+        # print("DCPA : ", numerator / v_r )
+
+        return numerator / v_r        # DCPA
+    
     def d1(self):
         '''Safe approaching distance'''
         # RB = np.rad2deg(self.RB())
@@ -386,10 +436,10 @@ class CRI:
         tb = self.TB()
 
         # 도메인 스케일
-        Rf_scaled = self.var_scale * Rf
-        Ra_scaled = self.var_scale * Ra
-        Rs_scaled = self.var_scale * Rs
-        Rp_scaled = self.var_scale * Rp
+        Rf_scaled = self.scaling * Rf
+        Ra_scaled = self.scaling * Ra
+        Rs_scaled = self.scaling * Rs
+        Rp_scaled = self.scaling * Rp
 
         def ellipse_radius(a, b, theta):
             """

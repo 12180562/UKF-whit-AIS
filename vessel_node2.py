@@ -94,9 +94,9 @@ class data_inNout:
 
         self.Pos_X  = operation.m_fltPos_X
         self.Pos_Y  = operation.m_fltPos_Y
-        self.Vel_U  = operation.m_fltVel_U
-        # self.Vel_U  = []
-        # U = rospy.get_param("min_targetSpeed")
+        # self.Vel_U  = operation.m_fltVel_U
+        self.Vel_U  = rospy.get_param("target_spd_List/target_speed_ship2")
+        # U = 
         # self.Vel_U.append(U)
         # self.Vel_U.append(U)
 
@@ -301,7 +301,7 @@ def main():
 
         TS_ID = TS_list.keys()
         # TODO : why do this?
-        print("TS_U : ", OS_list['Vel_U'])
+
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
         OS_list['V_x'] = OS_Vx
@@ -485,6 +485,7 @@ def main():
         eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
         temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
         desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
+        print(desired_spd_list)
         desired_heading_list.append(temp_heading_deg)
         desired_spd = desired_spd_list[targetspdIndex]
         if random_heading:

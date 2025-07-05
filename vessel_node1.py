@@ -34,8 +34,6 @@ class data_inNout:
         self.Vis_pub = rospy.Publisher('/vis1_info', vis_info, queue_size=10)
 
         self.ori_pub = rospy.Publisher('TS_list', ShipInfo, queue_size=10)
-        # self.del_pub = rospy.Publisher('TS_list_del', ShipInfo, queue_size=10)
-        # self.pre_pub = rospy.Publisher('TS_list_predict', ShipInfo, queue_size=10)
 
         self.result_pub = rospy.Publisher('result_info', ResultInfo, queue_size=10)
 
@@ -69,9 +67,9 @@ class data_inNout:
 
         self.Pos_X  = operation.m_fltPos_X
         self.Pos_Y  = operation.m_fltPos_Y
-        self.Vel_U  = operation.m_fltVel_U
-        # self.Vel_U  = []
-        # U = rospy.get_param("min_targetSpeed")
+        # self.Vel_U  = operation.m_fltVel_U
+        self.Vel_U  = rospy.get_param("target_spd_List/target_speed_ship1")
+        # U = 
         # self.Vel_U.append(U)
         # self.Vel_U.append(U)
 
@@ -152,20 +150,21 @@ class data_inNout:
 
     def cri_out(self, pub_list):
         cri = cri_info_yoo()
-        cri.DCPA = pub_list[0]
-        cri.TCPA = pub_list[1]
-        cri.UDCPA = pub_list[2]
-        cri.UTCPA = pub_list[3]
-        cri.UD = pub_list[4]
-        cri.UB = pub_list[5]
-        cri.UK = pub_list[6]
-        cri.CRI = pub_list[7]
-        cri.Rf = pub_list[8]
-        cri.Ra = pub_list[9]
-        cri.Rs = pub_list[10]
-        cri.Rp = pub_list[11]
-        cri.bx = pub_list[12]
-        cri.by = pub_list[13]
+        cri.RD = pub_list[0]
+        cri.DCPA = pub_list[1]
+        cri.TCPA = pub_list[2]
+        cri.UDCPA = pub_list[3]
+        cri.UTCPA = pub_list[4]
+        cri.UD = pub_list[5]
+        cri.UB = pub_list[6]
+        cri.UK = pub_list[7]
+        cri.CRI = pub_list[8]
+        cri.Rf = pub_list[9]
+        cri.Ra = pub_list[10]
+        cri.Rs = pub_list[11]
+        cri.Rp = pub_list[12]
+        cri.bx = pub_list[13]
+        cri.by = pub_list[14]
         cri.encounter_classification = pub_list[14]
         # print(cri.encounter_classification)
 
@@ -188,51 +187,26 @@ class data_inNout:
 
         self.ori_pub.publish(message)
 
-    # def ori_out(self, pub_list):
-    #     for ship_ID, ship_data in pub_list.items():
-    #         message = ShipInfo()
-    #         message.Ship_ID = ship_data['Ship_ID']
-    #         message.Pos_X = ship_data['Pos_X']
-    #         message.Pos_Y = ship_data['Pos_Y']
-    #         message.Vel_U = ship_data['Vel_U']
-    #         message.Heading = ship_data['Heading']
-
-    #         self.ori_pub.publish(message)
-
-    # def del_out(self, pub_list):
-    #     for ship_ID, ship_data in pub_list.items():
-    #         message = ShipInfo()
-    #         message.Ship_ID = ship_data['Ship_ID']
-    #         message.Pos_X = ship_data['Pos_X']
-    #         message.Pos_Y = ship_data['Pos_Y']
-    #         message.Vel_U = ship_data['Vel_U']
-    #         message.Heading = ship_data['Heading']
-
-    #         self.del_pub.publish(message)
-
-    # def pre_out(self, pub_list):
-    #     for ship_ID, ship_data in pub_list.items():
-    #         message = ShipInfo()
-    #         message.Ship_ID = ship_data['Ship_ID']
-    #         message.Pos_X = ship_data['Pos_X']
-    #         message.Pos_Y = ship_data['Pos_Y']
-    #         message.Vel_U = ship_data['Vel_U']
-    #         message.Heading = ship_data['Heading']
-
-    #         self.pre_pub.publish(message)
-
-    def result_out(self, pos_err, cov):
+    def result_out(self, pos_err, cov, CRP, DI):
         ukf_result = ResultInfo()
-        for ship_ID, ship_data in pos_err.items():
-            # ukf_result.Ship_ID = ship_ID
-            ukf_result.Pos_Err = ship_data
+        for ship_id in pos_err.keys():                           # ① id 하나씩
+            ukf_result = ResultInfo()                            #   결과 새로 만들기
 
-        for ship_ID, ship_data in cov.items(): 
-            ukf_result.Cov_XX = ship_data[0]
-            ukf_result.Cov_YY = ship_data[1]
-            ukf_result.Cov_UU = ship_data[2]
-            ukf_result.Cov_Heading = ship_data[3]
+            # ─── 필드 채우기 ──────────────────────────────
+            ukf_result.Ship_ID  = ship_id                        # (msg에 필드 있을 때)
+            ukf_result.Pos_Err  = pos_err[ship_id]
 
+            # cov가 없으면 기본 0으로
+            cov_data = cov.get(ship_id, (0.0, 0.0, 0.0, 0.0))
+            ukf_result.Cov_XX, \
+            ukf_result.Cov_YY, \
+            ukf_result.Cov_UU, \
+            ukf_result.Cov_Heading = cov_data
+
+            ukf_result.CRP = CRP.get(ship_id, 0.0)               # 없으면 0
+            ukf_result.DI  = DI.get(ship_id, 0.0)
+
+            # ─── 퍼블리시 ────────────────────────────────
             self.result_pub.publish(ukf_result)
 
 def main():  
@@ -242,6 +216,7 @@ def main():
 
     update_rate = rospy.get_param("update_rate")
     dt = rospy.get_param("mmg_dt")
+    detecting_distance = rospy.get_param("detecting_distance")
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     # path = "/home/phl/문서/" + timestr + ".csv"
@@ -267,7 +242,13 @@ def main():
     OS_scale = rospy.get_param("shipInfo_all/ship1_info/ship_scale")
     target_speed = (rospy.get_param("shipInfo_all/ship1_info/target_speed")  * 0.5144) / sqrt(OS_scale)
     ship_L = rospy.get_param("shipInfo_all/ship1_info/ship_L")
-    
+    ship_B = rospy.get_param("shipInfo_all/ship1_info/ship_B")
+    ship_T = rospy.get_param("shipInfo_all/ship1_info/ship_T")
+
+    ship_L_scaled = ship_L / OS_scale
+    ship_B_scaled = ship_B / OS_scale
+    ship_T_scaled = ship_T / OS_scale
+
     data = data_inNout()
     
     t = 0
@@ -277,7 +258,7 @@ def main():
     encounter = None
     encounterMMSI = []
 
-# UKF part
+# UKF Declare Variables Part
 #####################################################################################################################
     
     ukf_dt = rospy.get_param('ukf_dt')
@@ -354,7 +335,7 @@ def main():
         TS_ID = TS_list_ori.keys()
         # TODO : why do this?
 
-# UKF part
+# UKF Main part
 #####################################################################################################################   
 
         # print("TS_list_ori: ", TS_list_ori)
@@ -414,6 +395,7 @@ def main():
             radar_input_list.append(relative_distance_list[ts_ID])
             radar_input_list.append(relative_bearing_list[ts_ID])
             # print("relative_bearing ", relative_bearing_list[ts_ID])
+
 # --------------------------------------- use AIS and Radar change import----------------------------------------------------------
             predicted_state, covariance = ukf_instance[ts_ID].predict(ukf_dt)
 
@@ -468,15 +450,11 @@ def main():
             # TS_list = TS_list_del
             # TS_list = TS_list_pre
 #####################################################################################################################
+        
         print("\n")
         print("pos_err :    ", pos_err_list)
         # print(TS_list)
-        # print("\n")
-        # elapsed = time.perf_counter() - start_time  # [초]
-    
-        # # (b) 원하는 형식으로 출력하거나 로그 저장
-        # print(f"Sim elapsed: {elapsed:8.3f} s")   # \r 로 한 줄에 덮어쓰기
-        print("OS_U : ", OS_list['Vel_U'])
+
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
         OS_list['V_x'] = OS_Vx
@@ -506,6 +484,7 @@ def main():
         TS_bx_temp = []
         TS_by_temp = []
         TS_ENC_temp = []
+        distance = {}
 
         for ts_ID in TS_ID:
             temp_RD = TS_list[ts_ID]['RD']
@@ -562,21 +541,133 @@ def main():
             TS_ENC_temp.append(temp_enc)
             # print(temp_enc)
 
-            distance = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
-        print("distance :   ", round(distance,3))
-        print("CRI :        ", temp_cri)
+            distance[ts_ID] = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
+            print("distance :   ", round(distance[ts_ID],3))
+            print("CRI :        ", temp_cri)
         # print("tcpa :        ", temp_TCPA)
         # print("dcpa :        ", temp_DCPA)
         # print(temp_point)
+        
+        # for ts_ID in list(TS_ID):
+        #     if distance[ts_ID] > detecting_distance:
+        #         del TS_list[ts_ID]
 
-        V_selected, pub_collision_cone = Local_PP.VO_update(
+# TS_list include CPA information 
+#################################################################
+        damage_index = {ts_id: 0.0 for ts_id in TS_ID}
+
+        TS_list_cpa = copy.deepcopy(TS_list)
+
+        for ts_ID in TS_ID:
+            cpa_id = ts_ID + 1000
+            cpa_cri = 0
+            cpa_status = 'cpa'
+
+            TS_list_cpa.setdefault(cpa_id, {})
+
+            # 겹치지 않으면 
+            if TS_list[ts_ID]["DCPA"] >= TS_list[ts_ID]["mapped_radius"]:
+                TS_list_cpa[cpa_id].update({
+                    'Ship_ID'           : cpa_id,       # 1000 + ts_ID
+                    'Pos_X'             : 0,            # CPA 중심 X
+                    'Pos_Y'             : 0,            # CPA 중심 Y
+                    'V_x'               : 0,            # CPA 속도 X (지금은 0)
+                    'V_y'               : 0,            # CPA 속도 Y (지금은 0)
+                    'mapped_radius'     : 0,            # CPA 원 반지름
+                    'right_boundary'    : 0,            # 우현(오른쪽) 접선 각(라디안)
+                    'left_boundary'     : 0,            # 좌현(왼쪽)  접선 각(라디안)
+                    'CRI'               : cpa_cri,      # 위험도 등급 (예: 0)
+                    'status'            : cpa_status    # 상태 문자열 'cpa'
+                })
+
+            # 겹치면
+            else:
+                vox = OS_list["Vel_U"]*np.cos(np.deg2rad(OS_list["Heading"]))
+                voy = OS_list["Vel_U"]*np.sin(np.deg2rad(OS_list["Heading"]))
+
+                vtx = TS_list[ts_ID]["Vel_U"]*np.cos(np.deg2rad(TS_list[ts_ID]["Heading"]))
+                vty = TS_list[ts_ID]["Vel_U"]*np.sin(np.deg2rad(TS_list[ts_ID]["Heading"]))
+
+                cpa_x = ((OS_list["Pos_X"]+vox)+(TS_list[ts_ID]["Pos_X"]+vtx))/2
+                cpa_y = ((OS_list["Pos_Y"]+voy)+(TS_list[ts_ID]["Pos_Y"]+vty))/2
+                cpa_vx = 0
+                cpa_vy = 0
+                cpa_mapped_radius = (TS_list[ts_ID]["DCPA"]/2)+(2*TS_list[ts_ID]["mapped_radius"]-TS_list[ts_ID]["DCPA"])
+
+                # ① 필요한 값들 ─ (예시: 이미 계산해 둔 값이라고 가정)
+                xo, yo = OS_list["Pos_X"], OS_list["Pos_Y"]     # 자선 위치
+                xc, yc = cpa_x, cpa_y                           # CPA 원 중심
+                R = cpa_mapped_radius                           # CPA 원 반지름
+
+                # ② 자선→원 중심까지 거리 d
+                dx, dy = xc - xo, yc - yo
+                d = hypot(dx, dy)                          # 피타고라스 √(dx²+dy²)
+
+                if d <= R:                                      # d ≤ R이면 원 안에 있음 → 접선 불가
+                    raise ValueError("접선을 그릴 수 없습니다.")
+
+                # ③ 중심 방향(북을 0, 시계방향 +)  /   ④ 접선과 중심 방향 사이 각
+                base = atan2(dx, dy)         # atan2(y 대신 x, y) → 북 기준 각도
+                alpha = acos(R / d)          # cos α = R / d  → α = arccos(R/d)
+
+                # ⑤ 두 접선의 방위각(라디안)
+                cpa_rb = (base + alpha) % (2 * pi)
+                cpa_lb = (base - alpha) % (2 * pi)
+
+                TS_list_cpa[cpa_id].update({
+                    'Ship_ID'           : cpa_id,            # 1000 + ts_ID
+                    'Pos_X'             : cpa_x,             # CPA 중심 X
+                    'Pos_Y'             : cpa_y,             # CPA 중심 Y
+                    'V_x'               : cpa_vx,            # CPA 속도 X (지금은 0)
+                    'V_y'               : cpa_vy,            # CPA 속도 Y (지금은 0)
+                    'mapped_radius'     : cpa_mapped_radius, # CPA 원 반지름
+                    'right_boundary'    : cpa_rb,            # 우현(오른쪽) 접선 각(라디안)
+                    'left_boundary'     : cpa_lb,            # 좌현(왼쪽)  접선 각(라디안)
+                    'CRI'               : cpa_cri,           # 위험도 등급 (예: 0)
+                    'status'            : cpa_status         # 상태 문자열 'cpa'
+                })
+        
+        # print(TS_list_cpa)
+################################################################
+
+        V_selected, pub_collision_cone, collision_risk_vo = Local_PP.VO_update(
             OS_list, 
-            TS_list, 
+            # TS_list,
+            TS_list_cpa,
             V_des, 
             data.static_obstacle_info,
             data.static_point_info
             )
 
+# Estimate Collision Damage
+########################################################################################################
+        print("CRP : ",collision_risk_vo, "%")
+
+        rho = 1025  # 해수 밀도 kg/m³
+        # 선종 별 평균 값 벌크 0.85, 탱커 0.83, 컨테이너 0.7
+        Cb_o = 0.7
+        Cb_t = 0.7
+
+        M_o = ship_L_scaled * ship_B_scaled * ship_T_scaled * Cb_o * rho   # 자선 kg
+        M_t = ship_L_scaled * ship_B_scaled * ship_T_scaled * Cb_t * rho   # 타선 kg
+        mu  = (M_o * M_t) / (M_o + M_t)
+        # print("OS_MU : ", M_o)
+        for ts_ID in TS_ID:
+            vox = OS_list["Vel_U"]*np.cos(np.deg2rad(OS_list["Heading"]))
+            voy = OS_list["Vel_U"]*np.sin(np.deg2rad(OS_list["Heading"]))
+
+            vtx = TS_list[ts_ID]["Vel_U"]*np.cos(np.deg2rad(TS_list[ts_ID]["Heading"]))
+            vty = TS_list[ts_ID]["Vel_U"]*np.sin(np.deg2rad(TS_list[ts_ID]["Heading"]))
+            VA = np.array([vox, voy], dtype=float)   # 자선 [Vx, Vy]  (m/s)
+            VB = np.array([vtx, vty], dtype=float)   # 타선 [Vx, Vy]  (m/s)
+
+            Vr = VB - VA                 # 상대 속도 벡터
+            RV = np.linalg.norm(Vr)
+            damage_index[ts_ID] = (0.5 * mu * RV**2 * (collision_risk_vo[ts_ID]/100))/10**6
+        print("damage_index : ",damage_index, "MJ")
+
+#########################################################################################################
+        
         desired_spd_list = []
         desired_heading_list = []
 
@@ -625,12 +716,12 @@ def main():
 
         a = (real_target_heading + 360) % 360
 
-        if a<=3:
-            avoide_start = round(distance,3)
-            avoide_cri = temp_cri
-        print("avoide_start :   ", avoide_start)
-        print("n*L :            ", avoide_start/(ship_L/OS_scale))
-        print("avoide_cri :     ", avoide_cri)
+        # if a<=3:
+        #     avoide_start = round(distance[ts_ID],3)
+        #     avoide_cri = temp_cri
+        # print("avoide_start :   ", avoide_start)
+        # print("n*L :            ", avoide_start/(ship_L/OS_scale))
+        # print("avoide_cri :     ", avoide_cri)
 
         OS_pub_list = [
             int(OS_ID), 
@@ -658,6 +749,7 @@ def main():
         ]
 
         cri_pub_list = [
+            TS_RD_temp,
             TS_DCPA_temp,
             TS_TCPA_temp,
             TS_UDCPA_temp,
@@ -682,44 +774,46 @@ def main():
 
         ship_dic2list = list(OS_list.values())
 
-        # savedata_list = [
-        #     TS_RD_temp,
-        #     TS_RC_temp,
-        #     TS_K_temp,
-        #     TS_DCPA_temp,
-        #     TS_TCPA_temp,
-        #     TS_UDCPA_temp,
-        #     TS_UTCPA_temp,
-        #     TS_UD_temp,
-        #     TS_UB_temp,
-        #     TS_UK_temp,
-        #     TS_CRI_temp,
-        #     TS_Rf_temp,
-        #     TS_Ra_temp,
-        #     TS_Rs_temp,
-        #     TS_Rp_temp,
-        #     TS_ENC_temp,
-        #     V_selected,
-        #     pub_collision_cone,
-        #     VO_operate
-        # ]
+        """
+        savedata_list = [
+            TS_RD_temp,
+            TS_RC_temp,
+            TS_K_temp,
+            TS_DCPA_temp,
+            TS_TCPA_temp,
+            TS_UDCPA_temp,
+            TS_UTCPA_temp,
+            TS_UD_temp,
+            TS_UB_temp,
+            TS_UK_temp,
+            TS_CRI_temp,
+            TS_Rf_temp,
+            TS_Ra_temp,
+            TS_Rs_temp,
+            TS_Rp_temp,
+            TS_ENC_temp,
+            V_selected,
+            pub_collision_cone,
+            VO_operate
+        ]
 
-        # savedata_list = [
-        #     int(OS_ID),
-        #     ship_dic2list[1],
-        #     ship_dic2list[2],
-        #     wp_x,
-        #     wp_y,
-        #     ship_dic2list[3],
-        #     OS_Vx,
-        #     OS_Vy,
-        #     ship_dic2list[4],
-        #     desired_heading,
-        #     encounter,
-        #     encounterMMSI
-        # ]
+        savedata_list = [
+            int(OS_ID),
+            ship_dic2list[1],
+            ship_dic2list[2],
+            wp_x,
+            wp_y,
+            ship_dic2list[3],
+            OS_Vx,
+            OS_Vy,
+            ship_dic2list[4],
+            desired_heading,
+            encounter,
+            encounterMMSI
+        ]
 
-        # writer.writerow(savedata_list)
+        writer.writerow(savedata_list)
+        """
 
         data.path_out_publish(OS_pub_list)
         data.vis_out(vis_pub_list)
@@ -739,14 +833,10 @@ def main():
                 Vel_U_all, 
                 Heading_deg_all, 
             )
-        
-        # data.ts_out(TS_list)
-        # data.ori_out(TS_list_ori)
-        # data.del_out(TS_list_del)
-        # data.pre_out(TS_list_pre)
-        data.result_out(pos_err, cov)
 
-        if local_goal_EDA < 2 * (ship_L/OS_scale) :
+        data.result_out(pos_err, cov, collision_risk_vo, damage_index)
+
+        if local_goal_EDA < 2 * (ship_L_scaled) :
             waypointIndex = (waypointIndex + 1) % len(wpts_x_os)
             targetspdIndex = waypointIndex
 
