@@ -22,16 +22,16 @@ class CRI:
         
         self.range_of_judgment = 2
         # print(self.Ct)
-        # if round(self.Ct,1) == round(np.pi,1):
-        #     self.x_sigma = self.range_of_judgment*sqrt(y_var)
-        #     self.y_sigma = self.range_of_judgment*sqrt(x_var)
-        #     # print(1)
-        # else:
-        #     self.x_sigma = self.range_of_judgment*sqrt(x_var)
-        #     self.y_sigma = self.range_of_judgment*sqrt(y_var)
+        if round(self.Ct,1) == round(np.pi,1):
+            self.x_sigma = self.range_of_judgment*sqrt(y_var)
+            self.y_sigma = self.range_of_judgment*sqrt(x_var)
+            # print(1)
+        else:
+            self.x_sigma = self.range_of_judgment*sqrt(x_var)
+            self.y_sigma = self.range_of_judgment*sqrt(y_var)
 
-        self.x_sigma = self.range_of_judgment*sqrt(x_var)
-        self.y_sigma = self.range_of_judgment*sqrt(y_var)
+        # self.x_sigma = self.range_of_judgment*sqrt(x_var)
+        # self.y_sigma = self.range_of_judgment*sqrt(y_var)
             # print(2)
         # self.x_var = 0
         # self.y_var = 0
@@ -40,7 +40,7 @@ class CRI:
         # 쁠마 3 시그마는 99.7% 포함
 
         self.mapped_radius = 0
-        self.scaling = 2  # 10 넣으면 우측으로 갈곳 없음
+        self.scaling = 3  # 10 넣으면 우측으로 갈곳 없음
 
     def RD(self):
         '''Relative Distance, 자선과 타선 사이의 상대 거리'''
@@ -109,8 +109,8 @@ class CRI:
         result = atan2(self.Vry(), self.Vrx()) % (2*pi)
         return result
 
-    """
-    def tcpa(self):
+
+    def tcpa_o(self):
         # dx = self.Xt - self.Xo
         # dy = self.Yt - self.Yo
         # vrel_dot = self.Vrx() ** 2 + self.Vry() ** 2
@@ -127,7 +127,7 @@ class CRI:
         # print("TCPA : ", result)
         return result
 
-    def dcpa(self):
+    def dcpa_o(self):
         # dx = self.Xt - self.Xo
         # dy = self.Yt - self.Yo
         # x_rel = dx + self.Vrx() * self.tcpa()
@@ -138,9 +138,8 @@ class CRI:
             result = self.RD()
         numerator = abs((self.Xo - self.Xt) * self.Vrx() - (self.Yo - self.Yt) * self.Vry())
         result = numerator / v_r
-        print("DCPA : ", result)
+        # print("DCPA_o : ", result)
         return result
-    """
 
     def tcpa(self):
         """
@@ -169,69 +168,92 @@ class CRI:
         return -(dx * vrx + dy * vry) / vr2
     
     def dcpa(self):
-        # 상대 위치 (T - O)
-        dx = self.Xt - self.Xo
-        dy = self.Yt - self.Yo
+        # # 상대 위치 (T - O)
+        # dx = self.Xt - self.Xo
+        # dy = self.Yt - self.Yo
 
-        # 상대 속도
-        vrx = self.Vrx()
-        vry = self.Vry()
+        # # 상대 속도
+        # vrx = self.Vrx()
+        # vry = self.Vry()
 
-        # |Vr|
-        v_r = sqrt(vrx**2 + vry**2)
+        # # |Vr|
+        # v_r = sqrt(vrx**2 + vry**2)
 
-        # 상대 속도가 0이면 현재 거리 = DCPA
-        if v_r == 0:
-            return sqrt(dx**2 + dy**2)
+        # # 상대 속도가 0이면 현재 거리 = DCPA
+        # if v_r == 0:
+        #     return sqrt(dx**2 + dy**2)
 
-        # |r × Vr|  = | dx * vry - dy * vrx |
-        numerator = abs(dx * vry - dy * vrx)
-        # print("DCPA : ", numerator / v_r )
+        # # |r × Vr|  = | dx * vry - dy * vrx |
+        # numerator = abs(dx * vry - dy * vrx)
+        # # print("DCPA : ", numerator / v_r )
 
-        return numerator / v_r        # DCPA
+        # return numerator / v_r        # DCPA
+        tcpa = self.tcpa()
+
+        Vox = self.Vox()
+        Voy = self.Voy()
+
+        Vtx = self.Vtx()
+        Vty = self.Vty()
+
+        # Vtx = 0
+        # Vty = 1.3
+
+        # 자선 위치
+        os_x = self.Xo + Vox*tcpa
+        os_y = self.Yo + Voy*tcpa
+
+        # 타선 위치
+        ts_x = self.Xt + Vtx*tcpa
+        ts_y = self.Yt + Vty*tcpa
+
+        dx = ts_x - os_x
+        dy = ts_y - os_y
+
+        return sqrt(dx*dx + dy*dy)
     
     def d1(self):
         '''Safe approaching distance'''
-        # RB = np.rad2deg(self.RB())
-        # if 0 <= RB < 112.5:
-        #     result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
-        # elif 112.5 <= RB < 180:
-        #     result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
-        # elif 180 <= RB < 247.5:
-        #     result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
-        # else:
-        #     result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
-        result =  20 * self.L
+        RB = np.rad2deg(self.RB())
+        if 0 <= RB < 112.5:
+            result = self.ratio * (1.1 - 0.2 * (self.RB()/pi))
+        elif 112.5 <= RB < 180:
+            result = self.ratio * (1.0 - 0.4 * (self.RB()/pi))
+        elif 180 <= RB < 247.5:
+            result = self.ratio * (1.0 - 0.4 * ((2 * pi - self.RB())/pi))
+        else:
+            result = self.ratio * (1.1 - 0.2 * ((2 * pi - self.RB())/pi))
+        # result =  30 * self.L
         # print("d1 : ", result)
         return result
 
     def d2(self):
         '''Safe passing distance'''
-        # result = 9 * self.d1()
-        result =  100 * self.L
+        result = 9 * self.d1()
+        # result =  60 * self.L
 
         return result
 
     def UDCPA(self):
         '''#d1, d2의 범위에 따른 DCPA의 계수'''
-        if abs(self.dcpa()) <= self.d1():
+        if abs(self.dcpa_o()) <= self.d1():
             result = 1
-        elif self.d2() < abs(self.dcpa()):
+        elif self.d2() < abs(self.dcpa_o()):
             result = 0
         else:
-            result = 0.5 - 0.5 * sin((pi/(self.d2() - self.d1())) * (abs(self.dcpa()) - (self.d1() + self.d2())/2))
+            result = 0.5 - 0.5 * sin((pi/(self.d2() - self.d1())) * (abs(self.dcpa_o()) - (self.d1() + self.d2())/2))
         return result
 
     def D1(self):
         '''Distance of action'''
-        result = 80 * self.L
+        result = 10 * self.L
         return result
 
     def D2(self):
         '''Distance of last action'''
         # result = self.ratio * (1.7 * cos(self.RB() - np.deg2rad(19))) + sqrt(4.4 + 2.89 * pow(cos(self.RB() - np.deg2rad(19)), 2))
-        # result = 9 * self.D1()
-        result = 130 * self.L
+        result = 9 * self.D1()
+        # result = 60 * self.L
         return result
 
     def UD(self):
@@ -266,15 +288,15 @@ class CRI:
 
     def UTCPA(self):
         '''t1, t2의 범위에 따른 TCPA의 계수'''
-        if self.tcpa() < 0:
+        if self.tcpa_o() < 0:
             result = 0
         else:
-            if self.tcpa() <= self.t1():
+            if self.tcpa_o() <= self.t1():
                 result = 1
-            elif self.t2() < self.tcpa():
+            elif self.t2() < self.tcpa_o():
                 result = 0
             else:
-                result = pow(((self.t2() - abs(self.tcpa()))/(self.t2() - self.t1())), 2)
+                result = pow(((self.t2() - abs(self.tcpa_o()))/(self.t2() - self.t1())), 2)
         return result
 
     def UB(self):

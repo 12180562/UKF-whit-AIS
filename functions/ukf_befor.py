@@ -86,7 +86,7 @@ class UKF:
     
     # UKF 상태 업데이트 함수
     def update(self, z, dt):
-        kappa = 0  # 시그마 포인트 스케일링 매개변수
+        kappa = 1  # 시그마 포인트 스케일링 매개변수
 
         # 시그마 포인트 계산
         Xi, W = self.sigma_points(self.x, self.P, kappa)

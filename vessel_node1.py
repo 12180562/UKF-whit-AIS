@@ -165,7 +165,7 @@ class data_inNout:
         cri.Rp = pub_list[12]
         cri.bx = pub_list[13]
         cri.by = pub_list[14]
-        cri.encounter_classification = pub_list[14]
+        cri.encounter_classification = pub_list[15]
         # print(cri.encounter_classification)
 
         self.cri_pub.publish(cri)
@@ -177,13 +177,16 @@ class data_inNout:
 
         self.VO_pub.publish(vo)
 
-    def ts_out(self, ship_ID, Pos_X, Pos_Y, vel, psi_deg):
+    def ts_out(self, ship_ID, Pos_X, Pos_Y, vel, psi_deg, cpa_x, cpa_y, cpa_r):
         message = ShipInfo()
         message.Ship_ID = ship_ID
         message.Pos_X = Pos_X
         message.Pos_Y = Pos_Y
         message.Vel_U = vel
         message.Heading = psi_deg
+        message.cpa_x = cpa_x
+        message.cpa_y = cpa_y
+        message.cpa_r = cpa_r
 
         self.ori_pub.publish(message)
 
@@ -446,9 +449,11 @@ def main():
             # print(cov[ts_ID])
             # print(type(cov[ts_ID]))
             
-            TS_list = TS_list_ori
+            # TS_list = TS_list_ori
             # TS_list = TS_list_del
-            # TS_list = TS_list_pre
+            TS_list = TS_list_pre
+            # print("x_var : ",TS_list[ts_ID]['x_var'])
+            # print("y_var : ",TS_list[ts_ID]['y_var'])
 #####################################################################################################################
         
         print("\n")
@@ -564,20 +569,23 @@ def main():
             cpa_status = 'cpa'
 
             TS_list_cpa.setdefault(cpa_id, {})
-
+            print("TCPA : ",TS_list[ts_ID]["TCPA"])
+            print("DCAP : ",TS_list[ts_ID]["DCPA"])
+            # print("mapped : ",TS_list[ts_ID]["mapped_radius"])
+            cpa_x, cpa_y, cpa_vx, cpa_vy, cpa_mapped_radius, brg_rb, brg_lb = 0,0,0,0,0,0,0
             # 겹치지 않으면 
-            if TS_list[ts_ID]["DCPA"] >= TS_list[ts_ID]["mapped_radius"]:
+            if (TS_list[ts_ID]["DCPA"] >= TS_list[ts_ID]["mapped_radius"]) or TS_list[ts_ID]["TCPA"]<0:
                 TS_list_cpa[cpa_id].update({
-                    'Ship_ID'           : cpa_id,       # 1000 + ts_ID
-                    'Pos_X'             : 0,            # CPA 중심 X
-                    'Pos_Y'             : 0,            # CPA 중심 Y
-                    'V_x'               : 0,            # CPA 속도 X (지금은 0)
-                    'V_y'               : 0,            # CPA 속도 Y (지금은 0)
-                    'mapped_radius'     : 0,            # CPA 원 반지름
-                    'right_boundary'    : 0,            # 우현(오른쪽) 접선 각(라디안)
-                    'left_boundary'     : 0,            # 좌현(왼쪽)  접선 각(라디안)
-                    'CRI'               : cpa_cri,      # 위험도 등급 (예: 0)
-                    'status'            : cpa_status    # 상태 문자열 'cpa'
+                    'Ship_ID'           : cpa_id,            # 1000 + ts_ID
+                    'Pos_X'             : cpa_x,             # CPA 중심 X
+                    'Pos_Y'             : cpa_y,             # CPA 중심 Y
+                    'V_x'               : cpa_vx,            # CPA 속도 X (지금은 0)
+                    'V_y'               : cpa_vy,            # CPA 속도 Y (지금은 0)
+                    'mapped_radius'     : cpa_mapped_radius, # CPA 원 반지름
+                    'right_boundary'    : brg_rb,            # 우현(오른쪽) 접선 각(라디안)
+                    'left_boundary'     : brg_lb,            # 좌현(왼쪽)  접선 각(라디안)
+                    'CRI'               : cpa_cri,           # 위험도 등급 (예: 0)
+                    'status'            : cpa_status         # 상태 문자열 'cpa'
                 })
 
             # 겹치면
@@ -588,11 +596,15 @@ def main():
                 vtx = TS_list[ts_ID]["Vel_U"]*np.cos(np.deg2rad(TS_list[ts_ID]["Heading"]))
                 vty = TS_list[ts_ID]["Vel_U"]*np.sin(np.deg2rad(TS_list[ts_ID]["Heading"]))
 
-                cpa_x = ((OS_list["Pos_X"]+vox)+(TS_list[ts_ID]["Pos_X"]+vtx))/2
-                cpa_y = ((OS_list["Pos_Y"]+voy)+(TS_list[ts_ID]["Pos_Y"]+vty))/2
+                # vtx = 1.3*np.cos(np.deg2rad(TS_list[ts_ID]["Heading"]))
+                # vty = 1.3*np.sin(np.deg2rad(TS_list[ts_ID]["Heading"]))
+
+                cpa_x = ((OS_list["Pos_X"]+vox*TS_list[ts_ID]['TCPA'])+(TS_list[ts_ID]["Pos_X"]+vtx*TS_list[ts_ID]['TCPA']))/2
+                cpa_y = ((OS_list["Pos_Y"]+voy*TS_list[ts_ID]['TCPA'])+(TS_list[ts_ID]["Pos_Y"]+vty*TS_list[ts_ID]['TCPA']))/2
+
                 cpa_vx = 0
                 cpa_vy = 0
-                cpa_mapped_radius = (TS_list[ts_ID]["DCPA"]/2)+(2*TS_list[ts_ID]["mapped_radius"]-TS_list[ts_ID]["DCPA"])
+                cpa_mapped_radius = (TS_list[ts_ID]["DCPA"]/2)+(TS_list[ts_ID]["mapped_radius"]-TS_list[ts_ID]["DCPA"])
 
                 # ① 필요한 값들 ─ (예시: 이미 계산해 둔 값이라고 가정)
                 xo, yo = OS_list["Pos_X"], OS_list["Pos_Y"]     # 자선 위치
@@ -606,13 +618,23 @@ def main():
                 if d <= R:                                      # d ≤ R이면 원 안에 있음 → 접선 불가
                     raise ValueError("접선을 그릴 수 없습니다.")
 
-                # ③ 중심 방향(북을 0, 시계방향 +)  /   ④ 접선과 중심 방향 사이 각
-                base = atan2(dx, dy)         # atan2(y 대신 x, y) → 북 기준 각도
-                alpha = acos(R / d)          # cos α = R / d  → α = arccos(R/d)
+                # ── 2. 접점 좌표 (해석식)
+                #    v⊥ = ( -vy, vx )  (90° 회전)
+                dpx, dpy = -dy, dx
+                k1 = (R**2) / (d**2)
+                k2 = R * sqrt(d**2 - R**2) / (d**2)
 
-                # ⑤ 두 접선의 방위각(라디안)
-                cpa_rb = (base + alpha) % (2 * pi)
-                cpa_lb = (base - alpha) % (2 * pi)
+                T1x = xc + k1 * dx + k2 * dpx   # LB  (우선 가정)
+                T1y = yc + k1 * dy + k2 * dpy
+                T2x = xc + k1 * dx - k2 * dpx   # RB
+                T2y = yc + k1 * dy - k2 * dpy
+
+                # ── 3. 방위각(북=0, 시계+) 계산
+                def bearing(dx, dy):
+                    return (atan2(dx, dy) + 2 * pi) % (2 * pi)
+
+                brg_lb = bearing(T1y - yo, T1x - xo)
+                brg_rb = bearing(T2y - yo, T2x - xo)
 
                 TS_list_cpa[cpa_id].update({
                     'Ship_ID'           : cpa_id,            # 1000 + ts_ID
@@ -621,12 +643,13 @@ def main():
                     'V_x'               : cpa_vx,            # CPA 속도 X (지금은 0)
                     'V_y'               : cpa_vy,            # CPA 속도 Y (지금은 0)
                     'mapped_radius'     : cpa_mapped_radius, # CPA 원 반지름
-                    'right_boundary'    : cpa_rb,            # 우현(오른쪽) 접선 각(라디안)
-                    'left_boundary'     : cpa_lb,            # 좌현(왼쪽)  접선 각(라디안)
+                    'right_boundary'    : brg_rb,            # 우현(오른쪽) 접선 각(라디안)
+                    'left_boundary'     : brg_lb,            # 좌현(왼쪽)  접선 각(라디안)
                     'CRI'               : cpa_cri,           # 위험도 등급 (예: 0)
                     'status'            : cpa_status         # 상태 문자열 'cpa'
                 })
-        
+            print("cpa x,y : ", cpa_x,cpa_y)
+            print("cpa left right : ",rad2deg(brg_lb), rad2deg(brg_rb))
         # print(TS_list_cpa)
 ################################################################
 
@@ -648,16 +671,16 @@ def main():
         Cb_o = 0.7
         Cb_t = 0.7
 
-        M_o = ship_L_scaled * ship_B_scaled * ship_T_scaled * Cb_o * rho   # 자선 kg
-        M_t = ship_L_scaled * ship_B_scaled * ship_T_scaled * Cb_t * rho   # 타선 kg
+        M_o = ship_L * ship_B * ship_T * Cb_o * rho   # 자선 kg
+        M_t = ship_L * ship_B * ship_T * Cb_t * rho    # 타선 kg
         mu  = (M_o * M_t) / (M_o + M_t)
         # print("OS_MU : ", M_o)
         for ts_ID in TS_ID:
-            vox = OS_list["Vel_U"]*np.cos(np.deg2rad(OS_list["Heading"]))
-            voy = OS_list["Vel_U"]*np.sin(np.deg2rad(OS_list["Heading"]))
+            vox = OS_list["Vel_U"]*np.cos(np.deg2rad(OS_list["Heading"]))*sqrt(31.65)
+            voy = OS_list["Vel_U"]*np.sin(np.deg2rad(OS_list["Heading"]))*sqrt(31.65)
 
-            vtx = TS_list[ts_ID]["Vel_U"]*np.cos(np.deg2rad(TS_list[ts_ID]["Heading"]))
-            vty = TS_list[ts_ID]["Vel_U"]*np.sin(np.deg2rad(TS_list[ts_ID]["Heading"]))
+            vtx = TS_list[ts_ID]["Vel_U"]*np.cos(np.deg2rad(TS_list[ts_ID]["Heading"]))*sqrt(31.65)
+            vty = TS_list[ts_ID]["Vel_U"]*np.sin(np.deg2rad(TS_list[ts_ID]["Heading"]))*sqrt(31.65)
             VA = np.array([vox, voy], dtype=float)   # 자선 [Vx, Vy]  (m/s)
             VB = np.array([vtx, vty], dtype=float)   # 타선 [Vx, Vy]  (m/s)
 
@@ -716,12 +739,12 @@ def main():
 
         a = (real_target_heading + 360) % 360
 
-        # if a<=3:
-        #     avoide_start = round(distance[ts_ID],3)
-        #     avoide_cri = temp_cri
-        # print("avoide_start :   ", avoide_start)
-        # print("n*L :            ", avoide_start/(ship_L/OS_scale))
-        # print("avoide_cri :     ", avoide_cri)
+        if a<=3:
+            avoide_start = round(distance[ts_ID],3)
+            avoide_cri = temp_cri
+        print("avoide_start :   ", avoide_start)
+        print("n*L :            ", avoide_start/(ship_L/OS_scale))
+        print("avoide_cri :     ", avoide_cri)
 
         OS_pub_list = [
             int(OS_ID), 
@@ -832,6 +855,9 @@ def main():
                 Pos_Y_all, 
                 Vel_U_all, 
                 Heading_deg_all, 
+                cpa_x,
+                cpa_y,
+                cpa_mapped_radius
             )
 
         data.result_out(pos_err, cov, collision_risk_vo, damage_index)

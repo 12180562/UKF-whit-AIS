@@ -162,18 +162,18 @@ Portside_rule: True
 
 weight_focusObs: 1
 weight_agressivness: 1
-timeHorizon: 1000  # 350일때 상대거리 800 # 150일때 상대거리 약 13L
+timeHorizon: 900  # 350일때 상대거리 800 # 150일때 상대거리 약 13L
 filter_length : 10
 
 ############################################
 # m/s 스케일링을 적용한 속도
-min_targetSpeed : 7.0
-max_targetSpeed : 7.4
-num_targetSpeedCandidates : 5
+min_targetSpeed : 1.2
+max_targetSpeed : 1.4
+num_targetSpeedCandidates : 3
 
 min_targetHeading_deg_local : -45.0
 max_targetHeading_deg_local: 45.0
-num_targetHeadingCandidates: 45
+num_targetHeadingCandidates: 61
 
 Kp : 2.0
 Ki : 0.0
@@ -187,8 +187,8 @@ ship3_index : 10
 
 ukf_dt: 1
 # 시뮬레이션 자체가 update_rate로 인하여 10배속 되어 있음. 그렇기에 내가 생각하는 딜레이 시간에 0.1 곱해야함
-ais_delay: 10 # 3
-radar_delay: 2.5 # 2.5
+ais_delay: 3
+radar_delay: 0.5
 
 ukf_angle_dt: 1
 
@@ -209,7 +209,7 @@ shipInfo_all:
     ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
     ship_B : 27.4,
     ship_T : 9.75,
-    ship_scale : 1,
+    ship_scale : 31.65,
     ship_ID : 1000, ## 자선의 ship ID 정의
     ship_domain_radius : 44.0,  # original
     target_speed : 14,  #[knots] full scale에서의 노트 속도
@@ -224,20 +224,26 @@ shipInfo_all:
     ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
     ship_B : 27.4,
     ship_T : 9.75,
-    ship_scale : 1,
+    ship_scale : 31.65,
     ship_ID : 2001, ## 자선의 ship ID 정의
     ship_domain_radius : 44.0,  # original
     target_speed : 14,  #[knots]
 
-    initial_start_x : 20000,    # [m]
+    # initial_start_x : 20000,    # [m]
     # initial_start_x : 2516,    # [m]
     # initial_start_x : 234,    # [m]
+
     # initial_start_x : 600,    # [m]
-    initial_start_y : 0,    # [m]
-    initial_start_psi : 180,   # [deg]
-    # initial_start_x : 300.0,    # [m]
-    # initial_start_y : 300.0,    # [m]
-    # initial_start_psi : 270,   # [deg]
+    # initial_start_y : 0,    # [m]
+    # initial_start_psi : 180,   # [deg]
+
+    initial_start_x : 300.0,    # [m]
+    initial_start_y : 300.0,    # [m]
+    initial_start_psi : 270,   # [deg]
+
+    # initial_start_x : 512.0,    # [m]
+    # initial_start_y : 212.0,    # [m]
+    # initial_start_psi : 225,   # [deg]
     initial_start_U : 14,    # [knots] // 너무 작으면 발산함
     include_inha_modules : False,  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
     random_heading : False
@@ -295,8 +301,8 @@ shipInfo_all:
 
 waypoint_List: {
   wpts_x_ship1: [
-    20000, 0
-    # 600,0, 
+    # 20000, 0
+    600,0, 
     # 2516,0
     # 234,0
   ],  
@@ -304,15 +310,17 @@ waypoint_List: {
     0,0 
   ],
   wpts_x_ship2: [
-    0, 20000
-    # 0, 600
+    # 0, 20000
     # 0,2516
     # 0,234
-    # 300, 300
+    # 0, 600
+    300, 300
+    # 88,512
   ],
   wpts_y_ship2: [
-    0, 0
-    # -300, 300
+    # 0, 0
+    -300, 300
+    # -212,212
   ],
 
   # wpts_x_ship3: [
@@ -337,11 +345,13 @@ waypoint_List: {
 
 target_spd_List: {
   target_speed_ship1: [ # m/s scale 적용해서 작성하기
-    7.2, 7.2,
+    1.3, 1.3,
+    # 7.2, 7.2,
     # 1.3, 1.3, 1.3, 1.3, 1.3,
     ],
   target_speed_ship2: [
-    7.2, 7.2
+    1.3, 1.3,
+    # 7.2, 7.2
     # 1.3, 1.3, 1.3, 1.3, 1.3,
     ],
   # target_speed_ship3: [

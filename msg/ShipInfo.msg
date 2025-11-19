@@ -3,5 +3,8 @@ float64[] Pos_X
 float64[] Pos_Y
 float64[] Vel_U
 float64[] Heading
+float64 cpa_x
+float64 cpa_y
+float64 cpa_r
 
 

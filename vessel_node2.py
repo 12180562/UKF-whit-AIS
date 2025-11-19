@@ -485,7 +485,7 @@ def main():
         eta, eda = inha.eta_eda_assumption(wp, OS_list, target_speed)            
         temp_spd, temp_heading_deg = inha.desired_value_assumption(V_selected)
         desired_spd_list = list(data.waypoint_dict['{}'.format(OS_ID)].target_spd)
-        print(desired_spd_list)
+        # print(desired_spd_list)
         desired_heading_list.append(temp_heading_deg)
         desired_spd = desired_spd_list[targetspdIndex]
         if random_heading:
