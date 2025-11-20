@@ -249,39 +249,39 @@ shipInfo_all:
     random_heading : False
   }
 
-  # ship3_info : {
-  #   ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
-  #   ship_B : 27.4,
-  #   ship_T : 9.75,
-  #   ship_scale : 31.65,
-  #   ship_ID : 2002, ## 자선의 ship ID 정의
-  #   ship_domain_radius : 44.0,  # original
-  #   target_speed : 14,       #[knots]
-  #   # initial_start_x : 150.0,    # [m]
-  #   # initial_start_y : 150.0,    # [m]
-  #   # initial_start_psi : 270,   # [deg]
-  #   initial_start_x : 400,    # [m]
-  #   initial_start_y : 0,    # [m]
-  #   initial_start_psi : 180,   # [deg]
-  #   initial_start_U : 14,    # [knots]  // 너무 작으면 발산함
-  #   include_inha_modules : False,  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
-  #   random_heading : False
-  # }
-  # ship4_info : {
-  #   ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
-  #   ship_B : 27.4,
-  #   ship_T : 9.75,
-  #   ship_scale : 31.65,
-  #   ship_ID : 2003, ## 자선의 ship ID 정의
-  #   ship_domain_radius : 44.0,  # original
-  #   target_speed : 14,       #[knots]
-  #   initial_start_x : 600.0,     # [m]
-  #   initial_start_y : 0.0,    # [m]
-  #   initial_start_psi : 180,   # [deg]
-  #   initial_start_U : 14,    # [knots]  // 너무 작으면 발산함
-  #   include_inha_modules : False,  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
-  #   random_heading : False
-  # }
+  ship3_info : {
+    ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 27.4,
+    ship_T : 9.75,
+    ship_scale : 31.65,
+    ship_ID : 2002, ## 자선의 ship ID 정의
+    ship_domain_radius : 44.0,  # original
+    target_speed : 14,       #[knots]
+    # initial_start_x : 150.0,    # [m]
+    # initial_start_y : 150.0,    # [m]
+    # initial_start_psi : 270,   # [deg]
+    initial_start_x : 400,    # [m]
+    initial_start_y : 0,    # [m]
+    initial_start_psi : 180,   # [deg]
+    initial_start_U : 14,    # [knots]  // 너무 작으면 발산함
+    include_inha_modules : False,  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+    random_heading : False
+  }
+  ship4_info : {
+    ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
+    ship_B : 27.4,
+    ship_T : 9.75,
+    ship_scale : 31.65,
+    ship_ID : 2003, ## 자선의 ship ID 정의
+    ship_domain_radius : 44.0,  # original
+    target_speed : 14,       #[knots]
+    initial_start_x : 600.0,     # [m]
+    initial_start_y : 0.0,    # [m]
+    initial_start_psi : 180,   # [deg]
+    initial_start_U : 14,    # [knots]  // 너무 작으면 발산함
+    include_inha_modules : False,  # if) `True`라면 인하대 충돌회피 모듈이 작동함, // if `False`라면 인하대 충돌회피 모듈은 작동하지 않음!
+    random_heading : False
+  }
   # ship5_info : {
   #   ship_L : 163.55, ## 모형선의 길이 //향후 AIS data로 대체
   #   ship_B : 27.4,
@@ -323,18 +323,18 @@ waypoint_List: {
     # -212,212
   ],
 
-  # wpts_x_ship3: [
-  #   0, 400
-  # ],
-  # wpts_y_ship3: [
-  #   0, 0
-  # ],
-  # wpts_x_ship4: [
-  #   0, 600,
-  # ],
-  # wpts_y_ship4: [
-  #   0, 0,
-  # ],
+  wpts_x_ship3: [
+    0, 400
+  ],
+  wpts_y_ship3: [
+    0, 0
+  ],
+  wpts_x_ship4: [
+    0, 600,
+  ],
+  wpts_y_ship4: [
+    0, 0,
+  ],
   # wpts_x_ship5: [
   #   200, 300
   # ],
@@ -345,21 +345,21 @@ waypoint_List: {
 
 target_spd_List: {
   target_speed_ship1: [ # m/s scale 적용해서 작성하기
-    1.3, 1.3,
+    # 1.3, 1.3,
     # 7.2, 7.2,
-    # 1.3, 1.3, 1.3, 1.3, 1.3,
+    1.3, 1.3, 1.3, 1.3, 1.3,
     ],
   target_speed_ship2: [
-    1.3, 1.3,
+    # 1.3, 1.3,
     # 7.2, 7.2
-    # 1.3, 1.3, 1.3, 1.3, 1.3,
+    1.3, 1.3, 1.3, 1.3, 1.3,
     ],
-  # target_speed_ship3: [
-  #   1.3, 1.3, 1.3, 1.3, 1.3,
-  #   ],
-  # target_speed_ship4: [
-  #   1.3, 1.3, 1.3, 1.3, 1.3,
-  #   ],
+  target_speed_ship3: [
+    1.3, 1.3, 1.3, 1.3, 1.3,
+    ],
+  target_speed_ship4: [
+    1.3, 1.3, 1.3, 1.3, 1.3,
+    ],
   # target_speed_ship5: [
   #   1.3, 1.3, 1.3, 1.3, 1.3,
   #   ],

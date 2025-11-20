@@ -22,16 +22,17 @@ class CRI:
         
         self.range_of_judgment = 2
         # print(self.Ct)
-        if round(self.Ct,1) == round(np.pi,1):
-            self.x_sigma = self.range_of_judgment*sqrt(y_var)
-            self.y_sigma = self.range_of_judgment*sqrt(x_var)
-            # print(1)
-        else:
-            self.x_sigma = self.range_of_judgment*sqrt(x_var)
-            self.y_sigma = self.range_of_judgment*sqrt(y_var)
+        # if round(self.Ct,1) == round(np.pi,1):
+        #     self.x_sigma = self.range_of_judgment*sqrt(y_var)
+        #     self.y_sigma = self.range_of_judgment*sqrt(x_var)
+        #     # print(1)
+        # else:
+        #     self.x_sigma = self.range_of_judgment*sqrt(x_var)
+        #     self.y_sigma = self.range_of_judgment*sqrt(y_var)
 
-        # self.x_sigma = self.range_of_judgment*sqrt(x_var)
-        # self.y_sigma = self.range_of_judgment*sqrt(y_var)
+        self.x_sigma = self.range_of_judgment*sqrt(x_var)
+        self.y_sigma = self.range_of_judgment*sqrt(y_var)
+
             # print(2)
         # self.x_var = 0
         # self.y_var = 0
@@ -40,7 +41,7 @@ class CRI:
         # 쁠마 3 시그마는 99.7% 포함
 
         self.mapped_radius = 0
-        self.scaling = 3  # 10 넣으면 우측으로 갈곳 없음
+        self.scaling = 2  # 10 넣으면 우측으로 갈곳 없음
 
     def RD(self):
         '''Relative Distance, 자선과 타선 사이의 상대 거리'''
@@ -457,63 +458,78 @@ class CRI:
         # print(Rf, Ra, Rs, Rp)
         tb = self.TB()
 
-        # 도메인 스케일
-        Rf_scaled = self.scaling * Rf
-        Ra_scaled = self.scaling * Ra
-        Rs_scaled = self.scaling * Rs
-        Rp_scaled = self.scaling * Rp
+        Ct = self.Ct  # 선박 침로 (global frame 기준)
+
+        # 2) 글로벌 좌표계에서의 sigma (기존 self.x_sigma, self.y_sigma)
+        sigma_x = self.x_sigma  # global X 방향 표준편차
+        sigma_y = self.y_sigma  # global Y 방향 표준편차
+
+        # 공분산 행렬 (global frame)
+        cov_global = np.array([[sigma_x**2, 0.0],
+                            [0.0,        sigma_y**2]])
+
+        # heading에 따른 회전 행렬 (global -> ship frame)
+        # ship frame에서 x축: 선박 종방향(전/후), y축: 횡방향(좌/우)
+        cosC = np.cos(Ct)
+        sinC = np.sin(Ct)
+        R_heading = np.array([[cosC, -sinC],
+                            [sinC,  cosC]])
+
+        # ship frame에서의 공분산: R^T * Σ_global * R
+        cov_ship = R_heading.T @ cov_global @ R_heading
+
+        # ship frame에서의 종방향/횡방향 sigma
+        sigma_long = np.sqrt(cov_ship[0, 0])  # 선박 x축 (전/후 방향)
+        sigma_lat  = np.sqrt(cov_ship[1, 1])  # 선박 y축 (좌/우 방향)
+
+        # 3) 도메인 스케일 + 방향별 시그마 비율 적용
+        #   Rf, Ra는 장반경 → 종방향 sigma 사용
+        #   Rs, Rp는 단반경 → 횡방향 sigma 사용
+        Rf_eff = self.scaling * Rf + 1.34 * sigma_long
+        Ra_eff = self.scaling * Ra + 0.64 * sigma_long
+        Rs_eff = self.scaling * Rs + 1.25 * sigma_lat
+        Rp_eff = self.scaling * Rp + 0.75 * sigma_lat
 
         def ellipse_radius(a, b, theta):
             """
-            중심이 (0,0)에 있고,
-            x축 방향 반경이 a, y축 방향 반경이 b인 타원의
-            극좌표식 r(θ)를 반환.
-            (단, 타원의 주축이 x축과 y축에 평행하다고 가정)
+            중심 (0,0), x축 방향 장반경 a, y축 방향 단반경 b인 타원의
+            극좌표 반경 r(θ)을 반환.
+            (a, b는 scaling과 sigma가 모두 반영된 최종 값)
             """
-            a_scaled = a + self.y_sigma
-            b_scaled = b + self.x_sigma
-            return (a_scaled * b_scaled) / np.sqrt((b_scaled * np.cos(theta))**2 + (a_scaled * np.sin(theta))**2)
-        # a는 장반경으로 x축 세로방향, b는 단반경을 y축 가로방향을 의미함
-        # self.x_sigma는 시뮬레이션 기준 x축 세로방향
-        # self.y_sigma는 시뮬레이션 기준 y축 가로방향
-        # 점들을 저장할 리스트
+            return (a * b) / np.sqrt((b * np.cos(theta))**2 + (a * np.sin(theta))**2)        # a는 장반경으로 x축 세로방향, b는 단반경을 y축 가로방향을 의미함
+        
+        # 4) 국부(선박 중심, 미회전) 좌표계에서 도메인 점 생성
         xy_points = []
-
-        # 각 사분면별로 90개의 점을 만든다고 가정 (총 360점)
         num_points_per_quadrant = 90
-
-        # 1사분면(0 ~ 90도) : (Rf, 0) -> (0, Rs) 여기서 양의 각도는 반시계 방향
-        #   a=Rf, b=Rs, theta 범위 = [0, pi/2]
-        thetas_1 = np.linspace(0, (np.pi/2), num_points_per_quadrant, endpoint=False)
+        
+        # 1사분면: 전방-우현 (Forward-Starboard) : a=Rf, b=Rs
+        thetas_1 = np.linspace(0, np.pi/2, num_points_per_quadrant, endpoint=False)
         for t in thetas_1:
-            r = ellipse_radius(Rf_scaled, Rp_scaled, t)
+            r = ellipse_radius(Rf_eff, Rs_eff, t)
             x = r * np.cos(t)
             y = r * np.sin(t)
             xy_points.append([x, y])
 
-        # 2사분면(90 ~ 180도) : (0, Rs) -> (-Ra, 0)
-        #   a=Ra, b=Rs, theta 범위 = [pi/2, pi]
+        # 2사분면: 후방-우현 (Aft-Starboard) : a=Ra, b=Rs
         thetas_2 = np.linspace(np.pi/2, np.pi, num_points_per_quadrant, endpoint=False)
         for t in thetas_2:
-            r = ellipse_radius(Ra_scaled, Rp_scaled, t)
+            r = ellipse_radius(Ra_eff, Rs_eff, t)
             x = r * np.cos(t)
             y = r * np.sin(t)
             xy_points.append([x, y])
 
-        # 3사분면(180 ~ 270도) : (-Ra, 0) -> (0, -Rp)
-        #   a=Ra, b=Rp, theta 범위 = [pi, 3pi/2]
+        # 3사분면: 후방-좌현 (Aft-Port) : a=Ra, b=Rp
         thetas_3 = np.linspace(np.pi, 3*np.pi/2, num_points_per_quadrant, endpoint=False)
         for t in thetas_3:
-            r = ellipse_radius(Ra_scaled, Rs_scaled, t)
+            r = ellipse_radius(Ra_eff, Rp_eff, t)
             x = r * np.cos(t)
             y = r * np.sin(t)
             xy_points.append([x, y])
 
-        # 4사분면(270 ~ 360도) : (0, -Rp) -> (Rf, 0)
-        #   a=Rf, b=Rp, theta 범위 = [3pi/2, 2pi]
+        # 4사분면: 전방-좌현 (Forward-Port) : a=Rf, b=Rp
         thetas_4 = np.linspace(3*np.pi/2, 2*np.pi, num_points_per_quadrant, endpoint=True)
         for t in thetas_4:
-            r = ellipse_radius(Rf_scaled, Rs_scaled, t)
+            r = ellipse_radius(Rf_eff, Rp_eff, t)
             x = r * np.cos(t)
             y = r * np.sin(t)
             xy_points.append([x, y])
@@ -534,27 +550,25 @@ class CRI:
             # print(translated)
             rotated_points.append(translated.tolist())
 
-        angle_0 = tb % (2*np.pi)
-        # 4) angle_0가 속하는 구간 확인
-        if 0+self.Ct <= angle_0 < (np.pi/2)+self.Ct:
-            # 1사분면 파라미터
-            a, b = (Rf, Rs)
-        elif (np.pi/2)+self.Ct <= angle_0 < np.pi+self.Ct:
-            # 2사분면 파라미터
-            a, b = (Ra, Rs)
-        elif np.pi+self.Ct <= angle_0 < (3*np.pi/2)+self.Ct:
-            # 3사분면 파라미터
-            a, b = (Ra, Rp)
+        # 6) TB가 속한 방향 구간에 맞는 (a,b) 선택 → TB 방향 도메인 반경
+        angle_0 = tb % (2 * np.pi)
+
+        if 0 + Ct <= angle_0 < (np.pi/2) + Ct:
+            # 전방-우현
+            a_sel, b_sel = Rf_eff, Rs_eff
+        elif (np.pi/2) + Ct <= angle_0 < np.pi + Ct:
+            # 후방-우현
+            a_sel, b_sel = Ra_eff, Rs_eff
+        elif np.pi + Ct <= angle_0 < (3*np.pi/2) + Ct:
+            # 후방-좌현
+            a_sel, b_sel = Ra_eff, Rp_eff
         else:
-            # 4사분면 파라미터
-            a, b = (Rf, Rp)
+            # 전방-좌현
+            a_sel, b_sel = Rf_eff, Rp_eff
 
-        # 5) 해당 구간의 (a, b)를 써서 r( tb_rad ) 계산
-        #    (주의: 구간 판별은 angle_0 기준이지만,
-        #           실제 ellipse_radius()는 '실제 θ'인 tb_rad 를 넣어주면 됨)
-        self.mapped_radius = ellipse_radius(a, b, tb)
+        self.mapped_radius = ellipse_radius(a_sel, b_sel, tb)
 
-        return rotated_points, self.mapped_radius    
+        return rotated_points, self.mapped_radius 
     
     def lb_rb(self):
         boundary_pts, mapped_radius = self.SD_dist_yoo()

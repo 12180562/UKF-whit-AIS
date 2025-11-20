@@ -456,9 +456,21 @@ def main():
             # print("y_var : ",TS_list[ts_ID]['y_var'])
 #####################################################################################################################
         
-        print("\n")
-        print("pos_err :    ", pos_err_list)
+        # print("\n")
+        # print("pos_err :    ", pos_err_list)
         # print(TS_list)
+        print("\n")
+        print("x_var 2001 : ", round(TS_list[2001]['x_var']))
+        print("y_var 2001 : ", round(TS_list[2001]['y_var']))
+        print("\n")
+
+        print("x_var 2002 : ", round(TS_list[2002]['x_var']))
+        print("y_var 2002 : ", round(TS_list[2002]['y_var']))
+        print("\n")
+
+        print("x_var 2003 : ", round(TS_list[2003]['x_var']))
+        print("y_var 2003 : ", round(TS_list[2003]['y_var']))
+        # print("\n")
 
         OS_Vx, OS_Vy = inha.U_to_vector_V(OS_list['Vel_U'], OS_list['Heading'])
 
@@ -547,8 +559,8 @@ def main():
             # print(temp_enc)
 
             distance[ts_ID] = sqrt((OS_list["Pos_X"]-TS_list[ts_ID]["Pos_X"])**2+(OS_list["Pos_Y"]-TS_list[ts_ID]["Pos_Y"])**2)
-            print("distance :   ", round(distance[ts_ID],3))
-            print("CRI :        ", temp_cri)
+            # print("distance :   ", round(distance[ts_ID],3))
+            # print("CRI :        ", temp_cri)
         # print("tcpa :        ", temp_TCPA)
         # print("dcpa :        ", temp_DCPA)
         # print(temp_point)
@@ -569,8 +581,8 @@ def main():
             cpa_status = 'cpa'
 
             TS_list_cpa.setdefault(cpa_id, {})
-            print("TCPA : ",TS_list[ts_ID]["TCPA"])
-            print("DCAP : ",TS_list[ts_ID]["DCPA"])
+            # print("TCPA : ",TS_list[ts_ID]["TCPA"])
+            # print("DCAP : ",TS_list[ts_ID]["DCPA"])
             # print("mapped : ",TS_list[ts_ID]["mapped_radius"])
             cpa_x, cpa_y, cpa_vx, cpa_vy, cpa_mapped_radius, brg_rb, brg_lb = 0,0,0,0,0,0,0
             # 겹치지 않으면 
@@ -648,8 +660,8 @@ def main():
                     'CRI'               : cpa_cri,           # 위험도 등급 (예: 0)
                     'status'            : cpa_status         # 상태 문자열 'cpa'
                 })
-            print("cpa x,y : ", cpa_x,cpa_y)
-            print("cpa left right : ",rad2deg(brg_lb), rad2deg(brg_rb))
+            # print("cpa x,y : ", cpa_x,cpa_y)
+            # print("cpa left right : ",rad2deg(brg_lb), rad2deg(brg_rb))
         # print(TS_list_cpa)
 ################################################################
 
@@ -664,7 +676,7 @@ def main():
 
 # Estimate Collision Damage
 ########################################################################################################
-        print("CRP : ",collision_risk_vo, "%")
+        # print("CRP : ",collision_risk_vo, "%")
 
         rho = 1025  # 해수 밀도 kg/m³
         # 선종 별 평균 값 벌크 0.85, 탱커 0.83, 컨테이너 0.7
@@ -687,7 +699,7 @@ def main():
             Vr = VB - VA                 # 상대 속도 벡터
             RV = np.linalg.norm(Vr)
             damage_index[ts_ID] = (0.5 * mu * RV**2 * (collision_risk_vo[ts_ID]/100))/10**6
-        print("damage_index : ",damage_index, "MJ")
+        # print("damage_index : ",damage_index, "MJ")
 
 #########################################################################################################
         
@@ -742,9 +754,9 @@ def main():
         if a<=3:
             avoide_start = round(distance[ts_ID],3)
             avoide_cri = temp_cri
-        print("avoide_start :   ", avoide_start)
-        print("n*L :            ", avoide_start/(ship_L/OS_scale))
-        print("avoide_cri :     ", avoide_cri)
+        # print("avoide_start :   ", avoide_start)
+        # print("n*L :            ", avoide_start/(ship_L/OS_scale))
+        # print("avoide_cri :     ", avoide_cri)
 
         OS_pub_list = [
             int(OS_ID), 

@@ -37,7 +37,8 @@ class Inha_dataProcess:
                 ship_list_dic
                 ship_ID
         '''
-
+        # print(len(self.ship_ID))
+        # print(self.Vel_U)
         for i in range(len(self.ship_ID)):
             index_ship = self.ship_ID[i]
             if index_ship == OS_ID:
